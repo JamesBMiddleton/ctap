@@ -1,10 +1,9 @@
 # https://makefiletutorial.com/ - adapt the bottom example
 
-SHELL = /bin/bash
 CC = usr/bin/gcc
 CFLAGS = -g
 
-BUILD_DIR := ./build
+BUILD_DIR := ./out/build
 # SRC_DIR :=
 
 
