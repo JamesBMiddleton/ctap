@@ -4,6 +4,7 @@
 static void start_the_engines()
 {
     cor_load_the_map();
+    cor_load_the_map();
     return;
 }
 
