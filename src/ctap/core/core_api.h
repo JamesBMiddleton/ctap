@@ -4,6 +4,6 @@
 
 typedef struct {
     void (*start_the_engines) (void);
-} cor_t;
+} cor_api_t;
 
-extern const cor_t cor;
+extern const cor_api_t cor_api;

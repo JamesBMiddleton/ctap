@@ -1,9 +1,9 @@
 #include "map_loader.h"
-#include "../physics/api_physics.h"
+#include "../physics/physics_api.h"
 
 void cor_load_the_map()
 {
-    phy.start_gravity();
+    phy_api.start_gravity();
     return;
 }
 

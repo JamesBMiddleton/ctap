@@ -4,6 +4,6 @@
 
 typedef struct {
     void (*start_gravity) (void);
-} phy_t;
+} phy_api_t;
 
-extern const phy_t phy;
+extern const phy_api_t phy_api;
