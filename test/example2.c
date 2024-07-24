@@ -2,7 +2,7 @@
 #include "../src/ctap_api.h"
 #include <stdio.h>
 
-int main(int argc, char *argv[]) {
+i32 main(void) {
     ctp_api.load_map();
     printf("example_test!");
 	return 0;

@@ -1,7 +1,7 @@
 #include "ctap_api.h"
 #include "ctap/core/core_api.h"
 
-static ctp_retcode_e load_map()
+static ctp_retcode_e load_map(void)
 {
     cor_api.start_the_engines();
     return ctp_retcode_MAP_INVALID;

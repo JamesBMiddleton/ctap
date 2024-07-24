@@ -1,7 +1,7 @@
 #include "core_api.h"
 #include "map_loader.h"
 
-static void start_the_engines()
+static void start_the_engines(void)
 {
     cor_load_the_map();
     cor_load_the_map();
