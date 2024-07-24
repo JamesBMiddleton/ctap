@@ -17,9 +17,9 @@ TEST_DIR := test
 RELEASE_CFLAGS := -O3 -flto -finline-functions \
 				  -ffunction-sections -fdata-sections -Wl,--gc-sections \
 				  $(CFLAGS)
-DEBUG_CFLAGS := -O0 -Weverything -fsanitize=address -fsanitize=undefined \
-				-fno-omit-frame-pointer -fstack-protector-strong \
-				-fno-inline \
+DEBUG_CFLAGS := -O0 -Weverything -Werror -fsanitize=address \
+				-fsanitize=undefined -fno-omit-frame-pointer \
+				-fstack-protector-strong -fno-inline \
 				$(CFLAGS)
 
 # Find all the C files we want to compile
@@ -34,14 +34,25 @@ LIB_OBJ = $(BUILD_DIR)/lib$(LIB_NAME).a
 # test binary = test object filepath minus .c.o
 TEST_BINS = $(patsubst %.c.o,%,$(TEST_OBJS))
 
+.PHONY: all
 all: build
 
+.PHONY: build
 build: CFLAGS = $(RELEASE_CFLAGS)
 build: $(LIB_OBJ)
 
+.PHONY: check
 check: CFLAGS = $(DEBUG_CFLAGS)
 check: $(TEST_BINS)
 	./$<
+
+.PHONY: format
+format: $(SRCS) $(TESTS)
+	clang-format-15 -i $(SRCS) $(TESTS)
+
+.PHONY: clean
+clean:
+	rm -r $(BUILD_DIR)
 
 # Build the test binaries
 $(TEST_BINS): $(TEST_OBJS) $(LIB_OBJ)
@@ -61,8 +72,5 @@ $(BUILD_DIR)/$(TEST_DIR)/%.c.o: $(TEST_DIR)/%.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-.PHONY: clean
-clean:
-	rm -r $(BUILD_DIR)
 
 

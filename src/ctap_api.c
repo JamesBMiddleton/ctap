@@ -7,6 +7,4 @@ static ctp_retcode_e load_map(void)
     return ctp_retcode_MAP_INVALID;
 }
 
-const ctp_api_t ctp_api = {
-    .load_map = load_map
-};
+const ctp_api_t ctp_api = {.load_map = load_map};

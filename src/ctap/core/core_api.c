@@ -8,6 +8,4 @@ static void start_the_engines(void)
     return;
 }
 
-const cor_api_t cor_api = {
-    .start_the_engines = start_the_engines
-};
+const cor_api_t cor_api = {.start_the_engines = start_the_engines};

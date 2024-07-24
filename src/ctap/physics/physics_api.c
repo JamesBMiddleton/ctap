@@ -7,6 +7,4 @@ static void start_gravity(void)
     return;
 }
 
-const phy_api_t phy_api = {
-    .start_gravity = start_gravity
-};
+const phy_api_t phy_api = {.start_gravity = start_gravity};
