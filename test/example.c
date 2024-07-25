@@ -5,6 +5,6 @@
 i32 main(void)
 {
     ctp_api.load_map();
-    printf("example_test!");
+    printf("example_test!\n");
     return 0;
 }

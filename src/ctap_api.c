@@ -1,5 +1,5 @@
-#include "ctap_api.h"
-#include "ctap/core/core_api.h"
+#include "src/ctap_api.h"
+#include "src/ctap/core_api.h"
 
 static ctp_retcode_e load_map(void)
 {

@@ -3,19 +3,15 @@ MAKEFLAGS += -j$(shell nproc)
 
 .SILENT:
 
-AR := ar
-CC := clang-15
-
-CFLAGS := -std=c17 -MMD -MP -g
-LDFLAGS :=
-
 LIB_NAME := ctap
 BUILD_DIR := out/build
 SRC_DIR := src
 TEST_DIR := test
 
+CC := clang-15
+CFLAGS := -std=c17 -MMD -MP -g -I. 
 RELEASE_CFLAGS := -O3 -flto -finline-functions \
-				  -ffunction-sections -fdata-sections -Wl,--gc-sections \
+				  -ffunction-sections -fdata-sections \
 				  $(CFLAGS)
 DEBUG_CFLAGS := -O0 -Weverything -Werror -fsanitize=address \
 				-fsanitize=undefined -fno-omit-frame-pointer \
@@ -48,7 +44,7 @@ check: $(TEST_BINS)
 
 .PHONY: format
 format: $(SRCS) $(TESTS)
-	clang-format-15 -i $(SRCS) $(TESTS)
+	clang-format-15 --verbose -i $(SRCS) $(TESTS)
 
 .PHONY: clean
 clean:
@@ -56,11 +52,11 @@ clean:
 
 # Build the test binaries
 $(TEST_BINS): $(TEST_OBJS) $(LIB_OBJ)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< -L$(BUILD_DIR) -l$(LIB_NAME)
+	$(CC) $(CFLAGS) -o $@ $< -L$(BUILD_DIR) -l$(LIB_NAME)
 
 # Build the static library
 $(LIB_OBJ): $(SRC_OBJS)
-	$(AR) rcs $(LIB_OBJ) $(SRC_OBJS)
+	ar rcs $(LIB_OBJ) $(SRC_OBJS)
 
 # Build src object files
 $(BUILD_DIR)/$(SRC_DIR)/%.c.o: $(SRC_DIR)/%.c

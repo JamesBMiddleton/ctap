@@ -1,5 +1,5 @@
-#include "core_api.h"
-#include "map_loader.h"
+#include "src/ctap/core_api.h"
+#include "src/ctap/core/map_loader.h"
 
 static void start_the_engines(void)
 {

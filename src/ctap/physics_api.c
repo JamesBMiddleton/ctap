@@ -1,5 +1,5 @@
-#include "physics_api.h"
-#include "gravity.h"
+#include "src/ctap/physics_api.h"
+#include "src/ctap/physics/gravity.h"
 
 static void start_gravity(void)
 {
