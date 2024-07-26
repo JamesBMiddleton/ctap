@@ -3,9 +3,8 @@ MAKEFLAGS += -j$(shell nproc)
 
 .SILENT:
 
-LIB_NAME := ctap
+LIB_HEADER_NAME := ctap.h
 BUILD_DIR := out/build
-SRC_DIR := src
 TEST_DIR := test
 
 CC := clang-15
@@ -19,23 +18,14 @@ DEBUG_CFLAGS := -DDEBUG -O0 -Weverything -Werror -fsanitize=address \
 				$(CFLAGS)
 
 # Find all the C files we want to compile
-SRCS := $(shell find $(SRC_DIR) -name '*.c')
 TESTS := $(shell find $(TEST_DIR) -name '*.c')
-
 # object filepath = BUILD_DIR + source filepath + .o
-SRC_OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
 TEST_OBJS := $(TESTS:%=$(BUILD_DIR)/%.o)
-LIB_OBJ = $(BUILD_DIR)/lib$(LIB_NAME).a
-
 # test binary = test object filepath minus .c.o
 TEST_BINS = $(patsubst %.c.o,%,$(TEST_OBJS))
 
 .PHONY: all
 all: build
-
-.PHONY: build
-build: CFLAGS = $(RELEASE_CFLAGS)
-build: $(LIB_OBJ)
 
 .PHONY: check
 check: CFLAGS = $(DEBUG_CFLAGS)
@@ -51,22 +41,11 @@ clean:
 	rm -r $(BUILD_DIR)
 
 # Build the test binaries
-$(TEST_BINS): $(TEST_OBJS) $(LIB_OBJ)
-	$(CC) $(CFLAGS) -o $@ $< -L$(BUILD_DIR) -l$(LIB_NAME)
-
-# Build the static library
-$(LIB_OBJ): $(SRC_OBJS)
-	ar rcs $(LIB_OBJ) $(SRC_OBJS)
-
-# Build src object files
-$(BUILD_DIR)/$(SRC_DIR)/%.c.o: $(SRC_DIR)/%.c
-	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+$(TEST_BINS): $(TEST_OBJS)
+	$(CC) $(CFLAGS) -o $@ $<
 
 # Build test object files
 $(BUILD_DIR)/$(TEST_DIR)/%.c.o: $(TEST_DIR)/%.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
-
-
 

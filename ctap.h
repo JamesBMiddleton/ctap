@@ -1,0 +1,94 @@
+// #define ctp_IMPL
+
+typedef float f32;
+typedef double f64;
+typedef unsigned char u8;
+typedef unsigned short int u16;
+typedef unsigned int u32;
+typedef unsigned long int u64;
+typedef signed char i8;
+typedef signed short int i16;
+typedef signed int i32;
+typedef signed long int i64;
+typedef __SIZE_TYPE__ usize;
+typedef _Bool bool;
+#define true 1;
+#define false 0;
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// PUBLIC API //////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+typedef enum {
+    ctp_retcode_MAP_INVALID
+} ctp_retcode_e;
+
+ctp_retcode_e ctp_load_map(void);
+
+static i32 (*ctp_logger) (const char *__restrict __format, ...);
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// CORE API ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+typedef enum {
+    cor_retcode_MAP_INVALID
+} cor_retcode_e;
+
+static cor_retcode_e cor_start_the_engines(void);
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// CORE API ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////// CTAP UTILS ///////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+#ifdef DEBUG
+#define LOG_D(...)                                                             \
+  ctp_logger("DEBUG | ctap::%s::%d:    ", __func__, __LINE__),          \
+      ctp_logger(__VA_ARGS__), ctp_logger("\n")
+#else
+#define LOG_D(...)
+#endif
+#define LOG_W(...)                                                             \
+  ctp_logger("WARN  | ctap::%s::%d:    ", __func__, __LINE__),          \
+      ctp_logger(__VA_ARGS__), ctp_logger("\n")
+#define LOG_E(...)                                                             \
+  ctp_logger("ERROR | ctap::%s::%d:    ", __func__, __LINE__),          \
+      ctp_logger(__VA_ARGS__), ctp_logger("\n")
+
+// #define assert(expr) \
+//     ((expr) ? (void)0 : ctp_logger(__FILE__, __func__, __LINE__, #expr))
+
+#define ASSIGN_IF_ZERO(val, def)                                               \
+  do {                                                                         \
+    ((val) = ((val) == 0) ? (def) : (val))                                     \
+  } while (0)
+
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////// CTAP IMPLEMENTATION //////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+ctp_retcode_e ctp_load_map(void)
+{
+    cor_start_the_engines();
+    return ctp_retcode_MAP_INVALID;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////// CORE IMPLEMENTATION //////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+cor_retcode_e cor_start_the_engines(void)
+{
+    LOG_E("Hello world!"); 
+    return cor_retcode_MAP_INVALID;
+}
+

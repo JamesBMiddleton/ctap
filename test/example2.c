@@ -1,14 +1,9 @@
-#include "src/ctap_api.h"
-#include "utils/types.h"
-#include "utils/log.h"
+#include "ctap.h"
 #include <stdio.h>
-
-i32 (*utl_logger)(const char *__restrict __format, ...) = printf;
 
 i32 main(void)
 {
-    LOG_E("hello world");
-    ctp_api.load_map();
-    printf("example_test!\n");
+    ctp_logger = printf;
+    ctp_load_map();
     return 0;
 }
