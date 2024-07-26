@@ -9,11 +9,11 @@ SRC_DIR := src
 TEST_DIR := test
 
 CC := clang-15
-CFLAGS := -std=c17 -MMD -MP -g -I. 
+CFLAGS := -std=c99 -MMD -MP -g -I. 
 RELEASE_CFLAGS := -O3 -flto -finline-functions \
 				  -ffunction-sections -fdata-sections \
 				  $(CFLAGS)
-DEBUG_CFLAGS := -O0 -Weverything -Werror -fsanitize=address \
+DEBUG_CFLAGS := -DDEBUG -O0 -Weverything -Werror -fsanitize=address \
 				-fsanitize=undefined -fno-omit-frame-pointer \
 				-fstack-protector-strong -fno-inline \
 				$(CFLAGS)

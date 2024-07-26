@@ -1,3 +1,5 @@
+extern int (*utl_logger) (const char *__restrict __format, ...);
+
 #ifdef DEBUG
 #define LOG_D(...)                                                             \
   utl_logger("DEBUG | %s::%s:%d:    ", __FILE__, __func__, __LINE__),          \
