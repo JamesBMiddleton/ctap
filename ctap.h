@@ -1,3 +1,10 @@
+/*
+    Author: James Middleton
+    Repo: https://github.com/JamesBMiddleton/ctap
+    License: MIT
+    Docs: EOF
+*/
+
 // #define ctp_IMPL
 
 typedef float f32;
@@ -10,67 +17,112 @@ typedef signed char i8;
 typedef signed short int i16;
 typedef signed int i32;
 typedef signed long int i64;
-typedef __SIZE_TYPE__ usize;
-typedef _Bool bool;
-#define true 1;
-#define false 0;
+#define bool _Bool
+#define true 1
+#define false 0
 
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////// PUBLIC API //////////////////////////////////
+////////////////////////////////// CTAP API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum {
-    ctp_retcode_MAP_INVALID
-} ctp_retcode_e;
+typedef enum { ctp_retcode_MAP_INVALID } ctp_retcode_e;
 
 ctp_retcode_e ctp_load_map(void);
 
-static i32 (*ctp_logger) (const char *__restrict __format, ...);
+static i32 (*ctp_logger)(const char* __restrict __format, ...);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CORE API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum {
-    cor_retcode_MAP_INVALID
-} cor_retcode_e;
+typedef enum { cor_retcode_MAP_INVALID } cor_retcode_e;
 
 static cor_retcode_e cor_start_the_engines(void);
 
-
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////// CORE API ////////////////////////////////////
+/////////////////////////////// GRAPHICS API ///////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
 
 
 
 
 ////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////// CTAP UTILS ///////////////////////////////////
+/////////////////////////////// PHYSICS API ////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// INPUT API //////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// AUDIO API //////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// UTILS ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef DEBUG
-#define LOG_D(...)                                                             \
-  ctp_logger("DEBUG | ctap::%s::%d:    ", __func__, __LINE__),          \
-      ctp_logger(__VA_ARGS__), ctp_logger("\n")
+    #define LOG_D(...)                                                   \
+        do                                                               \
+        {                                                                \
+            ctp_logger("DEBUG | ctap::%s::%d:    ", __func__, __LINE__); \
+            ctp_logger(__VA_ARGS__), ctp_logger("\n");                   \
+        } while (0)
 #else
-#define LOG_D(...)
+    #define LOG_D(...)
 #endif
-#define LOG_W(...)                                                             \
-  ctp_logger("WARN  | ctap::%s::%d:    ", __func__, __LINE__),          \
-      ctp_logger(__VA_ARGS__), ctp_logger("\n")
-#define LOG_E(...)                                                             \
-  ctp_logger("ERROR | ctap::%s::%d:    ", __func__, __LINE__),          \
-      ctp_logger(__VA_ARGS__), ctp_logger("\n")
 
-// #define assert(expr) \
-//     ((expr) ? (void)0 : ctp_logger(__FILE__, __func__, __LINE__, #expr))
+#define LOG_W(...)                                                   \
+    do                                                               \
+    {                                                                \
+        ctp_logger("WARN  | ctap::%s::%d:    ", __func__, __LINE__); \
+        ctp_logger(__VA_ARGS__), ctp_logger("\n");                   \
+    } while (0)
 
-#define ASSIGN_IF_ZERO(val, def)                                               \
-  do {                                                                         \
-    ((val) = ((val) == 0) ? (def) : (val))                                     \
-  } while (0)
+#define LOG_E(...)                                                   \
+    do                                                               \
+    {                                                                \
+        ctp_logger("ERROR | ctap::%s::%d:    ", __func__, __LINE__); \
+        ctp_logger(__VA_ARGS__), ctp_logger("\n");                   \
+    } while (0)
+
+#define ASSIGN_IF_ZERO(val, def)               \
+    do                                         \
+    {                                          \
+        ((val) = ((val) == 0) ? (def) : (val)) \
+    } while (0)
+
+#define ASSERT(expr)                                                    \
+    do                                                                  \
+    {                                                                   \
+        ((expr) ? (void)0 :                                             \
+                  ctp_logger("ASSERTION FAILURE | ctap::%s::%d   %s\n", \
+                             __func__, __LINE__, #expr));               \
+    } while (0)
+
+#define STATIC_ASSERT(cond, msg) \
+    typedef char static_assert_##msg[(cond) ? 1 : -1]
+
+STATIC_ASSERT(sizeof(u8) == 1, u8_1_byte);
+STATIC_ASSERT(sizeof(u16) == 2, u16_2_bytes);
+STATIC_ASSERT(sizeof(u32) == 4, u32_4_bytes);
+STATIC_ASSERT(sizeof(u64) == 8, u64_8_bytes);
+STATIC_ASSERT(sizeof(i8) == 1, i8_1_byte);
+STATIC_ASSERT(sizeof(i16) == 2, i16_2_bytes);
+STATIC_ASSERT(sizeof(i32) == 4, i32_4_bytes);
+STATIC_ASSERT(sizeof(i64) == 8, i64_8_bytes);
+STATIC_ASSERT(sizeof(f64) == 8, f64_8_bytes);
+STATIC_ASSERT(sizeof(f32) == 4, f32_4_bytes);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// CTAP IMPLEMENTATION //////////////////////////////
@@ -88,7 +140,125 @@ ctp_retcode_e ctp_load_map(void)
 
 cor_retcode_e cor_start_the_engines(void)
 {
-    LOG_E("Hello world!"); 
+    bool i = true;
+    i = false;
+    LOG_E("Hello world! %d", i);
     return cor_retcode_MAP_INVALID;
 }
+
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////// GRAPHICS IMPLEMENTATION ////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////// PHYSICS IMPLEMENTATION /////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////// INPUT IMPLEMENTATION ///////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////// AUDIO IMPLEMENTATION ///////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////// LICENSE //////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+ 
+MIT License
+
+Copyright (c) 2024 JamesBMiddleton
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// DOCUMENTATION //////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+/*
+ 
+    __Hello world!__
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
