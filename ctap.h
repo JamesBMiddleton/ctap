@@ -17,6 +17,7 @@ typedef signed char i8;
 typedef signed short int i16;
 typedef signed int i32;
 typedef signed long int i64;
+typedef u32 usize; // !
 #define bool _Bool
 #define true 1
 #define false 0
@@ -26,12 +27,28 @@ typedef signed long int i64;
 ////////////////////////////////// CTAP API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+#define MAX_LOG_SZ 256
+
+typedef enum {
+    ctp_loglvl_DEBUG,
+    ctp_loglvl_WARN,
+    ctp_loglvl_ERROR,
+    ctp_loglvl_PANIC
+} ctp_loglvl_e;
+
+typedef struct {
+    const ctp_loglvl_e lvl;
+    const u32 line_num;
+    const char* func_name;
+    char message[MAX_LOG_SZ];
+} ctp_log_t;
+
 typedef enum { ctp_retcode_MAP_INVALID } ctp_retcode_e;
 
 ctp_retcode_e ctp_load_map(void);
 
-static i32 (*ctp_logger_cb)(const char* __restrict __format, ...);
-static void (*ctp_abort_cb)(void);
+static void (*ctp_log_cb)(const ctp_log_t log);
+static void (*ctp_panic_cb)(void);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CORE API ////////////////////////////////////
@@ -61,50 +78,85 @@ static cor_retcode_e cor_start_the_engines(void);
 ////////////////////////////////// UTILS ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+//memcpy
+//itoa
+
+// very simple sprintf with a single arg
+static void nano_sprintf(char* buf, usize bufsz, const char* format, void* value)
+{
+    buf[0] = 'x';
+    buf[1] = '\0';
+    if (format){}
+    if (value) {}
+    if (bufsz) {}
+    if (NULL) {}
+
+    // check if length of 'format' + max length that 'value' could be is more
+    // than 'bufsz'
+    // find the %, check whether it should be treated as a string,
+    // u32, u64 etc. - dangerous if we get it wrong? void*
+    // construct the formatted string in the buf
+}
+
+static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
+                         const char* format, void* value)
+{
+    ctp_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
+    nano_sprintf(&log.message[0], MAX_LOG_SZ, format, value);
+    return log;
+}
+
 #ifdef DEBUG
-#define LOG_D(...)                                                      \
-    do                                                                  \
-    {                                                                   \
-        ctp_logger_cb("DEBUG | ctap::%s::%d:    ", __func__, __LINE__); \
-        ctp_logger_cb(__VA_ARGS__), ctp_logger_cb("\n");                \
+#define LOG_D(format, value)                                             \
+    do                                                                   \
+    {                                                                    \
+        ctp_log_cb(new_log(ctp_loglvl_DEBUG, __LINE__, __func__, format, \
+                           (void*)value));                               \
     } while (0)
 #else
 #define LOG_D(...)
 #endif
 
-#define LOG_W(...)                                                      \
-    do                                                                  \
-    {                                                                   \
-        ctp_logger_cb("WARN  | ctap::%s::%d:    ", __func__, __LINE__); \
-        ctp_logger_cb(__VA_ARGS__), ctp_logger_cb("\n");                \
-    } while (0)
+// #define LOG_W(...)                                                      \
+//     do                                                                  \
+//     {                                                                   \
+//         ctp_logger_cb("WARN  | ctap::%s::%d:    ", __func__, __LINE__); \
+//         ctp_logger_cb(__VA_ARGS__), ctp_logger_cb("\n");                \
+//     } while (0)
+//
+// #define LOG_E(...)                                                      \
+//     do                                                                  \
+//     {                                                                   \
+//         ctp_logger_cb("ERROR | ctap::%s::%d:    ", __func__, __LINE__); \
+//         ctp_logger_cb(__VA_ARGS__), ctp_logger_cb("\n");                \
+//     } while (0)
+//
+// #define PANIC(...)                                                      \
+//     do                                                                  \
+//     {                                                                   \
+//         ctp_logger_cb("ERROR | ctap::%s::%d:    ", __func__, __LINE__); \
+//         ctp_logger_cb(__VA_ARGS__), ctp_logger_cb("\n");                \
+//         ctp_abort_cb();                                                 \
+//     } while (0)
 
-#define LOG_E(...)                                                      \
-    do                                                                  \
-    {                                                                   \
-        ctp_logger_cb("ERROR | ctap::%s::%d:    ", __func__, __LINE__); \
-        ctp_logger_cb(__VA_ARGS__), ctp_logger_cb("\n");                \
-        ctp_abort_cb();                                                 \
-    } while (0)
+// #define ASSIGN_IF_ZERO(val, def)               \
+//     do                                         \
+//     {                                          \
+//         ((val) = ((val) == 0) ? (def) : (val)) \
+//     } while (0)
 
-#define ASSIGN_IF_ZERO(val, def)               \
-    do                                         \
-    {                                          \
-        ((val) = ((val) == 0) ? (def) : (val)) \
-    } while (0)
-
-#ifdef DEBUG
-#define ASSERT(cond)                                                           \
-    do                                                                         \
-    {                                                                          \
-        if (!(cond))                                                             \
-            (ctp_logger_cb("ASSERT | ctap::%s::%d   %s\n", __func__, __LINE__, \
-                           #cond),                                             \
-             ctp_abort_cb());                                                  \
-    } while (0)
-#else
-#define ASSERT(...)
-#endif
+// #ifdef DEBUG
+// #define ASSERT(cond)                                                           \
+//     do                                                                         \
+//     {                                                                          \
+//         if (!(cond))                                                           \
+//             (ctp_logger_cb("ASSERT | ctap::%s::%d   %s\n", __func__, __LINE__, \
+//                            #cond),                                             \
+//              ctp_abort_cb());                                                  \
+//     } while (0)
+// #else
+// #define ASSERT(...)
+// #endif
 
 #define STATIC_ASSERT(cond, msg) \
     typedef char static_assert_##msg[(cond) ? 1 : -1]
@@ -137,10 +189,11 @@ ctp_retcode_e ctp_load_map(void)
 static cor_retcode_e cor_start_the_engines(void)
 {
     bool i = true;
-    bool* p = NULL;
+    // bool* p = NULL;
     i = false;
     LOG_D("Hello world! %d", i);
-    ASSERT(p);
+    // ctp_log_cb("hello %s", "world");
+    // ASSERT(p);
     return cor_retcode_MAP_INVALID;
 }
 
