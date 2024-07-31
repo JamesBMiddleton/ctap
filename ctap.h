@@ -17,7 +17,7 @@ typedef signed char i8;
 typedef signed short int i16;
 typedef signed int i32;
 typedef signed long int i64;
-typedef u32 usize; // !
+typedef __SIZE_TYPE__ usize;
 #define bool _Bool
 #define true 1
 #define false 0
@@ -78,18 +78,50 @@ static cor_retcode_e cor_start_the_engines(void);
 ////////////////////////////////// UTILS ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-//memcpy
+// assumes no overlap
+// redundant void* cast to silence -Wcast-align
+// if aligned, copy usize chunks, else copy individual bytes
+static void* utl_memcpy(void* dest, const void* src, usize count)
+{
+    const usize* src_word = (const usize*)src;
+    usize* dest_word = (usize*)dest;
+    if ((*src_word | *dest_word | count) & (sizeof(usize) - 1))
+    {
+        const u8* src_byte = (const u8*)src;
+        const u8* end_byte = src_byte + count;
+        u8* dest_byte = (u8*)dest;
+        while (src_byte != end_byte)
+            *(dest_byte++) = *(src_byte++);
+    }
+    else
+    {
+        const usize* end_word =
+            (const usize*)((const void*)((const u8*)src_word + count));
+        while (src_word != end_word)
+            *(dest_word++) = *(src_word++);
+    }
+    return dest;
+}
 //itoa
 
 // very simple sprintf with a single arg
-static void nano_sprintf(char* buf, usize bufsz, const char* format, void* value)
+static void nano_sprintf(char* buf, usize bufsz, const char* format,
+                         void* value)
 {
     buf[0] = 'x';
     buf[1] = '\0';
-    if (format){}
-    if (value) {}
-    if (bufsz) {}
-    if (NULL) {}
+    if (format)
+    {
+    }
+    if (value)
+    {
+    }
+    if (bufsz)
+    {
+    }
+    if (NULL)
+    {
+    }
 
     // check if length of 'format' + max length that 'value' could be is more
     // than 'bufsz'
