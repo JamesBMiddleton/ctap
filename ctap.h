@@ -80,12 +80,10 @@ static cor_retcode_e cor_start_the_engines(void);
 
 // assumes no overlap
 // redundant void* cast to silence -Wcast-align
-// if aligned, copy usize chunks, else copy individual bytes
-static void* utl_memcpy(void* dest, const void* src, usize count)
+// if aligned, copy u32 chunks, else copy individual bytes
+static void* utl_memcpy(void* dest, const void* src, const usize count)
 {
-    const usize* src_word = (const usize*)src;
-    usize* dest_word = (usize*)dest;
-    if ((*src_word | *dest_word | count) & (sizeof(usize) - 1))
+    if (((usize)src | (usize)dest | count) & 3)
     {
         const u8* src_byte = (const u8*)src;
         const u8* end_byte = src_byte + count;
@@ -95,8 +93,10 @@ static void* utl_memcpy(void* dest, const void* src, usize count)
     }
     else
     {
-        const usize* end_word =
-            (const usize*)((const void*)((const u8*)src_word + count));
+        const u32* src_word = (const u32*)src;
+        u32* dest_word = (u32*)dest;
+        const u32* end_word =
+            (const u32*)((const void*)((const u8*)src_word + count));
         while (src_word != end_word)
             *(dest_word++) = *(src_word++);
     }
