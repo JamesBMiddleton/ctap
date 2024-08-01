@@ -105,7 +105,7 @@ static void* utl_memcpy(void* dest, const void* src, const usize count)
 //itoa
 
 // very simple sprintf with a single arg
-static void nano_sprintf(char* buf, usize bufsz, const char* format,
+static void utl_sprintf(char* buf, usize bufsz, const char* format,
                          void* value)
 {
     buf[0] = 'x';
@@ -203,6 +203,7 @@ STATIC_ASSERT(sizeof(i32) == 4, i32_4_bytes);
 STATIC_ASSERT(sizeof(i64) == 8, i64_8_bytes);
 STATIC_ASSERT(sizeof(f64) == 8, f64_8_bytes);
 STATIC_ASSERT(sizeof(f32) == 4, f32_4_bytes);
+STATIC_ASSERT(sizeof(void*) == sizeof(usize), ptr_usize_bytes);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// CTAP IMPLEMENTATION //////////////////////////////
