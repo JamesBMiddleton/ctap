@@ -8,20 +8,18 @@
 // #define ctp_IMPL
 
 typedef float f32;
-typedef double f64;
 typedef unsigned char u8;
 typedef unsigned short int u16;
 typedef unsigned int u32;
-typedef unsigned long int u64;
 typedef signed char i8;
 typedef signed short int i16;
 typedef signed int i32;
-typedef signed long int i64;
-typedef __SIZE_TYPE__ usize;
 #define bool _Bool
 #define true 1
 #define false 0
 #define NULL ((void*)0)
+typedef __SIZE_TYPE__ usize; //! compiler dependent
+// typedef typeof(sizeof(0)) usize; // C23
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CTAP API ////////////////////////////////////
@@ -30,6 +28,7 @@ typedef __SIZE_TYPE__ usize;
 #define MAX_LOG_SZ 256
 
 typedef enum {
+    ctp_loglvl_ASSERT,
     ctp_loglvl_DEBUG,
     ctp_loglvl_WARN,
     ctp_loglvl_ERROR,
@@ -78,12 +77,18 @@ static cor_retcode_e cor_start_the_engines(void);
 ////////////////////////////////// UTILS ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-// assumes no overlap
-// redundant void* cast to silence -Wcast-align
-// if aligned, copy u32 chunks, else copy individual bytes
+/*
+ * If aligned copy 32bit chunks from dest to src, else copy bytes. 
+ * Assumes no overlap. Redundant void cast to silence -Wcast-align
+ *
+ * @param dest - copy destination 
+ * @param src  - copy source
+ * @param count - number of bytes to copy
+ * @return copy destinatiion
+*/
 static void* utl_memcpy(void* dest, const void* src, const usize count)
 {
-    if (((usize)src | (usize)dest | count) & 3)
+    if (((usize)src | (usize)dest | count) & sizeof(u32) - 1)
     {
         const u8* src_byte = (const u8*)src;
         const u8* end_byte = src_byte + count;
@@ -102,18 +107,37 @@ static void* utl_memcpy(void* dest, const void* src, const usize count)
     }
     return dest;
 }
-//itoa
 
-// very simple sprintf with a single arg
-static void utl_sprintf(char* buf, usize bufsz, const char* format,
-                         void* value)
+//itoa
+//strlen()?
+
+typedef union {
+    const char* s;
+    const i32 d;
+    const u32 u;
+    const f32 f;
+} utl_fmt_u;
+
+/*
+ * Takes a single format specifier of type %d, %u, %f or %s.
+ * e.g. utl_sprintf(buf, sizeof(buf), "hello %s", (utl_fmt_u){.s="world"});
+ * Chain calls together to construct a string with multiple format specifiers.
+ * 
+ * @param buf - the destination string buffer
+ * @param bufsz - size of destination string buffer
+ * @param format - the string format
+ * @param value - the format specifier value
+ * @return - the destination string buffer
+*/
+static char* utl_sprintf(char* buf, const usize bufsz, const char* format,
+                         const utl_fmt_u value)
 {
     buf[0] = 'x';
     buf[1] = '\0';
     if (format)
     {
     }
-    if (value)
+    if (value.d)
     {
     }
     if (bufsz)
@@ -126,69 +150,76 @@ static void utl_sprintf(char* buf, usize bufsz, const char* format,
     // check if length of 'format' + max length that 'value' could be is more
     // than 'bufsz'
     // find the %, check whether it should be treated as a string,
-    // u32, u64 etc. - dangerous if we get it wrong? void*
     // construct the formatted string in the buf
+    return buf;
 }
 
 static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
-                         const char* format, void* value)
+                         const char* format, const utl_fmt_u value)
 {
     ctp_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
-    nano_sprintf(&log.message[0], MAX_LOG_SZ, format, value);
+    utl_sprintf(&log.message[0], MAX_LOG_SZ, format, value);
     return log;
 }
 
 #ifdef DEBUG
-#define LOG_D(format, value)                                             \
-    do                                                                   \
-    {                                                                    \
-        ctp_log_cb(new_log(ctp_loglvl_DEBUG, __LINE__, __func__, format, \
-                           (void*)value));                               \
+#define LOG_D(format, ...)                                                   \
+    do                                                                       \
+    {                                                                        \
+        if (ctp_log_cb)                                                      \
+            ctp_log_cb(new_log(ctp_loglvl_DEBUG, __LINE__, __func__, format, \
+                               (utl_fmt_u){__VA_ARGS__}));                   \
     } while (0)
 #else
 #define LOG_D(...)
 #endif
 
-// #define LOG_W(...)                                                      \
-//     do                                                                  \
-//     {                                                                   \
-//         ctp_logger_cb("WARN  | ctap::%s::%d:    ", __func__, __LINE__); \
-//         ctp_logger_cb(__VA_ARGS__), ctp_logger_cb("\n");                \
-//     } while (0)
-//
-// #define LOG_E(...)                                                      \
-//     do                                                                  \
-//     {                                                                   \
-//         ctp_logger_cb("ERROR | ctap::%s::%d:    ", __func__, __LINE__); \
-//         ctp_logger_cb(__VA_ARGS__), ctp_logger_cb("\n");                \
-//     } while (0)
-//
-// #define PANIC(...)                                                      \
-//     do                                                                  \
-//     {                                                                   \
-//         ctp_logger_cb("ERROR | ctap::%s::%d:    ", __func__, __LINE__); \
-//         ctp_logger_cb(__VA_ARGS__), ctp_logger_cb("\n");                \
-//         ctp_abort_cb();                                                 \
-//     } while (0)
+#define LOG_W(format, ...)                                                  \
+    do                                                                      \
+    {                                                                       \
+        if (ctp_log_cb)                                                     \
+            ctp_log_cb(new_log(ctp_loglvl_WARN, __LINE__, __func__, format, \
+                               (utl_fmt_u){__VA_ARGS__}));                  \
+    } while (0)
 
-// #define ASSIGN_IF_ZERO(val, def)               \
-//     do                                         \
-//     {                                          \
-//         ((val) = ((val) == 0) ? (def) : (val)) \
-//     } while (0)
+#define LOG_E(format, ...)                                                   \
+    do                                                                       \
+    {                                                                        \
+        if (ctp_log_cb)                                                      \
+            ctp_log_cb(new_log(ctp_loglvl_ERROR, __LINE__, __func__, format, \
+                               (utl_fmt_u){__VA_ARGS__}));                   \
+    } while (0)
 
-// #ifdef DEBUG
-// #define ASSERT(cond)                                                           \
-//     do                                                                         \
-//     {                                                                          \
-//         if (!(cond))                                                           \
-//             (ctp_logger_cb("ASSERT | ctap::%s::%d   %s\n", __func__, __LINE__, \
-//                            #cond),                                             \
-//              ctp_abort_cb());                                                  \
-//     } while (0)
-// #else
-// #define ASSERT(...)
-// #endif
+#define PANIC(format, ...)                                                   \
+    do                                                                       \
+    {                                                                        \
+        if (ctp_log_cb)                                                      \
+            ctp_log_cb(new_log(ctp_loglvl_PANIC, __LINE__, __func__, format, \
+                               (utl_fmt_u){__VA_ARGS__}));                   \
+        ctp_panic_cb();                                                      \
+    } while (0)
+
+#ifdef DEBUG
+#define ASSERT(cond)                                                      \
+    do                                                                    \
+    {                                                                     \
+        if (!(cond))                                                      \
+        {                                                                 \
+            if (ctp_log_cb)                                               \
+                ctp_log_cb(new_log(ctp_loglvl_ASSERT, __LINE__, __func__, \
+                                   "%s", (utl_fmt_u){.s = #cond}));       \
+            ctp_panic_cb();                                               \
+        }                                                                 \
+    } while (0)
+#else
+#define ASSERT(...)
+#endif
+
+#define ASSIGN_IF_ZERO(val, def)               \
+    do                                         \
+    {                                          \
+        ((val) = ((val) == 0) ? (def) : (val)) \
+    } while (0)
 
 #define STATIC_ASSERT(cond, msg) \
     typedef char static_assert_##msg[(cond) ? 1 : -1]
@@ -196,12 +227,9 @@ static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
 STATIC_ASSERT(sizeof(u8) == 1, u8_1_byte);
 STATIC_ASSERT(sizeof(u16) == 2, u16_2_bytes);
 STATIC_ASSERT(sizeof(u32) == 4, u32_4_bytes);
-STATIC_ASSERT(sizeof(u64) == 8, u64_8_bytes);
 STATIC_ASSERT(sizeof(i8) == 1, i8_1_byte);
 STATIC_ASSERT(sizeof(i16) == 2, i16_2_bytes);
 STATIC_ASSERT(sizeof(i32) == 4, i32_4_bytes);
-STATIC_ASSERT(sizeof(i64) == 8, i64_8_bytes);
-STATIC_ASSERT(sizeof(f64) == 8, f64_8_bytes);
 STATIC_ASSERT(sizeof(f32) == 4, f32_4_bytes);
 STATIC_ASSERT(sizeof(void*) == sizeof(usize), ptr_usize_bytes);
 
@@ -222,11 +250,23 @@ ctp_retcode_e ctp_load_map(void)
 static cor_retcode_e cor_start_the_engines(void)
 {
     bool i = true;
-    // bool* p = NULL;
+    if (i)
+    {
+    }
+    bool* p = NULL;
     i = false;
-    LOG_D("Hello world! %d", i);
+    LOG_D("Hello world! %d", .d = i);
+    LOG_D("Hello world!", NULL);
+    LOG_E("Invalid map format", NULL);
+    char* s = "hello";
+    PANIC("Invalid map format", .s = s);
+
+    char arr[10] = "hello";
+    char arr2[10] = "";
+
+    utl_memcpy(arr2, arr, sizeof(arr));
     // ctp_log_cb("hello %s", "world");
-    // ASSERT(p);
+    ASSERT(p);
     return cor_retcode_MAP_INVALID;
 }
 

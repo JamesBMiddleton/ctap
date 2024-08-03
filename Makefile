@@ -15,17 +15,18 @@ RELEASE_CFLAGS := -O3 -flto -finline-functions \
 DEBUG_CFLAGS := -DDEBUG -O0 -Weverything -Werror -fsanitize=address \
 				-fsanitize=undefined -fno-omit-frame-pointer \
 				-fstack-protector-strong -fno-inline \
+				-Wno-declaration-after-statement \
 				$(CFLAGS)
 
-# Find all the C files we want to compile
+# Find all tests we want to compile
 TESTS := $(shell find $(TEST_DIR) -name '*.c')
-# object filepath = BUILD_DIR + source filepath + .o
+# test object filepath = BUILD_DIR + test filepath + .o
 TEST_OBJS := $(TESTS:%=$(BUILD_DIR)/%.o)
-# test binary = test object filepath minus .c.o
+# test binary filepath = test object filepath minus .c.o
 TEST_BINS = $(patsubst %.c.o,%,$(TEST_OBJS))
 
 .PHONY: all
-all: build
+all: check 
 
 .PHONY: check
 check: CFLAGS = $(DEBUG_CFLAGS)
@@ -45,7 +46,7 @@ $(TEST_BINS): $(TEST_OBJS)
 	$(CC) $(CFLAGS) -o $@ $<
 
 # Build test object files
-$(BUILD_DIR)/$(TEST_DIR)/%.c.o: $(TEST_DIR)/%.c
+$(BUILD_DIR)/$(TEST_DIR)/%.c.o: $(TEST_DIR)/%.c $(LIB_HEADER_NAME)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
