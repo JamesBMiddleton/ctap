@@ -14,5 +14,9 @@ i32 main(void)
     ctp_panic_cb = abort;
     ctp_load_map();
 
+    char arr[100];
+    utl_u32tostr(1410065408, arr);
+    printf("%s", arr);
+
     return 0;
 }

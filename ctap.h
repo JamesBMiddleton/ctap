@@ -88,6 +88,7 @@ static cor_retcode_e cor_start_the_engines(void);
 */
 static void* utl_memcpy(void* dest, const void* src, const usize count)
 {
+    // ASSERT POINTERS 
     if (((usize)src | (usize)dest | count) & sizeof(u32) - 1)
     {
         const u8* src_byte = (const u8*)src;
@@ -108,8 +109,33 @@ static void* utl_memcpy(void* dest, const void* src, const usize count)
     return dest;
 }
 
-//itoa
-//strlen()?
+/*
+ * Assumes buf is larger than num digits + null terminator.
+ * 0x540BE400 == 10^10 % UINT32_MAX 
+ *
+ * @param value - value to convert
+ * @param buf - destination string buffer
+ * @return buf
+*/
+static char* utl_u32tostr(u32 value, char* buf)
+{
+    // ASSERT POINTER
+    // Handle negative?
+    u32 digits = 10; 
+    for (++buf; (digits <= value) && (digits != 0x540BE400); digits *= 10)
+        ++buf;
+    *buf-- = '\0';
+    do 
+    {
+        *buf-- = '0' + (value % 10);
+        value /= 10;
+    } while (value != 0);
+    return buf;
+}
+
+//utl_i32tostr()
+//utl_f32tostr()
+//utl_strlen()?
 
 typedef union {
     const char* s;
@@ -158,7 +184,7 @@ static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
                          const char* format, const utl_fmt_u value)
 {
     ctp_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
-    utl_sprintf(&log.message[0], MAX_LOG_SZ, format, value);
+    utl_sprintf(&log.message[0], sizeof(log.message), format, value);
     return log;
 }
 
@@ -253,20 +279,22 @@ static cor_retcode_e cor_start_the_engines(void)
     if (i)
     {
     }
-    bool* p = NULL;
+    // bool* p = NULL;
     i = false;
     LOG_D("Hello world! %d", .d = i);
     LOG_D("Hello world!", NULL);
     LOG_E("Invalid map format", NULL);
-    char* s = "hello";
-    PANIC("Invalid map format", .s = s);
+    // char* s = "hello";
+    // PANIC("Invalid map format", .s = s);
 
     char arr[10] = "hello";
     char arr2[10] = "";
+    // utl_u32tostr(115, arr2);
+
 
     utl_memcpy(arr2, arr, sizeof(arr));
     // ctp_log_cb("hello %s", "world");
-    ASSERT(p);
+    // ASSERT(p);
     return cor_retcode_MAP_INVALID;
 }
 
