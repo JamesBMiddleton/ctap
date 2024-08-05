@@ -15,8 +15,10 @@ i32 main(void)
     ctp_load_map();
 
     char arr[100];
-    utl_u32tostr(1410065408, arr);
-    printf("%s", arr);
+    utl_u32tostr(4294967295/2, arr);
+    char arr2[100];
+    utl_i32tostr(2147483647, arr2);
+    printf("%s", arr2);
 
     return 0;
 }

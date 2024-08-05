@@ -109,9 +109,9 @@ static void* utl_memcpy(void* dest, const void* src, const usize count)
     return dest;
 }
 
+
 /*
  * Assumes buf is larger than num digits + null terminator.
- * 0x540BE400 == 10^10 % UINT32_MAX 
  *
  * @param value - value to convert
  * @param buf - destination string buffer
@@ -120,17 +120,48 @@ static void* utl_memcpy(void* dest, const void* src, const usize count)
 static char* utl_u32tostr(u32 value, char* buf)
 {
     // ASSERT POINTER
-    // Handle negative?
-    u32 digits = 10; 
-    for (++buf; (digits <= value) && (digits != 0x540BE400); digits *= 10)
-        ++buf;
-    *buf-- = '\0';
+    if (value >= 1000000000)
+        buf += 9;
+    else
+        for (u32 digits = 10; digits <= value; digits *= 10)
+            ++buf;
+    *++buf = '\0';
     do 
     {
-        *buf-- = '0' + (value % 10);
+        *--buf = '0' + (value % 10);
         value /= 10;
     } while (value != 0);
     return buf;
+}
+
+/*
+ * Assumes buf is larger than num digits + null terminator.
+ *
+ * @param value - value to convert
+ * @param buf - destination string buffer
+ * @return buf
+*/
+static char* utl_i32tostr(i32 value, char* buf)
+{
+    // ASSERT POINTER
+    i32 abs = value;
+    if (value < 0)
+    {
+            abs = -value;
+            *buf++ = '-';
+    }
+    if (abs >= 1000000000)
+        buf += 9;
+    else
+        for (i32 digits = 10; digits <= abs; digits *= 10)
+            ++buf;
+    *++buf = '\0';
+    do 
+    {
+        *--buf = '0' + (abs % 10);
+        abs /= 10;
+    } while (abs != 0);
+    return (value < 0) ? --buf : buf;
 }
 
 //utl_i32tostr()
