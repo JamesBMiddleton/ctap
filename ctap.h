@@ -88,7 +88,7 @@ static cor_retcode_e cor_start_the_engines(void);
 */
 static void* utl_memcpy(void* dest, const void* src, const usize count)
 {
-    // ASSERT POINTERS 
+    // ASSERT POINTERS
     if (((usize)src | (usize)dest | count) & sizeof(u32) - 1)
     {
         const u8* src_byte = (const u8*)src;
@@ -109,6 +109,79 @@ static void* utl_memcpy(void* dest, const void* src, const usize count)
     return dest;
 }
 
+/* Raise x to the power of y. */
+static inline i32 utl_powi(i32 x, u32 y)
+{
+    if (y == 0)
+        return 1;
+    i32 z = utl_powi(x, y / 2);
+    if ((y % 2) == 0)
+        return z * z;
+    else
+        return x * z * z;
+}
+
+/* Raise x to the power of y. */
+static inline u32 utl_powu(u32 x, u32 y)
+{
+    if (y == 0)
+        return 1;
+    u32 z = utl_powu(x, y / 2);
+    if ((y % 2) == 0)
+        return z * z;
+    else
+        return x * z * z;
+}
+
+/* 
+ * Raise x to the power of y.
+ * Can handle negative powers.
+ */
+static inline f32 utl_powf(f32 x, i32 y)
+{
+    if (y == 0)
+        return 1;
+    f32 z = utl_powf(x, y / 2);
+    if ((y % 2) == 0)
+        return z * z;
+    else if (y > 0)
+        return x * z * z;
+    else
+        return (z * z) / x;
+}
+
+/* Absolute integer value */
+static inline i32 utl_abs(i32 x)
+{
+    return (x < 0) ? -x : x;
+}
+
+/* Absolute float value */
+static inline f32 utl_fabs(f32 x)
+{
+    return (x < 0) ? -x : x;
+}
+
+/* Requires IEEE 754 compliant floats. */
+static inline bool utl_isnan(f32 x)
+{
+    return x != x;
+}
+
+/* Requires IEEE 754 compliant floats. */
+static inline bool utl_isinf(f32 x)
+{
+    return !utl_isnan(x) && utl_isnan(x - x);
+}
+
+/* Length of a string, not including null terminator */
+static inline u32 utl_strlen(const char* s)
+{
+    u32 len = 0;
+    while (*s++ != '\0')
+        ++len;
+    return len;
+}
 
 /*
  * Assumes buf is larger than num digits + null terminator.
@@ -126,7 +199,7 @@ static char* utl_u32tostr(u32 value, char* buf)
         for (u32 digits = 10; digits <= value; digits *= 10)
             ++buf;
     *++buf = '\0';
-    do 
+    do
     {
         *--buf = '0' + (value % 10);
         value /= 10;
@@ -144,19 +217,19 @@ static char* utl_u32tostr(u32 value, char* buf)
 static char* utl_i32tostr(i32 value, char* buf)
 {
     // ASSERT POINTER
-    i32 abs = value;
+    u32 abs = (u32)value;
     if (value < 0)
     {
-            abs = -value;
-            *buf++ = '-';
+        abs = (u32)-value;
+        *buf++ = '-';
     }
     if (abs >= 1000000000)
         buf += 9;
     else
-        for (i32 digits = 10; digits <= abs; digits *= 10)
+        for (u32 digits = 10; digits <= abs; digits *= 10)
             ++buf;
     *++buf = '\0';
-    do 
+    do
     {
         *--buf = '0' + (abs % 10);
         abs /= 10;
@@ -164,9 +237,57 @@ static char* utl_i32tostr(i32 value, char* buf)
     return (value < 0) ? --buf : buf;
 }
 
-//utl_i32tostr()
-//utl_f32tostr()
-//utl_strlen()?
+/*
+ * Assumes buf is larger than num digits + null terminator.
+ * We're checking for inf/nan before float casts, so silencing UB sanitizer.
+ *
+ * @param value - value to convert
+ * @param buf - destination string buffer
+ * @param decimals - number of decimal places 
+ * @return buf
+*/
+__attribute__((no_sanitize("undefined"))) 
+static char* utl_f32tostr(f32 value, char* buf, u8 decimals)
+{
+    if (utl_isnan(value))
+    {
+        static const char* nan = "NaN";
+        utl_memcpy(buf, nan, utl_strlen(nan)+1);
+        return buf;
+    }
+    
+    if (utl_isinf(value))
+    {
+        static const char* inf = "Inf";
+        utl_memcpy(buf, inf, utl_strlen(inf)+1);
+        return buf;
+    }
+
+    i32 whole = (i32)value;
+    f32 fraction = utl_fabs((value - (f32)whole) * 10);
+    char* start = utl_i32tostr(whole, buf);
+
+    while (*++buf != '\0')
+        ;
+
+    *buf++ = '.';
+
+    if (decimals--)
+    {
+        while ((i32)fraction == 0 && decimals--)
+        {
+            *buf++ = '0';
+            fraction *= 10;
+        }
+        while (decimals--)
+            fraction *= 10;
+        utl_u32tostr((u32)fraction, buf);
+    }
+    else
+        *buf = '\0';
+    return start;
+}
+
 
 typedef union {
     const char* s;
@@ -321,7 +442,6 @@ static cor_retcode_e cor_start_the_engines(void)
     char arr[10] = "hello";
     char arr2[10] = "";
     // utl_u32tostr(115, arr2);
-
 
     utl_memcpy(arr2, arr, sizeof(arr));
     // ctp_log_cb("hello %s", "world");
