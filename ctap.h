@@ -74,7 +74,52 @@ static cor_retcode_e cor_start_the_engines(void);
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////// UTILS ///////////////////////////////////////
+/////////////////////////////// UTILS API //////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+typedef union {
+    const char* s;
+    const i32 d;
+    const u32 u;
+    const f32 f;
+} utl_fmt_u;
+
+static void* utl_memcpy(void* dest, const void* src, const usize count);
+
+static inline u32 utl_strlen(const char* s);
+
+static char* utl_sprintf(char* buf, const usize bufsz, const char* format,
+                         const utl_fmt_u value);
+
+static inline i32 utl_powi(i32 x, u32 y);
+static inline u32 utl_powu(u32 x, u32 y);
+static inline f32 utl_powf(f32 x, i32 y);
+
+static inline i32 utl_abs(i32 x);
+static inline f32 utl_fabs(f32 x);
+
+static inline bool utl_isnan(f32 x);
+static inline bool utl_isinf(f32 x);
+
+static char* utl_u32tostr(u32 value, char* buf);
+static char* utl_i32tostr(i32 value, char* buf);
+static char* utl_f32tostr(f32 value, char* buf, u8 decimals);
+
+
+/* MACROS 
+ *
+ * LOG_D(format, ...)
+ * LOG_W(format, ...)
+ * LOG_E(format, ...)
+ * PANIC(format, ...)
+ * ASSIGN_IF_ZERO(val, def)
+ * ASSERT(cond)
+ * STATIC_ASSERT(cond, msg)
+ *
+ * */
+
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////// UTILS IMPLEMENTATION //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
@@ -246,20 +291,20 @@ static char* utl_i32tostr(i32 value, char* buf)
  * @param decimals - number of decimal places 
  * @return buf
 */
-__attribute__((no_sanitize("undefined"))) 
-static char* utl_f32tostr(f32 value, char* buf, u8 decimals)
+__attribute__((no_sanitize("undefined"))) static char*
+utl_f32tostr(f32 value, char* buf, u8 decimals)
 {
     if (utl_isnan(value))
     {
         static const char* nan = "NaN";
-        utl_memcpy(buf, nan, utl_strlen(nan)+1);
+        utl_memcpy(buf, nan, utl_strlen(nan) + 1);
         return buf;
     }
-    
+
     if (utl_isinf(value))
     {
         static const char* inf = "Inf";
-        utl_memcpy(buf, inf, utl_strlen(inf)+1);
+        utl_memcpy(buf, inf, utl_strlen(inf) + 1);
         return buf;
     }
 
@@ -287,14 +332,6 @@ static char* utl_f32tostr(f32 value, char* buf, u8 decimals)
         *buf = '\0';
     return start;
 }
-
-
-typedef union {
-    const char* s;
-    const i32 d;
-    const u32 u;
-    const f32 f;
-} utl_fmt_u;
 
 /*
  * Takes a single format specifier of type %d, %u, %f or %s.

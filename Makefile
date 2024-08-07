@@ -34,8 +34,8 @@ check: $(TEST_BINS)
 	./$<
 
 .PHONY: format
-format: $(SRCS) $(TESTS)
-	clang-format-15 --verbose -i $(SRCS) $(TESTS)
+format: $(LIB_HEADER_NAME) $(TESTS)
+	clang-format-15 --verbose -i $(LIB_HEADER_NAME) $(TESTS)
 
 .PHONY: clean
 clean:
