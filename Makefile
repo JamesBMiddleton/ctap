@@ -1,7 +1,6 @@
 SHELL = /bin/sh
-MAKEFLAGS += -j$(shell nproc)
 
-.SILENT:
+.SILENT: 
 
 LIB_HEADER_NAME := ctap.h
 BUILD_DIR := out/build
@@ -25,13 +24,16 @@ TEST_OBJS := $(TESTS:%=$(BUILD_DIR)/%.o)
 # test binary filepath = test object filepath minus .c.o
 TEST_BINS = $(patsubst %.c.o,%,$(TEST_OBJS))
 
-.PHONY: all
-all: check 
-
 .PHONY: check
 check: CFLAGS = $(DEBUG_CFLAGS)
+check: MAKEFLAGS += -j$(shell nproc)
 check: $(TEST_BINS)
 	./$<
+
+.PHONY: analyze
+analyze: CFLAGS = $(DEBUG_CFLAGS)
+analyze:
+	+ scan-build-15 make check
 
 .PHONY: format
 format: $(LIB_HEADER_NAME) $(TESTS)
@@ -49,4 +51,3 @@ $(TEST_BINS): $(TEST_OBJS)
 $(BUILD_DIR)/$(TEST_DIR)/%.c.o: $(TEST_DIR)/%.c $(LIB_HEADER_NAME)
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
-

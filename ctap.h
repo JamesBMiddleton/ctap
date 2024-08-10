@@ -7,6 +7,7 @@
 
 // #define ctp_IMPL
 
+#include <stdio.h>
 typedef float f32;
 typedef unsigned char u8;
 typedef unsigned short int u16;
@@ -77,6 +78,8 @@ static cor_retcode_e cor_start_the_engines(void);
 /////////////////////////////// UTILS API //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+#define MAX_FMT_ARGS 5
+
 typedef union {
     const char* s;
     const i32 d;
@@ -84,12 +87,16 @@ typedef union {
     const f32 f;
 } utl_fmt_u;
 
-static void* utl_memcpy(void* dest, const void* src, const usize count);
-
-static inline u32 utl_strlen(const char* s);
+typedef struct {
+    utl_fmt_u arr[MAX_FMT_ARGS];
+} utl_fmts_t;
 
 static char* utl_sprintf(char* buf, const usize bufsz, const char* format,
-                         const utl_fmt_u value);
+                         const utl_fmts_t values);
+
+static void* utl_memcpy(void* dest, const void* src, const usize count);
+
+static inline usize utl_strlen(const char* s);
 
 static inline i32 utl_powi(i32 x, u32 y);
 static inline u32 utl_powu(u32 x, u32 y);
@@ -104,7 +111,6 @@ static inline bool utl_isinf(f32 x);
 static char* utl_u32tostr(u32 value, char* buf);
 static char* utl_i32tostr(i32 value, char* buf);
 static char* utl_f32tostr(f32 value, char* buf, u8 decimals);
-
 
 /* MACROS 
  *
@@ -122,6 +128,80 @@ static char* utl_f32tostr(f32 value, char* buf, u8 decimals);
 //////////////////////// UTILS IMPLEMENTATION //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
+                         const char* format, const utl_fmts_t values)
+{
+    ctp_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
+    utl_sprintf(log.message, sizeof(log.message), format, values);
+    usize msg_len = utl_strlen(log.message);
+    log.message[msg_len] = '\n';
+    log.message[msg_len+1] = '\0';
+    return log;
+}
+
+#ifdef DEBUG
+#define LOG_D(format, ...)                                                   \
+    do                                                                       \
+    {                                                                        \
+        if (ctp_log_cb)                                                      \
+            ctp_log_cb(new_log(ctp_loglvl_DEBUG, __LINE__, __func__, format, \
+                               (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
+    } while (0)
+#else
+#define LOG_D(...)
+#endif
+
+#define LOG_W(format, ...)                                                  \
+    do                                                                      \
+    {                                                                       \
+        if (ctp_log_cb)                                                     \
+            ctp_log_cb(new_log(ctp_loglvl_WARN, __LINE__, __func__, format, \
+                               (utl_fmts_t){.arr = {__VA_ARGS__}}));        \
+    } while (0)
+
+#define LOG_E(format, ...)                                                   \
+    do                                                                       \
+    {                                                                        \
+        if (ctp_log_cb)                                                      \
+            ctp_log_cb(new_log(ctp_loglvl_ERROR, __LINE__, __func__, format, \
+                               (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
+    } while (0)
+
+#define PANIC(format, ...)                                                   \
+    do                                                                       \
+    {                                                                        \
+        if (ctp_log_cb)                                                      \
+            ctp_log_cb(new_log(ctp_loglvl_PANIC, __LINE__, __func__, format, \
+                               (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
+        ctp_panic_cb();                                                      \
+    } while (0)
+
+#ifdef DEBUG
+#define ASSERT(cond)                                                      \
+    do                                                                    \
+    {                                                                     \
+        if (!(cond))                                                      \
+        {                                                                 \
+            if (ctp_log_cb)                                               \
+                ctp_log_cb(new_log(ctp_loglvl_ASSERT, __LINE__, __func__, \
+                                   "%s",                                  \
+                                   (utl_fmts_t){.arr = {{.s = #cond}}})); \
+            ctp_panic_cb();                                               \
+        }                                                                 \
+    } while (0)
+#else
+#define ASSERT(...)
+#endif
+
+#define ASSIGN_IF_ZERO(val, def)               \
+    do                                         \
+    {                                          \
+        ((val) = ((val) == 0) ? (def) : (val)) \
+    } while (0)
+
+#define STATIC_ASSERT(cond, msg) \
+    typedef char static_assert_##msg[(cond) ? 1 : -1]
+
 /*
  * If aligned copy 32bit chunks from dest to src, else copy bytes. 
  * Assumes no overlap. Redundant void cast to silence -Wcast-align
@@ -133,7 +213,8 @@ static char* utl_f32tostr(f32 value, char* buf, u8 decimals);
 */
 static void* utl_memcpy(void* dest, const void* src, const usize count)
 {
-    // ASSERT POINTERS
+    ASSERT(dest);
+    ASSERT(src);
     if (((usize)src | (usize)dest | count) & sizeof(u32) - 1)
     {
         const u8* src_byte = (const u8*)src;
@@ -157,31 +238,36 @@ static void* utl_memcpy(void* dest, const void* src, const usize count)
 /* Raise x to the power of y. */
 static inline i32 utl_powi(i32 x, u32 y)
 {
-    if (y == 0)
-        return 1;
-    i32 z = utl_powi(x, y / 2);
-    if ((y % 2) == 0)
-        return z * z;
-    else
-        return x * z * z;
+    i32 z = 1;
+    while (true)
+    {
+        if (y & 1)
+            z *= x;
+        y >>= 1;
+        if (!y)
+            break;
+        x *= x;
+    }
+    return z;
 }
 
 /* Raise x to the power of y. */
 static inline u32 utl_powu(u32 x, u32 y)
 {
-    if (y == 0)
-        return 1;
-    u32 z = utl_powu(x, y / 2);
-    if ((y % 2) == 0)
-        return z * z;
-    else
-        return x * z * z;
+    u32 z = 1;
+    while (true)
+    {
+        if (y & 1)
+            z *= x;
+        y >>= 1;
+        if (!y)
+            break;
+        x *= x;
+    }
+    return z;
 }
 
-/* 
- * Raise x to the power of y.
- * Can handle negative powers.
- */
+/* Raise x to the power of y. Can handle negative powers. */
 static inline f32 utl_powf(f32 x, i32 y)
 {
     if (y == 0)
@@ -220,9 +306,10 @@ static inline bool utl_isinf(f32 x)
 }
 
 /* Length of a string, not including null terminator */
-static inline u32 utl_strlen(const char* s)
+static usize utl_strlen(const char* s)
 {
-    u32 len = 0;
+    ASSERT(s);
+    usize len = 0;
     while (*s++ != '\0')
         ++len;
     return len;
@@ -237,7 +324,7 @@ static inline u32 utl_strlen(const char* s)
 */
 static char* utl_u32tostr(u32 value, char* buf)
 {
-    // ASSERT POINTER
+    ASSERT(buf);
     if (value >= 1000000000)
         buf += 9;
     else
@@ -261,7 +348,7 @@ static char* utl_u32tostr(u32 value, char* buf)
 */
 static char* utl_i32tostr(i32 value, char* buf)
 {
-    // ASSERT POINTER
+    ASSERT(buf);
     u32 abs = (u32)value;
     if (value < 0)
     {
@@ -294,6 +381,7 @@ static char* utl_i32tostr(i32 value, char* buf)
 __attribute__((no_sanitize("undefined"))) static char*
 utl_f32tostr(f32 value, char* buf, u8 decimals)
 {
+    ASSERT(buf);
     if (utl_isnan(value))
     {
         static const char* nan = "NaN";
@@ -341,103 +429,64 @@ utl_f32tostr(f32 value, char* buf, u8 decimals)
  * @param buf - the destination string buffer
  * @param bufsz - size of destination string buffer
  * @param format - the string format
- * @param value - the format specifier value
+ * @param values - the format specifier value
  * @return - the destination string buffer
 */
 static char* utl_sprintf(char* buf, const usize bufsz, const char* format,
-                         const utl_fmt_u value)
+                         const utl_fmts_t values)
 {
-    buf[0] = 'x';
-    buf[1] = '\0';
-    if (format)
-    {
-    }
-    if (value.d)
-    {
-    }
-    if (bufsz)
-    {
-    }
-    if (NULL)
-    {
-    }
+    ASSERT(buf);
+    ASSERT(format);
 
-    // check if length of 'format' + max length that 'value' could be is more
-    // than 'bufsz'
-    // find the %, check whether it should be treated as a string,
-    // construct the formatted string in the buf
-    return buf;
+    char* start = buf;
+
+    usize i_fmt = 0;
+    while (*format != '\0')
+    {
+        if (buf == (start + bufsz))
+        {
+            LOG_E("Returning early, buffer too small!", 0);
+            return start;
+        }
+        if (*format != '%')
+        {
+            *buf++ = *format++;
+        }
+        else
+        {
+            ++format;
+            switch (*format)
+            {
+                // if buf short than max length spat out, error, return
+                case 'd':
+                    utl_i32tostr(values.arr[i_fmt++].d, buf);
+                    break;
+                case 'u':
+                    utl_u32tostr(values.arr[i_fmt++].u, buf);
+                    break;
+                case 'f':
+                    utl_f32tostr(values.arr[i_fmt++].f, buf, 3);
+                    break;
+                case 's':
+                {
+                    const char* s = values.arr[i_fmt].s;
+                    do {
+                        *buf++ = *s;
+                    } while (*s++ != '\0');
+                    break;
+                }
+                default:
+                    continue;
+            }
+            ++format;
+
+            while (*buf != '\0')
+                ++buf;
+        }
+    }
+    *buf = '\0';
+    return start;
 }
-
-static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
-                         const char* format, const utl_fmt_u value)
-{
-    ctp_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
-    utl_sprintf(&log.message[0], sizeof(log.message), format, value);
-    return log;
-}
-
-#ifdef DEBUG
-#define LOG_D(format, ...)                                                   \
-    do                                                                       \
-    {                                                                        \
-        if (ctp_log_cb)                                                      \
-            ctp_log_cb(new_log(ctp_loglvl_DEBUG, __LINE__, __func__, format, \
-                               (utl_fmt_u){__VA_ARGS__}));                   \
-    } while (0)
-#else
-#define LOG_D(...)
-#endif
-
-#define LOG_W(format, ...)                                                  \
-    do                                                                      \
-    {                                                                       \
-        if (ctp_log_cb)                                                     \
-            ctp_log_cb(new_log(ctp_loglvl_WARN, __LINE__, __func__, format, \
-                               (utl_fmt_u){__VA_ARGS__}));                  \
-    } while (0)
-
-#define LOG_E(format, ...)                                                   \
-    do                                                                       \
-    {                                                                        \
-        if (ctp_log_cb)                                                      \
-            ctp_log_cb(new_log(ctp_loglvl_ERROR, __LINE__, __func__, format, \
-                               (utl_fmt_u){__VA_ARGS__}));                   \
-    } while (0)
-
-#define PANIC(format, ...)                                                   \
-    do                                                                       \
-    {                                                                        \
-        if (ctp_log_cb)                                                      \
-            ctp_log_cb(new_log(ctp_loglvl_PANIC, __LINE__, __func__, format, \
-                               (utl_fmt_u){__VA_ARGS__}));                   \
-        ctp_panic_cb();                                                      \
-    } while (0)
-
-#ifdef DEBUG
-#define ASSERT(cond)                                                      \
-    do                                                                    \
-    {                                                                     \
-        if (!(cond))                                                      \
-        {                                                                 \
-            if (ctp_log_cb)                                               \
-                ctp_log_cb(new_log(ctp_loglvl_ASSERT, __LINE__, __func__, \
-                                   "%s", (utl_fmt_u){.s = #cond}));       \
-            ctp_panic_cb();                                               \
-        }                                                                 \
-    } while (0)
-#else
-#define ASSERT(...)
-#endif
-
-#define ASSIGN_IF_ZERO(val, def)               \
-    do                                         \
-    {                                          \
-        ((val) = ((val) == 0) ? (def) : (val)) \
-    } while (0)
-
-#define STATIC_ASSERT(cond, msg) \
-    typedef char static_assert_##msg[(cond) ? 1 : -1]
 
 STATIC_ASSERT(sizeof(u8) == 1, u8_1_byte);
 STATIC_ASSERT(sizeof(u16) == 2, u16_2_bytes);
@@ -470,9 +519,9 @@ static cor_retcode_e cor_start_the_engines(void)
     }
     // bool* p = NULL;
     i = false;
-    LOG_D("Hello world! %d", .d = i);
-    LOG_D("Hello world!", NULL);
-    LOG_E("Invalid map format", NULL);
+    // LOG_D("Hello world! %d", {.d = i});
+    // LOG_D("Hello world!", 0);
+    // LOG_E("Invalid map format", 0);
     // char* s = "hello";
     // PANIC("Invalid map format", .s = s);
 
@@ -505,7 +554,6 @@ static cor_retcode_e cor_start_the_engines(void)
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// LICENSE //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
 /*
  
 MIT License
@@ -531,11 +579,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 */
-
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// DOCUMENTATION //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
 /*
  
     __Hello world!__
