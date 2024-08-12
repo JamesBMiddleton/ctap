@@ -1,4 +1,5 @@
 SHELL = /bin/sh
+MAKEFLAGS += -j$(shell nproc)
 
 .SILENT: 
 
@@ -23,12 +24,16 @@ TESTS := $(shell find $(TEST_DIR) -name '*.c')
 TEST_OBJS := $(TESTS:%=$(BUILD_DIR)/%.o)
 # test binary filepath = test object filepath minus .c.o
 TEST_BINS = $(patsubst %.c.o,%,$(TEST_OBJS))
+# test log filepath = test binary filepath + .log
+TEST_LOGS = $(patsubst %.c.o,%.log,$(TEST_OBJS))
+
 
 .PHONY: check
 check: CFLAGS = $(DEBUG_CFLAGS)
-check: MAKEFLAGS += -j$(shell nproc)
-check: $(TEST_BINS)
-	./$<
+check: $(TEST_LOGS)
+
+$(TEST_LOGS): $(TEST_BINS)
+	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
 .PHONY: analyze
 analyze: CFLAGS = $(DEBUG_CFLAGS)
@@ -45,7 +50,7 @@ clean:
 
 # Build the test binaries
 $(TEST_BINS): $(TEST_OBJS)
-	$(CC) $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) -o $@ "$@.c.o"
 
 # Build test object files
 $(BUILD_DIR)/$(TEST_DIR)/%.c.o: $(TEST_DIR)/%.c $(LIB_HEADER_NAME)
