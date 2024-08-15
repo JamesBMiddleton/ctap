@@ -7,7 +7,6 @@
 
 // #define ctp_IMPL
 
-#include <stdio.h>
 typedef float f32;
 typedef unsigned char u8;
 typedef unsigned short int u16;
