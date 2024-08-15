@@ -79,8 +79,12 @@ static cor_retcode_e cor_start_the_engines(void);
 ////////////////////////////////////////////////////////////////////////////////
 
 #define MAX_FMT_ARGS 5
+#define I32_MAX_CHARS 11 // '-2147483647'
+#define F32_DECIMAL_CHARS 3
+#define F32_MAX_CHARS I32_MAX_CHARS + F32_DECIMAL_CHARS + 1 // '-2147483647.123'
 
 typedef union {
+    const char c;
     const char* s;
     const i32 d;
     const u32 u;
@@ -91,10 +95,10 @@ typedef struct {
     utl_fmt_u arr[MAX_FMT_ARGS];
 } utl_fmts_t;
 
-static char* utl_sprintf(char* buf, const usize bufsz, const char* format,
-                         const utl_fmts_t values);
+static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
+                               const utl_fmts_t values);
 
-static void* utl_memcpy(void* dest, const void* src, const usize count);
+static const void* utl_memcpy(void* dest, const void* src, const usize count);
 
 static inline usize utl_strlen(const char* s);
 
@@ -102,7 +106,7 @@ static inline i32 utl_powi(i32 x, u32 y);
 static inline u32 utl_powu(u32 x, u32 y);
 static inline f32 utl_powf(f32 x, i32 y);
 
-static inline i32 utl_abs(i32 x);
+static inline u32 utl_abs(i32 x);
 static inline f32 utl_fabs(f32 x);
 
 static inline bool utl_isnan(f32 x);
@@ -135,7 +139,7 @@ static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
     utl_sprintf(log.message, sizeof(log.message), format, values);
     usize msg_len = utl_strlen(log.message);
     log.message[msg_len] = '\n';
-    log.message[msg_len+1] = '\0';
+    log.message[msg_len + 1] = '\0';
     return log;
 }
 
@@ -211,7 +215,7 @@ static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
  * @param count - number of bytes to copy
  * @return copy destinatiion
 */
-static void* utl_memcpy(void* dest, const void* src, const usize count)
+static const void* utl_memcpy(void* dest, const void* src, const usize count)
 {
     ASSERT(dest);
     ASSERT(src);
@@ -282,9 +286,9 @@ static inline f32 utl_powf(f32 x, i32 y)
 }
 
 /* Absolute integer value */
-static inline i32 utl_abs(i32 x)
+static inline u32 utl_abs(i32 x)
 {
-    return (x < 0) ? -x : x;
+    return (x < 0) ? -(u32)x : (u32)x;
 }
 
 /* Absolute float value */
@@ -352,7 +356,7 @@ static char* utl_i32tostr(i32 value, char* buf)
     u32 abs = (u32)value;
     if (value < 0)
     {
-        abs = (u32)-value;
+        abs = -(u32)value;
         *buf++ = '-';
     }
     if (abs >= 1000000000)
@@ -397,7 +401,7 @@ utl_f32tostr(f32 value, char* buf, u8 decimals)
     }
 
     i32 whole = (i32)value;
-    f32 fraction = utl_fabs((value - (f32)whole) * 10);
+    f32 fraction = utl_fabs((value - (f32)whole));
     char* start = utl_i32tostr(whole, buf);
 
     while (*++buf != '\0')
@@ -407,6 +411,7 @@ utl_f32tostr(f32 value, char* buf, u8 decimals)
 
     if (decimals--)
     {
+        fraction *= 10;
         while ((i32)fraction == 0 && decimals--)
         {
             *buf++ = '0';
@@ -432,60 +437,81 @@ utl_f32tostr(f32 value, char* buf, u8 decimals)
  * @param values - the format specifier value
  * @return - the destination string buffer
 */
-static char* utl_sprintf(char* buf, const usize bufsz, const char* format,
-                         const utl_fmts_t values)
+static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
+                               const utl_fmts_t values)
 {
     ASSERT(buf);
     ASSERT(format);
 
-    char* start = buf;
+    const char* first = buf;
+    const char* last = buf + bufsz - 1;
+    usize i_values = 0;
 
-    usize i_fmt = 0;
     while (*format != '\0')
     {
-        if (buf == (start + bufsz))
+        if (buf == last)
         {
-            LOG_E("Returning early, buffer too small!", 0);
-            return start;
+            LOG_E("Destination buffer too small.", 0);
+            break;
         }
+
         if (*format != '%')
         {
             *buf++ = *format++;
         }
         else
         {
-            ++format;
-            switch (*format)
+            if (i_values == MAX_FMT_ARGS)
             {
-                // if buf short than max length spat out, error, return
+                LOG_E("Too many specifiers in format string.", 0);
+                break;
+            }
+
+            ++format;
+            const char specifier = *format++;
+            const utl_fmt_u value = values.arr[i_values++];
+
+            if (((specifier == 'd' || specifier == 'u' || specifier == 'f') &&
+                 (buf + F32_MAX_CHARS) > last) ||
+                ((specifier == 's') && (buf + utl_strlen(value.s) > last)))
+            {
+                LOG_E("Destination buffer too small.", 0);
+                break;
+            }
+
+            switch (specifier)
+            {
+                case 'c':
+                    *buf++ = value.c;
+                    continue;
                 case 'd':
-                    utl_i32tostr(values.arr[i_fmt++].d, buf);
+                    utl_i32tostr(value.d, buf);
                     break;
                 case 'u':
-                    utl_u32tostr(values.arr[i_fmt++].u, buf);
+                    utl_u32tostr(value.u, buf);
                     break;
                 case 'f':
-                    utl_f32tostr(values.arr[i_fmt++].f, buf, 3);
+                    utl_f32tostr(value.f, buf, 3);
                     break;
-                case 's':
-                {
-                    const char* s = values.arr[i_fmt].s;
-                    do {
-                        *buf++ = *s;
-                    } while (*s++ != '\0');
+                case 's': {
+                    const char* s = value.s;
+                    do
+                    {
+                        *buf = *s;
+                    } while (*s++ != '\0' && ++buf);
                     break;
                 }
                 default:
-                    continue;
+                    LOG_E("Invalid specifier '%c' used.", {.c = specifier});
+                    *buf = '\0';
+                    return first;
             }
-            ++format;
-
             while (*buf != '\0')
                 ++buf;
         }
     }
     *buf = '\0';
-    return start;
+    return first;
 }
 
 STATIC_ASSERT(sizeof(u8) == 1, u8_1_byte);
