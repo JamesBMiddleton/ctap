@@ -239,7 +239,6 @@ static const void* utl_memcpy(void* dest, const void* src, const usize count)
     return dest;
 }
 
-/* Raise x to the power of y. */
 static inline i32 utl_powi(i32 x, u32 y)
 {
     i32 z = 1;
@@ -255,7 +254,6 @@ static inline i32 utl_powi(i32 x, u32 y)
     return z;
 }
 
-/* Raise x to the power of y. */
 static inline u32 utl_powu(u32 x, u32 y)
 {
     u32 z = 1;
@@ -271,7 +269,7 @@ static inline u32 utl_powu(u32 x, u32 y)
     return z;
 }
 
-/* Raise x to the power of y. Can handle negative powers. */
+/* Can handle negative powers. */
 static inline f32 utl_powf(f32 x, i32 y)
 {
     if (y == 0)
@@ -285,13 +283,11 @@ static inline f32 utl_powf(f32 x, i32 y)
         return (z * z) / x;
 }
 
-/* Absolute integer value */
 static inline u32 utl_abs(i32 x)
 {
     return (x < 0) ? -(u32)x : (u32)x;
 }
 
-/* Absolute float value */
 static inline f32 utl_fabs(f32 x)
 {
     return (x < 0) ? -x : x;
@@ -309,7 +305,7 @@ static inline bool utl_isinf(f32 x)
     return !utl_isnan(x) && utl_isnan(x - x);
 }
 
-/* Length of a string, not including null terminator */
+/* Null terminator not included.*/
 static usize utl_strlen(const char* s)
 {
     ASSERT(s);
@@ -427,14 +423,13 @@ utl_f32tostr(f32 value, char* buf, u8 decimals)
 }
 
 /*
- * Takes a single format specifier of type %d, %u, %f or %s.
- * e.g. utl_sprintf(buf, sizeof(buf), "hello %s", (utl_fmt_u){.s="world"});
- * Chain calls together to construct a string with multiple format specifiers.
+ * Takes format specifiers of type %d, %u, %f, %s or %c.
+ * e.g. utl_sprintf(buf, bufsz, "%f", (utl_fmts_t){.arr = {{.f = 123.456f}}})
  * 
  * @param buf - the destination string buffer
  * @param bufsz - size of destination string buffer
  * @param format - the string format
- * @param values - the format specifier value
+ * @param values - struct wrapped array of format specifier values
  * @return - the destination string buffer
 */
 static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
