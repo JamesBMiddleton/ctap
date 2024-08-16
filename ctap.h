@@ -129,11 +129,12 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
 
 /* MACROS 
  *
+ * LOG(loglvl, msg)
  * LOG_D(format, ...)
  * LOG_W(format, ...)
  * LOG_E(format, ...)
- * PANIC(format, ...)
- * ASSIGN_IF_ZERO(val, def)
+ * PANIC(msg)
+ * ASSIGN_IF_ZERO(var, value)
  * ASSERT(cond)
  * STATIC_ASSERT(cond, msg)
  *
@@ -150,6 +151,15 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
 #define F32_MAX_CHARS \
     (1 + U32_MAX_CHARS + 1 + F32_DECIMAL_CHARS) // '-2147483648.123'
 
+static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
+                         const u32 line_num, const char* format,
+                         const utl_fmts_t values)
+{
+    ctp_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
+    utl_sprintf(log.message, sizeof(log.message), format, values);
+    return log;
+}
+
 #define LOG(loglvl, msg)                                  \
     do                                                    \
     {                                                     \
@@ -159,15 +169,6 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
                                    .func_name = __func__, \
                                    .message = #msg});     \
     } while (0)
-
-static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
-                         const u32 line_num, const char* format,
-                         const utl_fmts_t values)
-{
-    ctp_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
-    utl_sprintf(log.message, sizeof(log.message), format, values);
-    return log;
-}
 
 #ifdef DEBUG
 #define LOG_D(format, ...)                                                   \
@@ -226,10 +227,10 @@ static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
 #define ASSERT(...)
 #endif
 
-#define ASSIGN_IF_ZERO(var, val)              \
-    do                                        \
-    {                                         \
-        (var) = ((var) == 0) ? (val) : (var); \
+#define ASSIGN_IF_ZERO(var, value)              \
+    do                                          \
+    {                                           \
+        (var) = ((var) == 0) ? (value) : (var); \
     } while (0)
 
 #define STATIC_ASSERT(cond, msg) \
@@ -337,7 +338,7 @@ static inline bool utl_isinf(f32 val)
 }
 
 /* Null terminator not included.*/
-static usize utl_strlen(const char* str)
+static inline usize utl_strlen(const char* str)
 {
     ASSERT(str);
     usize len = 0;
