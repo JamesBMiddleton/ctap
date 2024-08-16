@@ -1,4 +1,4 @@
-#include "test.h" 
+#include "test.h"
 
 i32 main(void)
 {
@@ -23,12 +23,13 @@ i32 main(void)
 
     // sleep(10);
 
-    ASSERT(1==1);
+    ASSERT(1 == 1);
 
     // LOG_E("Hello %d %u %f", {.d=1}, {.u=42}, {.f=42.1f});
-    LOG_E("Hello %d %u %f %s", {.d=1}, {.u=42}, {.f=42.1f}, {.s="hello"});
+    LOG_E("Hello %d %u %f %s", {.d = 1}, {.u = 42}, {.f = 42.1f},
+          {.s = "hello"});
     // LOG_E("Hello %d", {.d=12});
-    
+
     LOG_E("Helloo\n", 0);
 
     // ASSERT(1==4);

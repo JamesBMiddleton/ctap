@@ -143,6 +143,7 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
 //////////////////////// UTILS IMPLEMENTATION //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+#define NULL_TERMINATOR_SZ 1
 #define U32_MAX_CHARS (10) // '4294967295'
 #define U32_MAX_CHAR_THRESHOLD 1000000000
 #define F32_DECIMAL_CHARS (3)
@@ -196,13 +197,15 @@ static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
                                (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
     } while (0)
 
-#define PANIC(format, ...)                                                   \
-    do                                                                       \
-    {                                                                        \
-        if (ctp_log_cb)                                                      \
-            ctp_log_cb(new_log(ctp_loglvl_PANIC, __func__, __LINE__, format, \
-                               (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
-        ctp_panic_cb();                                                      \
+#define PANIC(msg)                                          \
+    do                                                      \
+    {                                                       \
+        if (ctp_log_cb)                                     \
+            ctp_log_cb((ctp_log_t){.lvl = ctp_loglvl_PANIC, \
+                                   .line_num = __LINE__,    \
+                                   .func_name = __func__,   \
+                                   .message = #msg});       \
+        ctp_panic_cb();                                     \
     } while (0)
 
 #ifdef DEBUG
@@ -223,10 +226,10 @@ static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
 #define ASSERT(...)
 #endif
 
-#define ASSIGN_IF_ZERO(val, def)               \
-    do                                         \
-    {                                          \
-        ((val) = ((val) == 0) ? (def) : (val)) \
+#define ASSIGN_IF_ZERO(var, val)              \
+    do                                        \
+    {                                         \
+        (var) = ((var) == 0) ? (val) : (var); \
     } while (0)
 
 #define STATIC_ASSERT(cond, msg) \
@@ -239,7 +242,7 @@ static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
  * @param dest - copy destination 
  * @param src  - copy source
  * @param count - number of bytes to copy
- * @return copy destinatiion
+ * @return copy destination
 */
 static const void* utl_memcpy(void* dest, const void* src, const usize count)
 {
@@ -264,45 +267,51 @@ static const void* utl_memcpy(void* dest, const void* src, const usize count)
 
 static inline i32 utl_powi(i32 base, u32 exp)
 {
-    i32 tmp = 1;
+    i32 result = 1;
     while (true)
     {
         if (exp & 1U)
-            tmp *= base;
+            result *= base;
         exp >>= 1U;
-        if (!exp)
+        if (exp == 0)
             break;
         base *= base;
     }
-    return tmp;
+    return result;
 }
 
 static inline u32 utl_powu(u32 base, u32 exp)
 {
-    u32 tmp = 1;
+    u32 result = 1;
     while (true)
     {
         if (exp & 1U)
-            tmp *= base;
+            result *= base;
         exp >>= 1U;
-        if (!exp)
+        if (exp == 0)
             break;
         base *= base;
     }
-    return tmp;
+    return result;
 }
 
 /* Can handle negative powers. */
 static inline f32 utl_powf(f32 base, i32 exp)
 {
+    f32 result = 1;
     if (exp == 0)
-        return 1;
-    f32 tmp = utl_powf(base, exp / 2);
-    if ((exp % 2) == 0)
-        return tmp * tmp;
-    if (exp > 0)
-        return base * tmp * tmp;
-    return (tmp * tmp) / base;
+        return result;
+    u32 abs_exp = utl_abs(exp);
+    while (true)
+    {
+        if (abs_exp & 1U)
+            result *= base;
+        abs_exp >>= 1U;
+        if (abs_exp == 0)
+            break;
+        base *= base;
+    }
+    return (exp > 0) ? result : 1.0F / result;
 }
 
 static inline u32 utl_abs(i32 val)
@@ -413,14 +422,14 @@ utl_f32tostr(f32 val, char* buf, u8 decimals)
     if (utl_isnan(val))
     {
         static const char* nan = "NaN";
-        utl_memcpy(buf, nan, utl_strlen(nan) + 1);
+        utl_memcpy(buf, nan, utl_strlen(nan) + NULL_TERMINATOR_SZ);
         return buf;
     }
 
     if (utl_isinf(val))
     {
         static const char* inf = "Inf";
-        utl_memcpy(buf, inf, utl_strlen(inf) + 1);
+        utl_memcpy(buf, inf, utl_strlen(inf) + NULL_TERMINATOR_SZ);
         return buf;
     }
 
@@ -428,9 +437,7 @@ utl_f32tostr(f32 val, char* buf, u8 decimals)
     f32 fraction = utl_fabs((val - (f32)whole));
     char* start = utl_i32tostr(whole, buf);
 
-    while (*++buf != '\0')
-        ;
-
+    buf += utl_strlen(buf);
     *buf++ = '.';
 
     if (decimals--)
@@ -545,6 +552,18 @@ STATIC_ASSERT(sizeof(i32) == 4, i32_4_bytes);
 STATIC_ASSERT(sizeof(f32) == 4, f32_4_bytes);
 STATIC_ASSERT(sizeof(void*) == sizeof(usize), ptr_usize_bytes);
 
+void tmp(void);
+void tmp(void) // suppress 'unused' warnings temporarily
+{
+    NULL;
+    LOG_D("Hello World", 0);
+    LOG_W("Hello World", 0);
+    LOG_E("Hello World", 0);
+    PANIC("Hello World");
+    u32 var = 0;
+    u32 val = 1;
+    ASSIGN_IF_ZERO(var, val);
+}
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// CTAP IMPLEMENTATION //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
