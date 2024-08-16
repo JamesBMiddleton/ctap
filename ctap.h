@@ -33,8 +33,8 @@ typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 // #define I32_MIN (-2147483647-1)
 // #define I32_MAX (2147483647)
 //
-// #define F32_MIN (1.17549435e-38f) //! Assumes IEEE-754 compliance.
-// #define F32_MAX (3.40282347e+38f) //! Assumes IEEE-754 compliance.
+// #define F32_MIN (1.17549435e-38F) //! Assumes IEEE-754 compliance.
+// #define F32_MAX (3.40282347e+38F) //! Assumes IEEE-754 compliance.
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CTAP API ////////////////////////////////////
@@ -143,10 +143,21 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
 //////////////////////// UTILS IMPLEMENTATION //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-#define I32_MAX_CHARS 11 // '-2147483648'
-#define F32_DECIMAL_CHARS 3
+#define U32_MAX_CHARS (10) // '4294967295'
+#define U32_MAX_CHAR_THRESHOLD 1000000000
+#define F32_DECIMAL_CHARS (3)
 #define F32_MAX_CHARS \
-    (I32_MAX_CHARS + F32_DECIMAL_CHARS + 1) // '-2147483648.123'
+    (1 + U32_MAX_CHARS + 1 + F32_DECIMAL_CHARS) // '-2147483648.123'
+
+#define LOG(loglvl, msg)                                  \
+    do                                                    \
+    {                                                     \
+        if (ctp_log_cb)                                   \
+            ctp_log_cb((ctp_log_t){.lvl = (loglvl),       \
+                                   .line_num = __LINE__,  \
+                                   .func_name = __func__, \
+                                   .message = #msg});     \
+    } while (0)
 
 static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
                          const u32 line_num, const char* format,
@@ -154,9 +165,6 @@ static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
 {
     ctp_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
     utl_sprintf(log.message, sizeof(log.message), format, values);
-    usize msg_len = utl_strlen(log.message);
-    log.message[msg_len] = '\n';
-    log.message[msg_len + 1] = '\0';
     return log;
 }
 
@@ -198,17 +206,18 @@ static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
     } while (0)
 
 #ifdef DEBUG
-#define ASSERT(cond)                                                      \
-    do                                                                    \
-    {                                                                     \
-        if (!(cond))                                                      \
-        {                                                                 \
-            if (ctp_log_cb)                                               \
-                ctp_log_cb(new_log(ctp_loglvl_ASSERT, __func__, __LINE__, \
-                                   "%s",                                  \
-                                   (utl_fmts_t){.arr = {{.s = #cond}}})); \
-            ctp_panic_cb();                                               \
-        }                                                                 \
+#define ASSERT(cond)                                            \
+    do                                                          \
+    {                                                           \
+        if (!(cond))                                            \
+        {                                                       \
+            if (ctp_log_cb)                                     \
+                ctp_log_cb((ctp_log_t){.lvl = ctp_loglvl_ERROR, \
+                                       .line_num = __LINE__,    \
+                                       .func_name = __func__,   \
+                                       .message = #cond});      \
+            ctp_panic_cb();                                     \
+        }                                                       \
     } while (0)
 #else
 #define ASSERT(...)
@@ -234,8 +243,8 @@ static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
 */
 static const void* utl_memcpy(void* dest, const void* src, const usize count)
 {
-    //ASSERT(dest);
-    //ASSERT(src);
+    ASSERT(dest);
+    ASSERT(src);
     if (((usize)src | (usize)dest | count) & sizeof(u32) - 1)
     {
         const u8* src_byte = (const u8*)src;
@@ -321,7 +330,7 @@ static inline bool utl_isinf(f32 val)
 /* Null terminator not included.*/
 static usize utl_strlen(const char* str)
 {
-    //ASSERT(str);
+    ASSERT(str);
     usize len = 0;
     while (*str++ != '\0')
         ++len;
@@ -337,11 +346,11 @@ static usize utl_strlen(const char* str)
 */
 static char* utl_u32tostr(u32 val, char* buf)
 {
-    //ASSERT(buf);
+    ASSERT(buf);
     const static u8 base = 10;
 
-    if (val >= 1000000000)
-        buf += 9;
+    if (val >= U32_MAX_CHAR_THRESHOLD)
+        buf += U32_MAX_CHARS - 1;
     else
         for (u32 digits = base; digits <= val; digits *= base)
             ++buf;
@@ -363,7 +372,7 @@ static char* utl_u32tostr(u32 val, char* buf)
 */
 static char* utl_i32tostr(i32 val, char* buf)
 {
-    //ASSERT(buf);
+    ASSERT(buf);
     const static u8 base = 10;
 
     u32 abs = (u32)val;
@@ -372,8 +381,8 @@ static char* utl_i32tostr(i32 val, char* buf)
         abs = -(u32)val;
         *buf++ = '-';
     }
-    if (abs >= 1000000000)
-        buf += 9;
+    if (abs >= U32_MAX_CHAR_THRESHOLD)
+        buf += U32_MAX_CHARS - 1;
     else
         for (u32 digits = base; digits <= abs; digits *= base)
             ++buf;
@@ -398,7 +407,7 @@ static char* utl_i32tostr(i32 val, char* buf)
 __attribute__((no_sanitize("undefined"))) static char*
 utl_f32tostr(f32 val, char* buf, u8 decimals)
 {
-    // ASSERT(buf);
+    ASSERT(buf);
     const static f32 base = 10;
 
     if (utl_isnan(val))
@@ -454,8 +463,8 @@ utl_f32tostr(f32 val, char* buf, u8 decimals)
 static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
                                const utl_fmts_t vals)
 {
-    // ASSERT(buf);
-    // ASSERT(format);
+    ASSERT(buf);
+    ASSERT(format);
 
     const char* first = buf;
     const char* last = buf + bufsz - 1;
@@ -465,7 +474,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
     {
         if (buf == last)
         {
-            LOG_E("Destination buffer too small.", 0);
+            LOG(ctp_loglvl_ERROR, "Destination buffer too small.");
             break;
         }
 
@@ -477,7 +486,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
         {
             if (i_vals == MAX_FMT_ARGS)
             {
-                LOG_E("Too many specifiers in format string.", 0);
+                LOG(ctp_loglvl_ERROR, "Too many specifiers in format string.");
                 break;
             }
 
@@ -489,7 +498,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
                  (buf + F32_MAX_CHARS) > last) ||
                 ((specifier == 's') && (buf + utl_strlen(val.s) > last)))
             {
-                LOG_E("Destination buffer too small.", 0);
+                LOG(ctp_loglvl_ERROR, "Destination buffer too small.");
                 break;
             }
 
@@ -516,12 +525,11 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
                     break;
                 }
                 default:
-                    LOG_E("Invalid specifier '%c' used.", {.c = specifier});
+                    LOG(ctp_loglvl_ERROR, "Invalid specifier used.");
                     *buf = '\0';
                     return first;
             }
-            while (*buf != '\0')
-                ++buf;
+            buf += utl_strlen(buf);
         }
     }
     *buf = '\0';
@@ -553,13 +561,13 @@ ctp_retcode_e ctp_load_map(void)
 
 static cor_retcode_e cor_start_the_engines(void)
 {
-    // bool i = true;
+    bool test = true;
     // if (i)
     // {
     // }
     // // bool* p = NULL;
-    // i = false;
-    // // LOG_D("Hello world! %d", {.d = i});
+    test = false;
+    LOG_D("Hello world! %d", {.d = test});
     // // LOG_D("Hello world!", 0);
     // // LOG_E("Invalid map format", 0);
     // // char* s = "hello";

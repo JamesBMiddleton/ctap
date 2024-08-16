@@ -95,7 +95,7 @@ static void f32_check(void)
     ASSERT(strcmp(arr, "0.000") == 0);
 
     utl_sprintf(arr, sizeof(arr), "%f",
-                (utl_fmts_t){.arr = {{.f = -123.456f}}});
+                (utl_fmts_t){.arr = {{.f = -123.456F}}});
     ASSERT(strcmp(arr, "-123.456") == 0);
 
     // utl_sprintf(arr, sizeof(arr), "%f",

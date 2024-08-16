@@ -1,2 +1,6 @@
 Checks: '*,-altera-struct-pack-align, -altera-unroll-loops, -google-readability-braces-around-statements,
--readability-braces-around-statements, -hicpp-braces-around-statements, -altera-id-dependent-backward-branch'
+-readability-braces-around-statements, -hicpp-braces-around-statements, -altera-id-dependent-backward-branch, 
+-bugprone-easily-swappable-parameters'
+CheckOptions:
+  - key: readability-function-cognitive-complexity.IgnoreMacros
+    value: True 

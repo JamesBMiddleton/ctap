@@ -34,7 +34,7 @@ static void tst_logger_cb(ctp_log_t log)
             lvl = "ASSERT";
             break;
     }
-    printf("%s | %s::%d  %s", lvl, log.func_name, log.line_num, log.message);
+    printf("%s | %s::%d  %s\n", lvl, log.func_name, log.line_num, log.message);
     fflush(stdout);
 }
 
