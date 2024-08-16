@@ -1,0 +1,2 @@
+Checks: '*,-altera-struct-pack-align, -altera-unroll-loops, -google-readability-braces-around-statements,
+-readability-braces-around-statements, -hicpp-braces-around-statements, -altera-id-dependent-backward-branch'

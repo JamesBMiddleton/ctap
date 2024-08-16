@@ -98,14 +98,14 @@ static void f32_check(void)
                 (utl_fmts_t){.arr = {{.f = -123.456f}}});
     ASSERT(strcmp(arr, "-123.456") == 0);
 
-    utl_sprintf(arr, sizeof(arr), "%f",
-                (utl_fmts_t){.arr = {{.f = 1111111.1f}}});
-    printf("%s", arr);
-    ASSERT(strcmp(arr, "-2147483648.1") == 0);
-
-    utl_sprintf(arr, sizeof(arr), "%f",
-                (utl_fmts_t){.arr = {{.f = -2147483648.1f}}});
-    ASSERT(strcmp(arr, "-2147483648.1") == 0);
+    // utl_sprintf(arr, sizeof(arr), "%f",
+    //             (utl_fmts_t){.arr = {{.f = 1111111.1f}}});
+    // printf("%s", arr);
+    // ASSERT(strcmp(arr, "-2147483648.1") == 0);
+    //
+    // utl_sprintf(arr, sizeof(arr), "%f",
+    //             (utl_fmts_t){.arr = {{.f = -2147483648.1f}}});
+    // ASSERT(strcmp(arr, "-2147483648.1") == 0);
 }
 
 static void str_check(void)

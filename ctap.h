@@ -18,8 +18,23 @@ typedef signed int i32;
 #define true 1
 #define false 0
 #define NULL ((void*)0)
-typedef __SIZE_TYPE__ usize; //! compiler dependent
-// typedef typeof(sizeof(0)) usize; // C23
+typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
+
+// #define U8_MIN (0U)
+// #define U8_MAX (255U)
+// #define U16_MIN (0U)
+// #define U16_MAX (65535U)
+// #define U32_MIN (0U)
+// #define U32_MAX (4294967295U)
+// #define I8_MIN (-128)
+// #define I8_MAX (127)
+// #define I16_MIN (-32767-1)
+// #define I16_MAX (32767)
+// #define I32_MIN (-2147483647-1)
+// #define I32_MAX (2147483647)
+//
+// #define F32_MIN (1.17549435e-38f) //! Assumes IEEE-754 compliance.
+// #define F32_MAX (3.40282347e+38f) //! Assumes IEEE-754 compliance.
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CTAP API ////////////////////////////////////
@@ -78,9 +93,6 @@ static cor_retcode_e cor_start_the_engines(void);
 ////////////////////////////////////////////////////////////////////////////////
 
 #define MAX_FMT_ARGS 5
-#define I32_MAX_CHARS 11 // '-2147483647'
-#define F32_DECIMAL_CHARS 3
-#define F32_MAX_CHARS I32_MAX_CHARS + F32_DECIMAL_CHARS + 1 // '-2147483647.123'
 
 typedef union {
     const char c;
@@ -94,26 +106,26 @@ typedef struct {
     utl_fmt_u arr[MAX_FMT_ARGS];
 } utl_fmts_t;
 
-static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
-                               const utl_fmts_t values);
+static const char* utl_sprintf(char* buf, usize bufsz, const char* format,
+                               utl_fmts_t vals);
 
-static const void* utl_memcpy(void* dest, const void* src, const usize count);
+static const void* utl_memcpy(void* dest, const void* src, usize count);
 
-static inline usize utl_strlen(const char* s);
+static inline usize utl_strlen(const char* str);
 
-static inline i32 utl_powi(i32 x, u32 y);
-static inline u32 utl_powu(u32 x, u32 y);
-static inline f32 utl_powf(f32 x, i32 y);
+static inline i32 utl_powi(i32 base, u32 exp);
+static inline u32 utl_powu(u32 base, u32 exp);
+static inline f32 utl_powf(f32 base, i32 exp);
 
-static inline u32 utl_abs(i32 x);
-static inline f32 utl_fabs(f32 x);
+static inline u32 utl_abs(i32 val);
+static inline f32 utl_fabs(f32 val);
 
-static inline bool utl_isnan(f32 x);
-static inline bool utl_isinf(f32 x);
+static inline bool utl_isnan(f32 val);
+static inline bool utl_isinf(f32 val);
 
-static char* utl_u32tostr(u32 value, char* buf);
-static char* utl_i32tostr(i32 value, char* buf);
-static char* utl_f32tostr(f32 value, char* buf, u8 decimals);
+static char* utl_u32tostr(u32 val, char* buf);
+static char* utl_i32tostr(i32 val, char* buf);
+static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
 
 /* MACROS 
  *
@@ -125,14 +137,20 @@ static char* utl_f32tostr(f32 value, char* buf, u8 decimals);
  * ASSERT(cond)
  * STATIC_ASSERT(cond, msg)
  *
- * */
+*/
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////// UTILS IMPLEMENTATION //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
-                         const char* format, const utl_fmts_t values)
+#define I32_MAX_CHARS 11 // '-2147483648'
+#define F32_DECIMAL_CHARS 3
+#define F32_MAX_CHARS \
+    (I32_MAX_CHARS + F32_DECIMAL_CHARS + 1) // '-2147483648.123'
+
+static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
+                         const u32 line_num, const char* format,
+                         const utl_fmts_t values)
 {
     ctp_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
     utl_sprintf(log.message, sizeof(log.message), format, values);
@@ -147,7 +165,7 @@ static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
     do                                                                       \
     {                                                                        \
         if (ctp_log_cb)                                                      \
-            ctp_log_cb(new_log(ctp_loglvl_DEBUG, __LINE__, __func__, format, \
+            ctp_log_cb(new_log(ctp_loglvl_DEBUG, __func__, __LINE__, format, \
                                (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
     } while (0)
 #else
@@ -158,7 +176,7 @@ static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
     do                                                                      \
     {                                                                       \
         if (ctp_log_cb)                                                     \
-            ctp_log_cb(new_log(ctp_loglvl_WARN, __LINE__, __func__, format, \
+            ctp_log_cb(new_log(ctp_loglvl_WARN, __func__, __LINE__, format, \
                                (utl_fmts_t){.arr = {__VA_ARGS__}}));        \
     } while (0)
 
@@ -166,7 +184,7 @@ static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
     do                                                                       \
     {                                                                        \
         if (ctp_log_cb)                                                      \
-            ctp_log_cb(new_log(ctp_loglvl_ERROR, __LINE__, __func__, format, \
+            ctp_log_cb(new_log(ctp_loglvl_ERROR, __func__, __LINE__, format, \
                                (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
     } while (0)
 
@@ -174,7 +192,7 @@ static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
     do                                                                       \
     {                                                                        \
         if (ctp_log_cb)                                                      \
-            ctp_log_cb(new_log(ctp_loglvl_PANIC, __LINE__, __func__, format, \
+            ctp_log_cb(new_log(ctp_loglvl_PANIC, __func__, __LINE__, format, \
                                (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
         ctp_panic_cb();                                                      \
     } while (0)
@@ -186,7 +204,7 @@ static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
         if (!(cond))                                                      \
         {                                                                 \
             if (ctp_log_cb)                                               \
-                ctp_log_cb(new_log(ctp_loglvl_ASSERT, __LINE__, __func__, \
+                ctp_log_cb(new_log(ctp_loglvl_ASSERT, __func__, __LINE__, \
                                    "%s",                                  \
                                    (utl_fmts_t){.arr = {{.s = #cond}}})); \
             ctp_panic_cb();                                               \
@@ -216,100 +234,96 @@ static ctp_log_t new_log(ctp_loglvl_e lvl, u32 line_num, const char* func_name,
 */
 static const void* utl_memcpy(void* dest, const void* src, const usize count)
 {
-    ASSERT(dest);
-    ASSERT(src);
+    //ASSERT(dest);
+    //ASSERT(src);
     if (((usize)src | (usize)dest | count) & sizeof(u32) - 1)
     {
         const u8* src_byte = (const u8*)src;
-        const u8* end_byte = src_byte + count;
         u8* dest_byte = (u8*)dest;
-        while (src_byte != end_byte)
+        for (usize i = 0; i < count; ++i)
             *(dest_byte++) = *(src_byte++);
     }
     else
     {
         const u32* src_word = (const u32*)src;
         u32* dest_word = (u32*)dest;
-        const u32* end_word =
-            (const u32*)((const void*)((const u8*)src_word + count));
-        while (src_word != end_word)
+        for (usize i = 0; i < count; i += sizeof(u32))
             *(dest_word++) = *(src_word++);
     }
     return dest;
 }
 
-static inline i32 utl_powi(i32 x, u32 y)
+static inline i32 utl_powi(i32 base, u32 exp)
 {
-    i32 z = 1;
+    i32 tmp = 1;
     while (true)
     {
-        if (y & 1)
-            z *= x;
-        y >>= 1;
-        if (!y)
+        if (exp & 1U)
+            tmp *= base;
+        exp >>= 1U;
+        if (!exp)
             break;
-        x *= x;
+        base *= base;
     }
-    return z;
+    return tmp;
 }
 
-static inline u32 utl_powu(u32 x, u32 y)
+static inline u32 utl_powu(u32 base, u32 exp)
 {
-    u32 z = 1;
+    u32 tmp = 1;
     while (true)
     {
-        if (y & 1)
-            z *= x;
-        y >>= 1;
-        if (!y)
+        if (exp & 1U)
+            tmp *= base;
+        exp >>= 1U;
+        if (!exp)
             break;
-        x *= x;
+        base *= base;
     }
-    return z;
+    return tmp;
 }
 
 /* Can handle negative powers. */
-static inline f32 utl_powf(f32 x, i32 y)
+static inline f32 utl_powf(f32 base, i32 exp)
 {
-    if (y == 0)
+    if (exp == 0)
         return 1;
-    f32 z = utl_powf(x, y / 2);
-    if ((y % 2) == 0)
-        return z * z;
-    else if (y > 0)
-        return x * z * z;
-    else
-        return (z * z) / x;
+    f32 tmp = utl_powf(base, exp / 2);
+    if ((exp % 2) == 0)
+        return tmp * tmp;
+    if (exp > 0)
+        return base * tmp * tmp;
+    return (tmp * tmp) / base;
 }
 
-static inline u32 utl_abs(i32 x)
+static inline u32 utl_abs(i32 val)
 {
-    return (x < 0) ? -(u32)x : (u32)x;
+    return (val < 0) ? -(u32)val : (u32)val;
 }
 
-static inline f32 utl_fabs(f32 x)
+static inline f32 utl_fabs(f32 val)
 {
-    return (x < 0) ? -x : x;
-}
-
-/* Requires IEEE 754 compliant floats. */
-static inline bool utl_isnan(f32 x)
-{
-    return x != x;
+    return (val < 0) ? -val : val;
 }
 
 /* Requires IEEE 754 compliant floats. */
-static inline bool utl_isinf(f32 x)
+static inline bool utl_isnan(f32 val)
 {
-    return !utl_isnan(x) && utl_isnan(x - x);
+    return val != val;
+}
+
+/* Requires IEEE 754 compliant floats. */
+static inline bool utl_isinf(f32 val)
+{
+    return !utl_isnan(val) && utl_isnan(val - val);
 }
 
 /* Null terminator not included.*/
-static usize utl_strlen(const char* s)
+static usize utl_strlen(const char* str)
 {
-    ASSERT(s);
+    //ASSERT(str);
     usize len = 0;
-    while (*s++ != '\0')
+    while (*str++ != '\0')
         ++len;
     return len;
 }
@@ -317,86 +331,92 @@ static usize utl_strlen(const char* s)
 /*
  * Assumes buf is larger than num digits + null terminator.
  *
- * @param value - value to convert
+ * @param val - value to convert
  * @param buf - destination string buffer
  * @return buf
 */
-static char* utl_u32tostr(u32 value, char* buf)
+static char* utl_u32tostr(u32 val, char* buf)
 {
-    ASSERT(buf);
-    if (value >= 1000000000)
+    //ASSERT(buf);
+    const static u8 base = 10;
+
+    if (val >= 1000000000)
         buf += 9;
     else
-        for (u32 digits = 10; digits <= value; digits *= 10)
+        for (u32 digits = base; digits <= val; digits *= base)
             ++buf;
     *++buf = '\0';
     do
     {
-        *--buf = '0' + (value % 10);
-        value /= 10;
-    } while (value != 0);
+        *--buf = (i8)('0' + (val % base));
+        val /= base;
+    } while (val != 0);
     return buf;
 }
 
 /*
  * Assumes buf is larger than num digits + null terminator.
  *
- * @param value - value to convert
+ * @param val - value to convert
  * @param buf - destination string buffer
  * @return buf
 */
-static char* utl_i32tostr(i32 value, char* buf)
+static char* utl_i32tostr(i32 val, char* buf)
 {
-    ASSERT(buf);
-    u32 abs = (u32)value;
-    if (value < 0)
+    //ASSERT(buf);
+    const static u8 base = 10;
+
+    u32 abs = (u32)val;
+    if (val < 0)
     {
-        abs = -(u32)value;
+        abs = -(u32)val;
         *buf++ = '-';
     }
     if (abs >= 1000000000)
         buf += 9;
     else
-        for (u32 digits = 10; digits <= abs; digits *= 10)
+        for (u32 digits = base; digits <= abs; digits *= base)
             ++buf;
     *++buf = '\0';
     do
     {
-        *--buf = '0' + (abs % 10);
-        abs /= 10;
+        *--buf = (i8)('0' + (abs % base));
+        abs /= base;
     } while (abs != 0);
-    return (value < 0) ? --buf : buf;
+    return (val < 0) ? --buf : buf;
 }
 
 /*
  * Assumes buf is larger than num digits + null terminator.
  * We're checking for inf/nan before float casts, so silencing UB sanitizer.
  *
- * @param value - value to convert
+ * @param val - value to convert
  * @param buf - destination string buffer
  * @param decimals - number of decimal places 
  * @return buf
 */
 __attribute__((no_sanitize("undefined"))) static char*
-utl_f32tostr(f32 value, char* buf, u8 decimals)
+utl_f32tostr(f32 val, char* buf, u8 decimals)
 {
-    ASSERT(buf);
-    if (utl_isnan(value))
+    // ASSERT(buf);
+    const static f32 base = 10;
+
+    if (utl_isnan(val))
     {
         static const char* nan = "NaN";
         utl_memcpy(buf, nan, utl_strlen(nan) + 1);
         return buf;
     }
 
-    if (utl_isinf(value))
+    if (utl_isinf(val))
     {
         static const char* inf = "Inf";
         utl_memcpy(buf, inf, utl_strlen(inf) + 1);
         return buf;
     }
 
-    i32 whole = (i32)value;
-    f32 fraction = utl_fabs((value - (f32)whole));
+    i32 whole = (i32)val;
+    f32 fraction = utl_fabs((val - (f32)whole));
     char* start = utl_i32tostr(whole, buf);
 
     while (*++buf != '\0')
@@ -406,14 +426,14 @@ utl_f32tostr(f32 value, char* buf, u8 decimals)
 
     if (decimals--)
     {
-        fraction *= 10;
+        fraction *= base;
         while ((i32)fraction == 0 && decimals--)
         {
             *buf++ = '0';
-            fraction *= 10;
+            fraction *= base;
         }
         while (decimals--)
-            fraction *= 10;
+            fraction *= base;
         utl_u32tostr((u32)fraction, buf);
     }
     else
@@ -428,18 +448,18 @@ utl_f32tostr(f32 value, char* buf, u8 decimals)
  * @param buf - the destination string buffer
  * @param bufsz - size of destination string buffer
  * @param format - the string format
- * @param values - struct wrapped array of format specifier values
+ * @param vals - struct wrapped array of format specifier values
  * @return - the destination string buffer
 */
 static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
-                               const utl_fmts_t values)
+                               const utl_fmts_t vals)
 {
-    ASSERT(buf);
-    ASSERT(format);
+    // ASSERT(buf);
+    // ASSERT(format);
 
     const char* first = buf;
     const char* last = buf + bufsz - 1;
-    usize i_values = 0;
+    usize i_vals = 0;
 
     while (*format != '\0')
     {
@@ -455,7 +475,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
         }
         else
         {
-            if (i_values == MAX_FMT_ARGS)
+            if (i_vals == MAX_FMT_ARGS)
             {
                 LOG_E("Too many specifiers in format string.", 0);
                 break;
@@ -463,11 +483,11 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
 
             ++format;
             const char specifier = *format++;
-            const utl_fmt_u value = values.arr[i_values++];
+            const utl_fmt_u val = vals.arr[i_vals++];
 
             if (((specifier == 'd' || specifier == 'u' || specifier == 'f') &&
                  (buf + F32_MAX_CHARS) > last) ||
-                ((specifier == 's') && (buf + utl_strlen(value.s) > last)))
+                ((specifier == 's') && (buf + utl_strlen(val.s) > last)))
             {
                 LOG_E("Destination buffer too small.", 0);
                 break;
@@ -476,23 +496,23 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
             switch (specifier)
             {
                 case 'c':
-                    *buf++ = value.c;
+                    *buf++ = val.c;
                     continue;
                 case 'd':
-                    utl_i32tostr(value.d, buf);
+                    utl_i32tostr(val.d, buf);
                     break;
                 case 'u':
-                    utl_u32tostr(value.u, buf);
+                    utl_u32tostr(val.u, buf);
                     break;
                 case 'f':
-                    utl_f32tostr(value.f, buf, 3);
+                    utl_f32tostr(val.f, buf, 3);
                     break;
                 case 's': {
-                    const char* s = value.s;
+                    const char* str = val.s;
                     do
                     {
-                        *buf = *s;
-                    } while (*s++ != '\0' && ++buf);
+                        *buf = *str;
+                    } while (*str++ != '\0' && ++buf);
                     break;
                 }
                 default:
@@ -533,23 +553,23 @@ ctp_retcode_e ctp_load_map(void)
 
 static cor_retcode_e cor_start_the_engines(void)
 {
-    bool i = true;
-    if (i)
-    {
-    }
-    // bool* p = NULL;
-    i = false;
-    // LOG_D("Hello world! %d", {.d = i});
-    // LOG_D("Hello world!", 0);
-    // LOG_E("Invalid map format", 0);
-    // char* s = "hello";
-    // PANIC("Invalid map format", .s = s);
-
-    char arr[10] = "hello";
-    char arr2[10] = "";
-    // utl_u32tostr(115, arr2);
-
-    utl_memcpy(arr2, arr, sizeof(arr));
+    // bool i = true;
+    // if (i)
+    // {
+    // }
+    // // bool* p = NULL;
+    // i = false;
+    // // LOG_D("Hello world! %d", {.d = i});
+    // // LOG_D("Hello world!", 0);
+    // // LOG_E("Invalid map format", 0);
+    // // char* s = "hello";
+    // // PANIC("Invalid map format", .s = s);
+    //
+    // char arr[10] = "hello";
+    // char arr2[10] = "";
+    // // utl_u32tostr(115, arr2);
+    //
+    // utl_memcpy(arr2, arr, sizeof(arr));
     // ctp_log_cb("hello %s", "world");
     // ASSERT(p);
     return cor_retcode_MAP_INVALID;
