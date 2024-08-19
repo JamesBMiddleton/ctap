@@ -20,21 +20,21 @@ typedef signed int i32;
 #define NULL ((void*)0)
 typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 
-// #define U8_MIN (0U)
-// #define U8_MAX (255U)
-// #define U16_MIN (0U)
-// #define U16_MAX (65535U)
-// #define U32_MIN (0U)
-// #define U32_MAX (4294967295U)
-// #define I8_MIN (-128)
-// #define I8_MAX (127)
-// #define I16_MIN (-32767-1)
-// #define I16_MAX (32767)
-// #define I32_MIN (-2147483647-1)
-// #define I32_MAX (2147483647)
-//
-// #define F32_MIN (1.17549435e-38F) //! Assumes IEEE-754 compliance.
-// #define F32_MAX (3.40282347e+38F) //! Assumes IEEE-754 compliance.
+#define U8_MIN (0U)
+#define U8_MAX (255U)
+#define U16_MIN (0U)
+#define U16_MAX (65535U)
+#define U32_MIN (0U)
+#define U32_MAX (4294967295U)
+#define I8_MIN (-128)
+#define I8_MAX (127)
+#define I16_MIN (-32767 - 1)
+#define I16_MAX (32767)
+#define I32_MIN (-2147483647 - 1)
+#define I32_MAX (2147483647)
+
+#define F32_MIN (1.17549435e-38F) //! Assumes IEEE-754 compliance.
+#define F32_MAX (3.40282347e+38F) //! Assumes IEEE-754 compliance.
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CTAP API ////////////////////////////////////
@@ -61,8 +61,11 @@ typedef enum { ctp_retcode_MAP_INVALID } ctp_retcode_e;
 
 ctp_retcode_e ctp_load_map(void);
 
-static void (*ctp_log_cb)(const ctp_log_t log);
-static void (*ctp_panic_cb)(void);
+typedef void (*ctp_logger_cb)(const ctp_log_t);
+ctp_logger_cb ctp_logger(ctp_logger_cb new_logger_cb);
+
+typedef void (*ctp_panic_cb)(void);
+ctp_panic_cb ctp_panic(ctp_panic_cb new_panic_cb);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CORE API ////////////////////////////////////
@@ -160,68 +163,62 @@ static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
     return log;
 }
 
-#define LOG(loglvl, msg)                                  \
-    do                                                    \
-    {                                                     \
-        if (ctp_log_cb)                                   \
-            ctp_log_cb((ctp_log_t){.lvl = (loglvl),       \
-                                   .line_num = __LINE__,  \
-                                   .func_name = __func__, \
-                                   .message = #msg});     \
+#define LOG(loglvl, msg)                                    \
+    do                                                      \
+    {                                                       \
+        ctp_logger(NULL)((ctp_log_t){.lvl = (loglvl),       \
+                                     .line_num = __LINE__,  \
+                                     .func_name = __func__, \
+                                     .message = #msg});     \
     } while (0)
 
 #ifdef DEBUG
-#define LOG_D(format, ...)                                                   \
-    do                                                                       \
-    {                                                                        \
-        if (ctp_log_cb)                                                      \
-            ctp_log_cb(new_log(ctp_loglvl_DEBUG, __func__, __LINE__, format, \
-                               (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
+#define LOG_D(format, ...)                                                     \
+    do                                                                         \
+    {                                                                          \
+        ctp_logger(NULL)(new_log(ctp_loglvl_DEBUG, __func__, __LINE__, format, \
+                                 (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
     } while (0)
 #else
 #define LOG_D(...)
 #endif
 
-#define LOG_W(format, ...)                                                  \
-    do                                                                      \
-    {                                                                       \
-        if (ctp_log_cb)                                                     \
-            ctp_log_cb(new_log(ctp_loglvl_WARN, __func__, __LINE__, format, \
-                               (utl_fmts_t){.arr = {__VA_ARGS__}}));        \
+#define LOG_W(format, ...)                                                    \
+    do                                                                        \
+    {                                                                         \
+        ctp_logger(NULL)(new_log(ctp_loglvl_WARN, __func__, __LINE__, format, \
+                                 (utl_fmts_t){.arr = {__VA_ARGS__}}));        \
     } while (0)
 
-#define LOG_E(format, ...)                                                   \
-    do                                                                       \
-    {                                                                        \
-        if (ctp_log_cb)                                                      \
-            ctp_log_cb(new_log(ctp_loglvl_ERROR, __func__, __LINE__, format, \
-                               (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
+#define LOG_E(format, ...)                                                     \
+    do                                                                         \
+    {                                                                          \
+        ctp_logger(NULL)(new_log(ctp_loglvl_ERROR, __func__, __LINE__, format, \
+                                 (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
     } while (0)
 
-#define PANIC(msg)                                          \
-    do                                                      \
-    {                                                       \
-        if (ctp_log_cb)                                     \
-            ctp_log_cb((ctp_log_t){.lvl = ctp_loglvl_PANIC, \
-                                   .line_num = __LINE__,    \
-                                   .func_name = __func__,   \
-                                   .message = #msg});       \
-        ctp_panic_cb();                                     \
+#define PANIC(msg)                                            \
+    do                                                        \
+    {                                                         \
+        ctp_logger(NULL)((ctp_log_t){.lvl = ctp_loglvl_PANIC, \
+                                     .line_num = __LINE__,    \
+                                     .func_name = __func__,   \
+                                     .message = #msg});       \
+        ctp_panic(NULL)();                                    \
     } while (0)
 
 #ifdef DEBUG
-#define ASSERT(cond)                                            \
-    do                                                          \
-    {                                                           \
-        if (!(cond))                                            \
-        {                                                       \
-            if (ctp_log_cb)                                     \
-                ctp_log_cb((ctp_log_t){.lvl = ctp_loglvl_ERROR, \
-                                       .line_num = __LINE__,    \
-                                       .func_name = __func__,   \
-                                       .message = #cond});      \
-            ctp_panic_cb();                                     \
-        }                                                       \
+#define ASSERT(cond)                                              \
+    do                                                            \
+    {                                                             \
+        if (!(cond))                                              \
+        {                                                         \
+            ctp_logger(NULL)((ctp_log_t){.lvl = ctp_loglvl_ERROR, \
+                                         .line_num = __LINE__,    \
+                                         .func_name = __func__,   \
+                                         .message = #cond});      \
+            ctp_panic(NULL)();                                    \
+        }                                                         \
     } while (0)
 #else
 #define ASSERT(...)
@@ -556,7 +553,6 @@ STATIC_ASSERT(sizeof(void*) == sizeof(usize), ptr_usize_bytes);
 void tmp(void);
 void tmp(void) // suppress 'unused' warnings temporarily
 {
-    NULL;
     LOG_D("Hello World", 0);
     LOG_W("Hello World", 0);
     LOG_E("Hello World", 0);
@@ -564,6 +560,21 @@ void tmp(void) // suppress 'unused' warnings temporarily
     u32 var = 0;
     u32 val = 1;
     ASSIGN_IF_ZERO(var, val);
+
+    (void)U8_MIN;
+    (void)U8_MAX;
+    (void)U16_MIN;
+    (void)U16_MAX;
+    (void)U32_MIN;
+    (void)U32_MAX;
+    (void)I8_MIN;
+    (void)I8_MAX;
+    (void)I16_MIN;
+    (void)I16_MAX;
+    (void)I32_MIN;
+    (void)I32_MAX;
+    (void)F32_MIN;
+    (void)F32_MAX;
 }
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// CTAP IMPLEMENTATION //////////////////////////////
@@ -573,6 +584,34 @@ ctp_retcode_e ctp_load_map(void)
 {
     cor_start_the_engines();
     return ctp_retcode_MAP_INVALID;
+}
+
+static void null_logger_cb(const ctp_log_t log)
+{
+    (void)log;
+}
+
+ctp_logger_cb ctp_logger(ctp_logger_cb new_logger_cb)
+{
+    static ctp_logger_cb logger_cb = null_logger_cb;
+    if (new_logger_cb)
+        logger_cb = new_logger_cb;
+    return logger_cb;
+}
+
+/* Intentionally trigger a 'divide by zero' trap */
+static void null_panic_cb(void)
+{
+    u32 zero = 0;
+    (void) (1/zero);
+}
+
+ctp_panic_cb ctp_panic(ctp_panic_cb new_panic_cb)
+{
+    static ctp_panic_cb panic_cb = null_panic_cb;
+    if (new_panic_cb)
+        panic_cb = new_panic_cb;
+    return panic_cb;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

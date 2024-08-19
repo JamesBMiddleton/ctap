@@ -10,10 +10,11 @@ i32 main(void)
 */
 
 #include "ctap.h"
-#include <stdio.h> 
-#include <stdlib.h> 
+#include <stdio.h>
+#include <stdlib.h>
 
 void tst_logger_cb(ctp_log_t log);
+void tst_null_logger_cb(ctp_log_t log);
 void tst_abort_cb(void);
 void tst_setup(void);
 
@@ -42,6 +43,11 @@ void tst_logger_cb(ctp_log_t log)
     (void)fflush(stdout);
 }
 
+void tst_null_logger_cb(ctp_log_t log)
+{
+    (void)log;
+}
+
 __attribute__((noreturn)) void tst_abort_cb(void)
 {
     (void)fflush(stdout);
@@ -53,7 +59,6 @@ __attribute__((noreturn)) void tst_abort_cb(void)
 
 void tst_setup(void)
 {
-    ctp_log_cb = tst_logger_cb;
-    ctp_panic_cb = tst_abort_cb;
+    ctp_logger(tst_logger_cb);
+    ctp_panic(tst_abort_cb);
 }
-
