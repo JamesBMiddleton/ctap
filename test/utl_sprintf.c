@@ -96,6 +96,14 @@ static void f32_check(void)
     utl_sprintf(arr, sizeof(arr), "%f",
                 (utl_fmts_t){.arr = {{.f = -123.456F}}});
     ASSERT(strcmp(arr, "-123.456") == 0);
+
+    utl_sprintf(arr, sizeof(arr), "%f",
+                (utl_fmts_t){.arr = {{.f = -0.0 / 0.0}}});
+    ASSERT(strcmp(arr, "NaN") == 0);
+
+    utl_sprintf(arr, sizeof(arr), "%f",
+                (utl_fmts_t){.arr = {{.f = -1.0 / 0.0}}});
+    ASSERT(strcmp(arr, "Inf") == 0);
 }
 
 static void str_check(void)
