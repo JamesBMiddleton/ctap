@@ -1,5 +1,4 @@
 #include "test.h"
-#include <stdio.h>
 #include <string.h>
 
 static char arr[MAX_LOG_SZ] = {0};
