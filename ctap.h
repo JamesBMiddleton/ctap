@@ -57,15 +57,15 @@ typedef struct {
     char message[MAX_LOG_SZ];
 } ctp_log_t;
 
-typedef enum { ctp_retcode_MAP_INVALID } ctp_retcode_e;
-
-ctp_retcode_e ctp_load_map(void);
-
 typedef void (*ctp_logger_cb)(const ctp_log_t);
 ctp_logger_cb ctp_logger(ctp_logger_cb new_logger_cb);
 
 typedef void (*ctp_panic_cb)(void);
 ctp_panic_cb ctp_panic(ctp_panic_cb new_panic_cb);
+
+typedef enum { ctp_retcode_MAP_INVALID } ctp_retcode_e;
+
+ctp_retcode_e ctp_load_map(void);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CORE API ////////////////////////////////////
@@ -603,7 +603,7 @@ ctp_logger_cb ctp_logger(ctp_logger_cb new_logger_cb)
 static void null_panic_cb(void)
 {
     u32 zero = 0;
-    (void) (1/zero);
+    (void)(1 / zero);
 }
 
 ctp_panic_cb ctp_panic(ctp_panic_cb new_panic_cb)
