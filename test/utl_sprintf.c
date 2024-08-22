@@ -144,9 +144,9 @@ i32 main(void)
 {
     tst_setup();
 
-    ctp_logger(tst_null_logger_cb);
+    ctp_set_logger(tst_null_logger_cb);
     error_check();
-    ctp_logger(tst_logger_cb);
+    ctp_set_logger(tst_logger_cb);
 
     u32_check();
     i32_check();

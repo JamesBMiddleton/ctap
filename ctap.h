@@ -40,6 +40,8 @@ typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 ////////////////////////////////// CTAP API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+typedef enum { ctp_OK, ctp_retcode_NULL_CB } ctp_retcode_e;
+
 #define MAX_LOG_SZ 256
 
 typedef enum {
@@ -58,12 +60,12 @@ typedef struct {
 } ctp_log_t;
 
 typedef void (*ctp_logger_cb)(const ctp_log_t);
-ctp_logger_cb ctp_logger(ctp_logger_cb new_logger_cb);
+ctp_retcode_e ctp_set_logger_cb(ctp_logger_cb new_logger_cb);
+ctp_retcode_e ctp_get_logger_cb(ctp_logger_cb new_logger_cb);
 
 typedef void (*ctp_panic_cb)(void);
-ctp_panic_cb ctp_panic(ctp_panic_cb new_panic_cb);
-
-typedef enum { ctp_retcode_MAP_INVALID } ctp_retcode_e;
+ctp_retcode_e ctp_set_panic_cb(ctp_panic_cb new_panic_cb);
+ctp_retcode_e ctp_get_logger_cb(ctp_logger_cb new_logger_cb);
 
 ctp_retcode_e ctp_load_map(void);
 
@@ -163,62 +165,64 @@ static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
     return log;
 }
 
-#define LOG(loglvl, msg)                                    \
-    do                                                      \
-    {                                                       \
-        ctp_logger(NULL)((ctp_log_t){.lvl = (loglvl),       \
-                                     .line_num = __LINE__,  \
-                                     .func_name = __func__, \
-                                     .message = #msg});     \
+#define LOG(loglvl, msg)                                  \
+    do                                                    \
+    {                                                     \
+        ctp_get_logger((ctp_log_t){.lvl = (loglvl),       \
+                                   .line_num = __LINE__,  \
+                                   .func_name = __func__, \
+                                   .message = #msg});     \
     } while (0)
 
 #ifdef DEBUG
-#define LOG_D(format, ...)                                                     \
-    do                                                                         \
-    {                                                                          \
-        ctp_logger(NULL)(new_log(ctp_loglvl_DEBUG, __func__, __LINE__, format, \
-                                 (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
+#define LOG_D(format, ...)                                                   \
+    do                                                                       \
+    {                                                                        \
+        ctp_get_logger(new_log(ctp_loglvl_DEBUG, __func__, __LINE__, format, \
+                               (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
     } while (0)
 #else
 #define LOG_D(...)
 #endif
 
-#define LOG_W(format, ...)                                                    \
-    do                                                                        \
-    {                                                                         \
-        ctp_logger(NULL)(new_log(ctp_loglvl_WARN, __func__, __LINE__, format, \
-                                 (utl_fmts_t){.arr = {__VA_ARGS__}}));        \
+#define LOG_W(format, ...)                                                \
+    do                                                                    \
+    {                                                                     \
+        ctp_get_logger_cb()(new_log(ctp_loglvl_WARN, __func__, __LINE__,  \
+                                    format,                               \
+                                    (utl_fmts_t){.arr = {__VA_ARGS__}})); \
     } while (0)
 
-#define LOG_E(format, ...)                                                     \
-    do                                                                         \
-    {                                                                          \
-        ctp_logger(NULL)(new_log(ctp_loglvl_ERROR, __func__, __LINE__, format, \
-                                 (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
+#define LOG_E(format, ...)                                                \
+    do                                                                    \
+    {                                                                     \
+        ctp_get_logger_cb()(new_log(ctp_loglvl_ERROR, __func__, __LINE__, \
+                                    format,                               \
+                                    (utl_fmts_t){.arr = {__VA_ARGS__}})); \
     } while (0)
 
-#define PANIC(msg)                                            \
-    do                                                        \
-    {                                                         \
-        ctp_logger(NULL)((ctp_log_t){.lvl = ctp_loglvl_PANIC, \
-                                     .line_num = __LINE__,    \
-                                     .func_name = __func__,   \
-                                     .message = #msg});       \
-        ctp_panic(NULL)();                                    \
+#define PANIC(msg)                                               \
+    do                                                           \
+    {                                                            \
+        ctp_get_logger_cb()((ctp_log_t){.lvl = ctp_loglvl_PANIC, \
+                                        .line_num = __LINE__,    \
+                                        .func_name = __func__,   \
+                                        .message = #msg});       \
+        ctp_get_panic_cb();                                      \
     } while (0)
 
 #ifdef DEBUG
-#define ASSERT(cond)                                              \
-    do                                                            \
-    {                                                             \
-        if (!(cond))                                              \
-        {                                                         \
-            ctp_logger(NULL)((ctp_log_t){.lvl = ctp_loglvl_ERROR, \
-                                         .line_num = __LINE__,    \
-                                         .func_name = __func__,   \
-                                         .message = #cond});      \
-            ctp_panic(NULL)();                                    \
-        }                                                         \
+#define ASSERT(cond)                                            \
+    do                                                          \
+    {                                                           \
+        if (!(cond))                                            \
+        {                                                       \
+            ctp_get_logger((ctp_log_t){.lvl = ctp_loglvl_ERROR, \
+                                       .line_num = __LINE__,    \
+                                       .func_name = __func__,   \
+                                       .message = #cond});      \
+            ctp_get_panic_cb()();                               \
+        }                                                       \
     } while (0)
 #else
 #define ASSERT(...)
@@ -580,6 +584,14 @@ void tmp(void) // suppress 'unused' warnings temporarily
 ///////////////////////////// CTAP IMPLEMENTATION //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+typedef struct {
+    ctp_logger_cb logger_cb;
+    ctp_panic_cb panic_cb;
+    u32 placeholder;
+    // pool_t
+} state_ctp_t;
+static state_ctp_t state_ctp; // NOLINT
+
 ctp_retcode_e ctp_load_map(void)
 {
     cor_start_the_engines();
@@ -591,12 +603,15 @@ static void null_logger_cb(const ctp_log_t log)
     (void)log;
 }
 
-ctp_logger_cb ctp_logger(ctp_logger_cb new_logger_cb)
+ctp_retcode_e ctp_set_logger_cb(ctp_logger_cb new_logger_cb)
 {
-    static ctp_logger_cb logger_cb = null_logger_cb;
     if (new_logger_cb)
-        logger_cb = new_logger_cb;
-    return logger_cb;
+    {
+        state_ctp.logger_cb = new_logger_cb;
+        return ctp_retcode_OK;
+    }
+    LOG_E("Logger callback is null.");
+    return ctp_retcode_NULL_CB;
 }
 
 /* Intentionally trigger a 'divide by zero' trap */
@@ -606,17 +621,26 @@ static void null_panic_cb(void)
     (void)(1 / zero);
 }
 
-ctp_panic_cb ctp_panic(ctp_panic_cb new_panic_cb)
+ctp_retcode_e ctp_set_panic_cb(ctp_panic_cb new_panic_cb)
 {
-    static ctp_panic_cb panic_cb = null_panic_cb;
     if (new_panic_cb)
-        panic_cb = new_panic_cb;
-    return panic_cb;
+    {
+        state_ctp.panic_cb = new_panic_cb;
+        return ctp_retcode_OK;
+    }
+    LOG_E("Panic callback is null.");
+    return ctp_retcode_NULL_CB;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// CORE IMPLEMENTATION //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+typedef struct {
+    u32 placeholder;
+    // pool_t
+} state_cor_t;
+static state_cor_t state_cor; // NOLINT
 
 static cor_retcode_e cor_start_the_engines(void)
 {
@@ -646,17 +670,41 @@ static cor_retcode_e cor_start_the_engines(void)
 /////////////////////////// GRAPHICS IMPLEMENTATION ////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+typedef struct {
+    u32 placeholder;
+    // pool_t
+} state_gfx_t;
+static state_gfx_t state_gfx; // NOLINT
+
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////// PHYSICS IMPLEMENTATION /////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+typedef struct {
+    u32 placeholder;
+    // pool_t
+} state_phy_t;
+static state_phy_t state_phy; // NOLINT
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////// INPUT IMPLEMENTATION ///////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+typedef struct {
+    u32 placeholder;
+    // pool_t
+} state_inp_t;
+static state_inp_t state_inp; // NOLINT
+
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////// AUDIO IMPLEMENTATION ///////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+typedef struct {
+    u32 placeholder;
+    // pool_t
+} state_aud_t;
+static state_aud_t state_aud; // NOLINT
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// LICENSE //////////////////////////////////////

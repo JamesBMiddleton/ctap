@@ -59,6 +59,6 @@ __attribute__((noreturn)) void tst_abort_cb(void)
 
 void tst_setup(void)
 {
-    ctp_logger(tst_logger_cb);
-    ctp_panic(tst_abort_cb);
+    ctp_set_logger(tst_logger_cb);
+    ctp_set_panic(tst_abort_cb);
 }
