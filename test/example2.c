@@ -2,9 +2,7 @@
 
 i32 main(void)
 {
-    tst_setup();
-
-    ctp_load_map();
+    tst_init();
 
     utl_powf(1, 1);
     utl_powi(1, 1);

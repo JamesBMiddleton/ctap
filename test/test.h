@@ -15,8 +15,8 @@ i32 main(void)
 
 void tst_logger_cb(ctp_log_t log);
 void tst_null_logger_cb(ctp_log_t log);
-void tst_abort_cb(void);
-void tst_setup(void);
+void tst_panic_cb(void);
+void tst_init(void);
 
 void tst_logger_cb(ctp_log_t log)
 {
@@ -48,7 +48,7 @@ void tst_null_logger_cb(ctp_log_t log)
     (void)log;
 }
 
-__attribute__((noreturn)) void tst_abort_cb(void)
+__attribute__((noreturn)) void tst_panic_cb(void)
 {
     (void)fflush(stdout);
     abort();
@@ -57,8 +57,8 @@ __attribute__((noreturn)) void tst_abort_cb(void)
 // tst_user_stub()
 // tst_str_equals()...
 
-void tst_setup(void)
+void tst_init(void)
 {
-    ctp_set_logger(tst_logger_cb);
-    ctp_set_panic(tst_abort_cb);
+    ctp_init((ctp_init_args_t){.logger_cb = tst_logger_cb,
+                               .panic_cb = tst_panic_cb});
 }

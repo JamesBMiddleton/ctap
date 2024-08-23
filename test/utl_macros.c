@@ -2,7 +2,7 @@
 
 i32 main(void)
 {
-    tst_setup();
+    tst_init();
 
     return 0;
 }

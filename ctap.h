@@ -40,7 +40,7 @@ typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 ////////////////////////////////// CTAP API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum { ctp_OK, ctp_retcode_NULL_CB } ctp_retcode_e;
+typedef enum { ctp_retcode_OK, ctp_retcode_NULL_CB } ctp_retcode_e;
 
 #define MAX_LOG_SZ 256
 
@@ -60,14 +60,15 @@ typedef struct {
 } ctp_log_t;
 
 typedef void (*ctp_logger_cb)(const ctp_log_t);
-ctp_retcode_e ctp_set_logger_cb(ctp_logger_cb new_logger_cb);
-ctp_retcode_e ctp_get_logger_cb(ctp_logger_cb new_logger_cb);
-
 typedef void (*ctp_panic_cb)(void);
-ctp_retcode_e ctp_set_panic_cb(ctp_panic_cb new_panic_cb);
-ctp_retcode_e ctp_get_logger_cb(ctp_logger_cb new_logger_cb);
 
-ctp_retcode_e ctp_load_map(void);
+typedef struct {
+    ctp_logger_cb logger_cb; // Optional.
+    ctp_panic_cb panic_cb; // Optional.
+    // map..
+    // input_cb..
+} ctp_init_args_t;
+ctp_retcode_e ctp_init(ctp_init_args_t args);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CORE API ////////////////////////////////////
@@ -94,7 +95,7 @@ static cor_retcode_e cor_start_the_engines(void);
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////// UTILS API //////////////////////////////////////
+//////////////////////////////// UTIL API //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 #define MAX_FMT_ARGS 5
@@ -110,6 +111,31 @@ typedef union {
 typedef struct {
     utl_fmt_u arr[MAX_FMT_ARGS];
 } utl_fmts_t;
+
+typedef enum { utl_retcode_OK, utl_retcode_NULL_CB } utl_retcode_e;
+
+typedef enum {
+    utl_loglvl_ASSERT,
+    utl_loglvl_DEBUG,
+    utl_loglvl_WARN,
+    utl_loglvl_ERROR,
+    utl_loglvl_PANIC
+} utl_loglvl_e;
+
+typedef struct {
+    const utl_loglvl_e lvl;
+    const u32 line_num;
+    const char* func_name;
+    char message[MAX_LOG_SZ];
+} utl_log_t;
+
+typedef void (*utl_logger_cb)(const utl_log_t);
+void utl_set_logger_cb(utl_logger_cb new_logger_cb);
+utl_logger_cb utl_get_logger_cb(void);
+
+typedef void (*utl_panic_cb)(void);
+void utl_set_panic_cb(utl_panic_cb new_panic_cb);
+utl_panic_cb utl_get_panic_cb(void);
 
 static const char* utl_sprintf(char* buf, usize bufsz, const char* format,
                                utl_fmts_t vals);
@@ -146,8 +172,15 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
 */
 
 ////////////////////////////////////////////////////////////////////////////////
-//////////////////////// UTILS IMPLEMENTATION //////////////////////////////////
+///////////////////////// UTIL IMPLEMENTATION //////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+typedef struct {
+    utl_logger_cb logger_cb;
+    utl_panic_cb panic_cb;
+    // pool_t
+} state_utl_t;
+static state_utl_t state_utl; // NOLINT
 
 #define NULL_TERMINATOR_SZ 1
 #define U32_MAX_CHARS (10) // '4294967295'
@@ -156,30 +189,31 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
 #define F32_MAX_CHARS \
     (1 + U32_MAX_CHARS + 1 + F32_DECIMAL_CHARS) // '-2147483648.123'
 
-static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
+static utl_log_t new_log(const utl_loglvl_e lvl, const char* func_name,
                          const u32 line_num, const char* format,
                          const utl_fmts_t values)
 {
-    ctp_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
+    utl_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
     utl_sprintf(log.message, sizeof(log.message), format, values);
     return log;
 }
 
-#define LOG(loglvl, msg)                                  \
-    do                                                    \
-    {                                                     \
-        ctp_get_logger((ctp_log_t){.lvl = (loglvl),       \
-                                   .line_num = __LINE__,  \
-                                   .func_name = __func__, \
-                                   .message = #msg});     \
+#define LOG(loglvl, msg)                                       \
+    do                                                         \
+    {                                                          \
+        utl_get_logger_cb()((utl_log_t){.lvl = (loglvl),       \
+                                        .line_num = __LINE__,  \
+                                        .func_name = __func__, \
+                                        .message = #msg});     \
     } while (0)
 
 #ifdef DEBUG
-#define LOG_D(format, ...)                                                   \
-    do                                                                       \
-    {                                                                        \
-        ctp_get_logger(new_log(ctp_loglvl_DEBUG, __func__, __LINE__, format, \
-                               (utl_fmts_t){.arr = {__VA_ARGS__}}));         \
+#define LOG_D(format, ...)                                                \
+    do                                                                    \
+    {                                                                     \
+        utl_get_logger_cb()(new_log(utl_loglvl_DEBUG, __func__, __LINE__, \
+                                    format,                               \
+                                    (utl_fmts_t){.arr = {__VA_ARGS__}})); \
     } while (0)
 #else
 #define LOG_D(...)
@@ -188,7 +222,7 @@ static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
 #define LOG_W(format, ...)                                                \
     do                                                                    \
     {                                                                     \
-        ctp_get_logger_cb()(new_log(ctp_loglvl_WARN, __func__, __LINE__,  \
+        utl_get_logger_cb()(new_log(utl_loglvl_WARN, __func__, __LINE__,  \
                                     format,                               \
                                     (utl_fmts_t){.arr = {__VA_ARGS__}})); \
     } while (0)
@@ -196,7 +230,7 @@ static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
 #define LOG_E(format, ...)                                                \
     do                                                                    \
     {                                                                     \
-        ctp_get_logger_cb()(new_log(ctp_loglvl_ERROR, __func__, __LINE__, \
+        utl_get_logger_cb()(new_log(utl_loglvl_ERROR, __func__, __LINE__, \
                                     format,                               \
                                     (utl_fmts_t){.arr = {__VA_ARGS__}})); \
     } while (0)
@@ -204,25 +238,25 @@ static ctp_log_t new_log(const ctp_loglvl_e lvl, const char* func_name,
 #define PANIC(msg)                                               \
     do                                                           \
     {                                                            \
-        ctp_get_logger_cb()((ctp_log_t){.lvl = ctp_loglvl_PANIC, \
+        utl_get_logger_cb()((utl_log_t){.lvl = utl_loglvl_PANIC, \
                                         .line_num = __LINE__,    \
                                         .func_name = __func__,   \
                                         .message = #msg});       \
-        ctp_get_panic_cb();                                      \
+        utl_get_panic_cb()();                                    \
     } while (0)
 
 #ifdef DEBUG
-#define ASSERT(cond)                                            \
-    do                                                          \
-    {                                                           \
-        if (!(cond))                                            \
-        {                                                       \
-            ctp_get_logger((ctp_log_t){.lvl = ctp_loglvl_ERROR, \
-                                       .line_num = __LINE__,    \
-                                       .func_name = __func__,   \
-                                       .message = #cond});      \
-            ctp_get_panic_cb()();                               \
-        }                                                       \
+#define ASSERT(cond)                                                 \
+    do                                                               \
+    {                                                                \
+        if (!(cond))                                                 \
+        {                                                            \
+            utl_get_logger_cb()((utl_log_t){.lvl = utl_loglvl_ERROR, \
+                                            .line_num = __LINE__,    \
+                                            .func_name = __func__,   \
+                                            .message = #cond});      \
+            utl_get_panic_cb()();                                    \
+        }                                                            \
     } while (0)
 #else
 #define ASSERT(...)
@@ -483,7 +517,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
     {
         if (buf == last)
         {
-            LOG(ctp_loglvl_ERROR, "Destination buffer too small.");
+            LOG(utl_loglvl_ERROR, "Destination buffer too small.");
             break;
         }
 
@@ -495,7 +529,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
         {
             if (i_vals == MAX_FMT_ARGS)
             {
-                LOG(ctp_loglvl_ERROR, "Too many specifiers in format string.");
+                LOG(utl_loglvl_ERROR, "Too many specifiers in format string.");
                 break;
             }
 
@@ -507,7 +541,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
                  (buf + F32_MAX_CHARS) > last) ||
                 ((specifier == 's') && (buf + utl_strlen(val.s) > last)))
             {
-                LOG(ctp_loglvl_ERROR, "Destination buffer too small.");
+                LOG(utl_loglvl_ERROR, "Destination buffer too small.");
                 break;
             }
 
@@ -534,7 +568,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
                     break;
                 }
                 default:
-                    LOG(ctp_loglvl_ERROR, "Invalid specifier used.");
+                    LOG(utl_loglvl_ERROR, "Invalid specifier used.");
                     *buf = '\0';
                     return first;
             }
@@ -543,6 +577,27 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
     }
     *buf = '\0';
     return first;
+}
+
+void utl_set_logger_cb(utl_logger_cb new_logger_cb)
+{
+    ASSERT(new_logger_cb);
+    state_utl.logger_cb = new_logger_cb;
+}
+
+utl_logger_cb utl_get_logger_cb(void)
+{
+    return state_utl.logger_cb;
+}
+
+void utl_set_panic_cb(utl_panic_cb new_panic_cb)
+{
+    ASSERT(new_panic_cb);
+    state_utl.panic_cb = new_panic_cb;
+}
+utl_panic_cb utl_get_panic_cb(void)
+{
+    return state_utl.panic_cb;
 }
 
 STATIC_ASSERT(sizeof(u8) == 1, u8_1_byte);
@@ -579,6 +634,7 @@ void tmp(void) // suppress 'unused' warnings temporarily
     (void)I32_MAX;
     (void)F32_MIN;
     (void)F32_MAX;
+    (void)NULL;
 }
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// CTAP IMPLEMENTATION //////////////////////////////
@@ -586,32 +642,13 @@ void tmp(void) // suppress 'unused' warnings temporarily
 
 typedef struct {
     ctp_logger_cb logger_cb;
-    ctp_panic_cb panic_cb;
-    u32 placeholder;
     // pool_t
 } state_ctp_t;
 static state_ctp_t state_ctp; // NOLINT
-
-ctp_retcode_e ctp_load_map(void)
-{
-    cor_start_the_engines();
-    return ctp_retcode_MAP_INVALID;
-}
-
+    //
 static void null_logger_cb(const ctp_log_t log)
 {
     (void)log;
-}
-
-ctp_retcode_e ctp_set_logger_cb(ctp_logger_cb new_logger_cb)
-{
-    if (new_logger_cb)
-    {
-        state_ctp.logger_cb = new_logger_cb;
-        return ctp_retcode_OK;
-    }
-    LOG_E("Logger callback is null.");
-    return ctp_retcode_NULL_CB;
 }
 
 /* Intentionally trigger a 'divide by zero' trap */
@@ -621,15 +658,47 @@ static void null_panic_cb(void)
     (void)(1 / zero);
 }
 
-ctp_retcode_e ctp_set_panic_cb(ctp_panic_cb new_panic_cb)
+static void fwd_logger_cb(const utl_log_t in_log)
 {
-    if (new_panic_cb)
+    ctp_loglvl_e out_lvl = ctp_loglvl_DEBUG;
+    switch (in_log.lvl)
     {
-        state_ctp.panic_cb = new_panic_cb;
-        return ctp_retcode_OK;
+        case utl_loglvl_DEBUG:
+            out_lvl = ctp_loglvl_DEBUG;
+            break;
+        case utl_loglvl_WARN:
+            out_lvl = ctp_loglvl_WARN;
+            break;
+        case utl_loglvl_ERROR:
+            out_lvl = ctp_loglvl_ERROR;
+            break;
+        case utl_loglvl_PANIC:
+            out_lvl = ctp_loglvl_PANIC;
+            break;
+        case utl_loglvl_ASSERT:
+            out_lvl = ctp_loglvl_ASSERT;
+            break;
     }
-    LOG_E("Panic callback is null.");
-    return ctp_retcode_NULL_CB;
+    ctp_log_t out_log = {.lvl = out_lvl,
+                         .line_num = in_log.line_num,
+                         .func_name = in_log.func_name};
+    utl_memcpy(out_log.message, in_log.message, utl_strlen(in_log.message) + 1);
+    state_ctp.logger_cb(out_log);
+}
+
+ctp_retcode_e ctp_init(ctp_init_args_t args)
+{
+    ASSIGN_IF_ZERO(args.logger_cb, null_logger_cb);
+    ASSIGN_IF_ZERO(args.panic_cb, null_panic_cb);
+
+    state_ctp.logger_cb = args.logger_cb;
+    utl_set_logger_cb(fwd_logger_cb);
+
+    utl_set_panic_cb(args.panic_cb);
+
+    cor_start_the_engines();
+
+    return ctp_retcode_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

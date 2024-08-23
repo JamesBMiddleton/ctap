@@ -142,11 +142,9 @@ static void char_check(void)
 
 i32 main(void)
 {
-    tst_setup();
+    tst_init();
 
-    ctp_set_logger(tst_null_logger_cb);
     error_check();
-    ctp_set_logger(tst_logger_cb);
 
     u32_check();
     i32_check();
