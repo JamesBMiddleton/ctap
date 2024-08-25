@@ -4,10 +4,6 @@ i32 main(void)
 {
     tst_init();
 
-    utl_powf(1, 1);
-    utl_powi(1, 1);
-    utl_powu(1, 1);
-
     char arr[100];
     utl_u32tostr(4294967295 / 2, arr);
     char arr2[100];

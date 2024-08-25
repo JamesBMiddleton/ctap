@@ -7,6 +7,12 @@
 
 // #define ctp_IMPL
 
+#define pure // pass-by-value functions with no interaction with external state
+#define bool _Bool
+#define true 1
+#define false 0
+#define NULL ((void*)0)
+
 typedef float f32;
 typedef unsigned char u8;
 typedef unsigned short int u16;
@@ -14,10 +20,6 @@ typedef unsigned int u32;
 typedef signed char i8;
 typedef signed short int i16;
 typedef signed int i32;
-#define bool _Bool
-#define true 1
-#define false 0
-#define NULL ((void*)0)
 typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 
 #define U8_MIN (0U)
@@ -284,7 +286,7 @@ static const void* utl_memcpy(void* dest, const void* src, const usize count)
 {
     ASSERT(dest);
     ASSERT(src);
-    if (((usize)src | (usize)dest | count) & sizeof(u32) - 1)
+    if (((usize)src | (usize)dest | count) & (sizeof(u32) - 1))
     {
         const u8* src_byte = (const u8*)src;
         u8* dest_byte = (u8*)dest;
@@ -301,7 +303,7 @@ static const void* utl_memcpy(void* dest, const void* src, const usize count)
     return dest;
 }
 
-static inline i32 utl_powi(i32 base, u32 exp)
+pure static inline i32 utl_powi(i32 base, u32 exp)
 {
     i32 result = 1;
     while (true)
@@ -316,7 +318,7 @@ static inline i32 utl_powi(i32 base, u32 exp)
     return result;
 }
 
-static inline u32 utl_powu(u32 base, u32 exp)
+pure static inline u32 utl_powu(u32 base, u32 exp)
 {
     u32 result = 1;
     while (true)
@@ -332,7 +334,7 @@ static inline u32 utl_powu(u32 base, u32 exp)
 }
 
 /* Can handle negative powers. */
-static inline f32 utl_powf(f32 base, i32 exp)
+pure static inline f32 utl_powf(f32 base, i32 exp)
 {
     f32 result = 1;
     if (exp == 0)
@@ -350,24 +352,24 @@ static inline f32 utl_powf(f32 base, i32 exp)
     return (exp > 0) ? result : 1.0F / result;
 }
 
-static inline u32 utl_abs(i32 val)
+pure static inline u32 utl_abs(i32 val)
 {
     return (val < 0) ? -(u32)val : (u32)val;
 }
 
-static inline f32 utl_fabs(f32 val)
+pure static inline f32 utl_fabs(f32 val)
 {
     return (val < 0) ? -val : val;
 }
 
 /* Requires IEEE 754 compliant floats. */
-static inline bool utl_isnan(f32 val)
+pure static inline bool utl_isnan(f32 val)
 {
     return val != val;
 }
 
 /* Requires IEEE 754 compliant floats. */
-static inline bool utl_isinf(f32 val)
+pure static inline bool utl_isinf(f32 val)
 {
     return !utl_isnan(val) && utl_isnan(val - val);
 }
@@ -392,7 +394,7 @@ static inline usize utl_strlen(const char* str)
 static char* utl_u32tostr(u32 val, char* buf)
 {
     ASSERT(buf);
-    const static u8 base = 10;
+    static const u8 base = 10;
 
     if (val >= U32_MAX_CHAR_THRESHOLD)
         buf += U32_MAX_CHARS - 1;
@@ -418,7 +420,7 @@ static char* utl_u32tostr(u32 val, char* buf)
 static char* utl_i32tostr(i32 val, char* buf)
 {
     ASSERT(buf);
-    const static u8 base = 10;
+    static const u8 base = 10;
 
     u32 abs = (u32)val;
     if (val < 0)
@@ -453,7 +455,7 @@ __attribute__((no_sanitize("undefined"))) static char*
 utl_f32tostr(f32 val, char* buf, u8 decimals)
 {
     ASSERT(buf);
-    const static f32 base = 10;
+    static const f32 base = 10;
 
     if (utl_isnan(val))
     {
@@ -609,33 +611,6 @@ STATIC_ASSERT(sizeof(i32) == 4, i32_4_bytes);
 STATIC_ASSERT(sizeof(f32) == 4, f32_4_bytes);
 STATIC_ASSERT(sizeof(void*) == sizeof(usize), ptr_usize_bytes);
 
-void tmp(void);
-void tmp(void) // suppress 'unused' warnings temporarily
-{
-    LOG_D("Hello World", 0);
-    LOG_W("Hello World", 0);
-    LOG_E("Hello World", 0);
-    PANIC("Hello World");
-    u32 var = 0;
-    u32 val = 1;
-    ASSIGN_IF_ZERO(var, val);
-
-    (void)U8_MIN;
-    (void)U8_MAX;
-    (void)U16_MIN;
-    (void)U16_MAX;
-    (void)U32_MIN;
-    (void)U32_MAX;
-    (void)I8_MIN;
-    (void)I8_MAX;
-    (void)I16_MIN;
-    (void)I16_MAX;
-    (void)I32_MIN;
-    (void)I32_MAX;
-    (void)F32_MIN;
-    (void)F32_MAX;
-    (void)NULL;
-}
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// CTAP IMPLEMENTATION //////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -811,3 +786,37 @@ SOFTWARE.
     __Hello world!__
 
 */
+
+void tmp(void);
+void tmp(void) // suppress 'unused' warnings temporarily
+{
+    LOG_D("Hello World", 0);
+    LOG_W("Hello World", 0);
+    LOG_E("Hello World", 0);
+    PANIC("Hello World");
+    u32 var = 0;
+    u32 val = 1;
+    ASSIGN_IF_ZERO(var, val);
+
+    (void)U8_MIN;
+    (void)U8_MAX;
+    (void)U16_MIN;
+    (void)U16_MAX;
+    (void)U32_MIN;
+    (void)U32_MAX;
+    (void)I8_MIN;
+    (void)I8_MAX;
+    (void)I16_MIN;
+    (void)I16_MAX;
+    (void)I32_MIN;
+    (void)I32_MAX;
+    (void)F32_MIN;
+    (void)F32_MAX;
+    (void)NULL;
+
+    state_aud.placeholder = 1;
+    state_phy.placeholder = 1;
+    state_inp.placeholder = 1;
+    state_gfx.placeholder = 1;
+    state_cor.placeholder = 1;
+}

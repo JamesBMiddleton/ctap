@@ -18,8 +18,16 @@ void tst_null_logger_cb(ctp_log_t log);
 void tst_panic_cb(void);
 void tst_init(void);
 
+typedef struct {
+    bool suppress_logs;
+} state_tst_t;
+static state_tst_t state_tst; 
+
 void tst_logger_cb(ctp_log_t log)
 {
+    if (state_tst.suppress_logs == true)
+        return;
+
     const char* lvl = "UNKNOWN";
     switch (log.lvl)
     {
@@ -43,11 +51,6 @@ void tst_logger_cb(ctp_log_t log)
     (void)fflush(stdout);
 }
 
-void tst_null_logger_cb(ctp_log_t log)
-{
-    (void)log;
-}
-
 __attribute__((noreturn)) void tst_panic_cb(void)
 {
     (void)fflush(stdout);
@@ -61,4 +64,5 @@ void tst_init(void)
 {
     ctp_init((ctp_init_args_t){.logger_cb = tst_logger_cb,
                                .panic_cb = tst_panic_cb});
+    state_tst.suppress_logs = false;
 }
