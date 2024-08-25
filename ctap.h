@@ -7,7 +7,6 @@
 
 // #define ctp_IMPL
 
-#define pure // pass-by-value functions with no interaction with external state
 #define bool _Bool
 #define true 1
 #define false 0
@@ -303,7 +302,7 @@ static const void* utl_memcpy(void* dest, const void* src, const usize count)
     return dest;
 }
 
-pure static inline i32 utl_powi(i32 base, u32 exp)
+static inline i32 utl_powi(i32 base, u32 exp)
 {
     i32 result = 1;
     while (true)
@@ -318,7 +317,7 @@ pure static inline i32 utl_powi(i32 base, u32 exp)
     return result;
 }
 
-pure static inline u32 utl_powu(u32 base, u32 exp)
+static inline u32 utl_powu(u32 base, u32 exp)
 {
     u32 result = 1;
     while (true)
@@ -334,7 +333,7 @@ pure static inline u32 utl_powu(u32 base, u32 exp)
 }
 
 /* Can handle negative powers. */
-pure static inline f32 utl_powf(f32 base, i32 exp)
+static inline f32 utl_powf(f32 base, i32 exp)
 {
     f32 result = 1;
     if (exp == 0)
@@ -352,24 +351,24 @@ pure static inline f32 utl_powf(f32 base, i32 exp)
     return (exp > 0) ? result : 1.0F / result;
 }
 
-pure static inline u32 utl_abs(i32 val)
+static inline u32 utl_abs(i32 val)
 {
     return (val < 0) ? -(u32)val : (u32)val;
 }
 
-pure static inline f32 utl_fabs(f32 val)
+static inline f32 utl_fabs(f32 val)
 {
     return (val < 0) ? -val : val;
 }
 
 /* Requires IEEE 754 compliant floats. */
-pure static inline bool utl_isnan(f32 val)
+static inline bool utl_isnan(f32 val)
 {
     return val != val;
 }
 
 /* Requires IEEE 754 compliant floats. */
-pure static inline bool utl_isinf(f32 val)
+static inline bool utl_isinf(f32 val)
 {
     return !utl_isnan(val) && utl_isnan(val - val);
 }
