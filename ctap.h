@@ -69,15 +69,20 @@ typedef struct {
     // map..
     // input_cb..
 } ctp_init_args_t;
+
 ctp_retcode_e ctp_init(ctp_init_args_t args);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CORE API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum { cor_retcode_MAP_INVALID } cor_retcode_e;
+typedef enum { cor_retcode_MAP_INVALID, cor_retcode_OK } cor_retcode_e;
 
-static cor_retcode_e cor_start_the_engines(void);
+typedef struct {
+    u32 placeholder;
+} cor_init_args_t;
+
+static cor_retcode_e cor_init(cor_init_args_t args);
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// GRAPHICS API ///////////////////////////////////
@@ -96,7 +101,7 @@ static cor_retcode_e cor_start_the_engines(void);
 ////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////// UTIL API //////////////////////////////////////
+/////////////////////////////// UTIL API ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 #define MAX_FMT_ARGS 5
@@ -130,13 +135,14 @@ typedef struct {
     char message[MAX_LOG_SZ];
 } utl_log_t;
 
-typedef void (*utl_logger_cb)(const utl_log_t);
-void utl_set_logger_cb(utl_logger_cb new_logger_cb);
-utl_logger_cb utl_get_logger_cb(void);
+typedef void(utl_logger_cb)(const utl_log_t);
+typedef void(utl_panic_cb)(void);
+typedef struct {
+    utl_logger_cb* logger_cb;
+    utl_panic_cb* panic_cb;
+} utl_init_args_t;
 
-typedef void (*utl_panic_cb)(void);
-void utl_set_panic_cb(utl_panic_cb new_panic_cb);
-utl_panic_cb utl_get_panic_cb(void);
+static utl_retcode_e utl_init(utl_init_args_t args);
 
 static const char* utl_sprintf(char* buf, usize bufsz, const char* format,
                                utl_fmts_t vals);
@@ -173,15 +179,19 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
 */
 
 ////////////////////////////////////////////////////////////////////////////////
-///////////////////////// UTIL IMPLEMENTATION //////////////////////////////////
+/////////////////////////////// UTIL IMPL //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-    utl_logger_cb logger_cb;
-    utl_panic_cb panic_cb;
+    utl_logger_cb* logger_cb;
+    utl_panic_cb* panic_cb;
     // pool_t
 } state_utl_t;
-static state_utl_t state_utl; // NOLINT
+
+//NOLINTBEGIN
+static state_utl_t mutable_state_utl; // API func !l-value! usage only
+static const state_utl_t* state_utl = &mutable_state_utl; // API func usage only
+//NOLINTEND
 
 #define NULL_TERMINATOR_SZ 1
 #define U32_MAX_CHARS (10) // '4294967295'
@@ -190,74 +200,74 @@ static state_utl_t state_utl; // NOLINT
 #define F32_MAX_CHARS \
     (1 + U32_MAX_CHARS + 1 + F32_DECIMAL_CHARS) // '-2147483648.123'
 
-static utl_log_t new_log(const utl_loglvl_e lvl, const char* func_name,
-                         const u32 line_num, const char* format,
-                         const utl_fmts_t values)
+static utl_log_t new_log_utl(const utl_loglvl_e lvl, const char* func_name,
+                             const u32 line_num, const char* format,
+                             const utl_fmts_t values)
 {
     utl_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
     utl_sprintf(log.message, sizeof(log.message), format, values);
     return log;
 }
 
-#define LOG(loglvl, msg)                                       \
-    do                                                         \
-    {                                                          \
-        utl_get_logger_cb()((utl_log_t){.lvl = (loglvl),       \
-                                        .line_num = __LINE__,  \
-                                        .func_name = __func__, \
-                                        .message = #msg});     \
+#define LOG(loglvl, msg)                                        \
+    do                                                          \
+    {                                                           \
+        state_utl->logger_cb((utl_log_t){.lvl = (loglvl),       \
+                                         .line_num = __LINE__,  \
+                                         .func_name = __func__, \
+                                         .message = #msg});     \
     } while (0)
 
 #ifdef DEBUG
-#define LOG_D(format, ...)                                                \
-    do                                                                    \
-    {                                                                     \
-        utl_get_logger_cb()(new_log(utl_loglvl_DEBUG, __func__, __LINE__, \
-                                    format,                               \
-                                    (utl_fmts_t){.arr = {__VA_ARGS__}})); \
+#define LOG_D(format, ...)                                                     \
+    do                                                                         \
+    {                                                                          \
+        state_utl->logger_cb(new_log_utl(utl_loglvl_DEBUG, __func__, __LINE__, \
+                                         format,                               \
+                                         (utl_fmts_t){.arr = {__VA_ARGS__}})); \
     } while (0)
 #else
 #define LOG_D(...)
 #endif
 
-#define LOG_W(format, ...)                                                \
-    do                                                                    \
-    {                                                                     \
-        utl_get_logger_cb()(new_log(utl_loglvl_WARN, __func__, __LINE__,  \
-                                    format,                               \
-                                    (utl_fmts_t){.arr = {__VA_ARGS__}})); \
+#define LOG_W(format, ...)                                                     \
+    do                                                                         \
+    {                                                                          \
+        state_utl->logger_cb(new_log_utl(utl_loglvl_WARN, __func__, __LINE__,  \
+                                         format,                               \
+                                         (utl_fmts_t){.arr = {__VA_ARGS__}})); \
     } while (0)
 
-#define LOG_E(format, ...)                                                \
-    do                                                                    \
-    {                                                                     \
-        utl_get_logger_cb()(new_log(utl_loglvl_ERROR, __func__, __LINE__, \
-                                    format,                               \
-                                    (utl_fmts_t){.arr = {__VA_ARGS__}})); \
+#define LOG_E(format, ...)                                                     \
+    do                                                                         \
+    {                                                                          \
+        state_utl->logger_cb(new_log_utl(utl_loglvl_ERROR, __func__, __LINE__, \
+                                         format,                               \
+                                         (utl_fmts_t){.arr = {__VA_ARGS__}})); \
     } while (0)
 
-#define PANIC(msg)                                               \
-    do                                                           \
-    {                                                            \
-        utl_get_logger_cb()((utl_log_t){.lvl = utl_loglvl_PANIC, \
-                                        .line_num = __LINE__,    \
-                                        .func_name = __func__,   \
-                                        .message = #msg});       \
-        utl_get_panic_cb()();                                    \
+#define PANIC(msg)                                                \
+    do                                                            \
+    {                                                             \
+        state_utl->logger_cb((utl_log_t){.lvl = utl_loglvl_PANIC, \
+                                         .line_num = __LINE__,    \
+                                         .func_name = __func__,   \
+                                         .message = #msg});       \
+        state_utl->panic_cb();                                    \
     } while (0)
 
 #ifdef DEBUG
-#define ASSERT(cond)                                                 \
-    do                                                               \
-    {                                                                \
-        if (!(cond))                                                 \
-        {                                                            \
-            utl_get_logger_cb()((utl_log_t){.lvl = utl_loglvl_ERROR, \
-                                            .line_num = __LINE__,    \
-                                            .func_name = __func__,   \
-                                            .message = #cond});      \
-            utl_get_panic_cb()();                                    \
-        }                                                            \
+#define ASSERT(cond)                                                  \
+    do                                                                \
+    {                                                                 \
+        if (!(cond))                                                  \
+        {                                                             \
+            state_utl->logger_cb((utl_log_t){.lvl = utl_loglvl_ERROR, \
+                                             .line_num = __LINE__,    \
+                                             .func_name = __func__,   \
+                                             .message = #cond});      \
+            state_utl->panic_cb();                                    \
+        }                                                             \
     } while (0)
 #else
 #define ASSERT(...)
@@ -271,6 +281,15 @@ static utl_log_t new_log(const utl_loglvl_e lvl, const char* func_name,
 
 #define STATIC_ASSERT(cond, msg) \
     typedef char static_assert_##msg[(cond) ? 1 : -1]
+
+STATIC_ASSERT(sizeof(u8) == 1, u8_1_byte);
+STATIC_ASSERT(sizeof(u16) == 2, u16_2_bytes);
+STATIC_ASSERT(sizeof(u32) == 4, u32_4_bytes);
+STATIC_ASSERT(sizeof(i8) == 1, i8_1_byte);
+STATIC_ASSERT(sizeof(i16) == 2, i16_2_bytes);
+STATIC_ASSERT(sizeof(i32) == 4, i32_4_bytes);
+STATIC_ASSERT(sizeof(f32) == 4, f32_4_bytes);
+STATIC_ASSERT(sizeof(void*) == sizeof(usize), ptr_usize_bytes);
 
 /*
  * If aligned copy 32bit chunks from dest to src, else copy bytes. 
@@ -580,59 +599,41 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
     return first;
 }
 
-void utl_set_logger_cb(utl_logger_cb new_logger_cb)
+static utl_retcode_e utl_init(utl_init_args_t args)
 {
-    ASSERT(new_logger_cb);
-    state_utl.logger_cb = new_logger_cb;
+    if (args.logger_cb == NULL || args.panic_cb == NULL)
+        return utl_retcode_NULL_CB;
+    mutable_state_utl.logger_cb = args.logger_cb;
+    mutable_state_utl.panic_cb = args.panic_cb;
+    return utl_retcode_OK;
 }
-
-utl_logger_cb utl_get_logger_cb(void)
-{
-    return state_utl.logger_cb;
-}
-
-void utl_set_panic_cb(utl_panic_cb new_panic_cb)
-{
-    ASSERT(new_panic_cb);
-    state_utl.panic_cb = new_panic_cb;
-}
-utl_panic_cb utl_get_panic_cb(void)
-{
-    return state_utl.panic_cb;
-}
-
-STATIC_ASSERT(sizeof(u8) == 1, u8_1_byte);
-STATIC_ASSERT(sizeof(u16) == 2, u16_2_bytes);
-STATIC_ASSERT(sizeof(u32) == 4, u32_4_bytes);
-STATIC_ASSERT(sizeof(i8) == 1, i8_1_byte);
-STATIC_ASSERT(sizeof(i16) == 2, i16_2_bytes);
-STATIC_ASSERT(sizeof(i32) == 4, i32_4_bytes);
-STATIC_ASSERT(sizeof(f32) == 4, f32_4_bytes);
-STATIC_ASSERT(sizeof(void*) == sizeof(usize), ptr_usize_bytes);
 
 ////////////////////////////////////////////////////////////////////////////////
-///////////////////////////// CTAP IMPLEMENTATION //////////////////////////////
+///////////////////////// CTAP IMPL ////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
     ctp_logger_cb logger_cb;
-    // pool_t
 } state_ctp_t;
-static state_ctp_t state_ctp; // NOLINT
-    //
-static void null_logger_cb(const ctp_log_t log)
+
+//NOLINTBEGIN
+static state_ctp_t mutable_state_ctp; // API func !l-value! usage only
+static const state_ctp_t* state_ctp = &mutable_state_ctp; // API func usage only
+//NOLINTEND
+
+static void null_logger_cb_ctp(const ctp_log_t log)
 {
     (void)log;
 }
 
 /* Intentionally trigger a 'divide by zero' trap */
-static void null_panic_cb(void)
+static void null_panic_cb_ctp(void)
 {
     u32 zero = 0;
     (void)(1 / zero);
 }
 
-static void fwd_logger_cb(const utl_log_t in_log)
+static void fwd_logger_cb_ctp(const utl_log_t in_log)
 {
     ctp_loglvl_e out_lvl = ctp_loglvl_DEBUG;
     switch (in_log.lvl)
@@ -657,97 +658,82 @@ static void fwd_logger_cb(const utl_log_t in_log)
                          .line_num = in_log.line_num,
                          .func_name = in_log.func_name};
     utl_memcpy(out_log.message, in_log.message, utl_strlen(in_log.message) + 1);
-    state_ctp.logger_cb(out_log);
+    mutable_state_ctp.logger_cb(out_log);
 }
 
 ctp_retcode_e ctp_init(ctp_init_args_t args)
 {
-    ASSIGN_IF_ZERO(args.logger_cb, null_logger_cb);
-    ASSIGN_IF_ZERO(args.panic_cb, null_panic_cb);
+    ASSIGN_IF_ZERO(args.logger_cb, null_logger_cb_ctp);
+    ASSIGN_IF_ZERO(args.panic_cb, null_panic_cb_ctp);
 
-    state_ctp.logger_cb = args.logger_cb;
-    utl_set_logger_cb(fwd_logger_cb);
+    mutable_state_ctp.logger_cb = args.logger_cb;
+    utl_init((utl_init_args_t){.logger_cb = fwd_logger_cb_ctp,
+                               .panic_cb = args.panic_cb});
 
-    utl_set_panic_cb(args.panic_cb);
-
-    cor_start_the_engines();
+    const u32 placeholder = 42;
+    cor_init((cor_init_args_t){.placeholder = placeholder});
 
     return ctp_retcode_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-///////////////////////////// CORE IMPLEMENTATION //////////////////////////////
+///////////////////////////// CORE IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
     u32 placeholder;
     // pool_t
 } state_cor_t;
-static state_cor_t state_cor; // NOLINT
 
-static cor_retcode_e cor_start_the_engines(void)
+//NOLINTBEGIN
+static state_cor_t mutable_state_cor; // API func !l-value! usage only
+static const state_cor_t* state_cor = &mutable_state_cor; // API func usage only
+//NOLINTEND
+
+typedef struct {
+    u32 startiness;
+    u32 num_horses;
+} engine_starter_cor_t;
+
+static cor_retcode_e start_the_engines_cor(engine_starter_cor_t starter)
 {
-    bool test = true;
-    // if (i)
-    // {
-    // }
-    // // bool* p = NULL;
-    test = false;
-    LOG_D("Hello world! %d", {.d = test});
-    // // LOG_D("Hello world!", 0);
-    // // LOG_E("Invalid map format", 0);
-    // // char* s = "hello";
-    // // PANIC("Invalid map format", .s = s);
-    //
-    // char arr[10] = "hello";
-    // char arr2[10] = "";
-    // // utl_u32tostr(115, arr2);
-    //
-    // utl_memcpy(arr2, arr, sizeof(arr));
-    // ctp_log_cb("hello %s", "world");
-    // ASSERT(p);
+    LOG_D("Engines started with %u startiness and %u horses!",
+          {.u = starter.startiness}, {.u = starter.num_horses});
     return cor_retcode_MAP_INVALID;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/////////////////////////// GRAPHICS IMPLEMENTATION ////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+static cor_retcode_e cor_init(cor_init_args_t args)
+{
+    mutable_state_cor.placeholder = args.placeholder;
+    switch (start_the_engines_cor(
+        (engine_starter_cor_t){.num_horses = state_cor->placeholder,
+                               .startiness = state_cor->placeholder}))
+    {
+        case cor_retcode_MAP_INVALID:
+            LOG_E("Invalid map.", 0);
+            return cor_retcode_MAP_INVALID;
+        case cor_retcode_OK:
+            LOG_D("Map loaded.", 0);
+    }
 
-typedef struct {
-    u32 placeholder;
-    // pool_t
-} state_gfx_t;
-static state_gfx_t state_gfx; // NOLINT
-
-////////////////////////////////////////////////////////////////////////////////
-/////////////////////////// PHYSICS IMPLEMENTATION /////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-typedef struct {
-    u32 placeholder;
-    // pool_t
-} state_phy_t;
-static state_phy_t state_phy; // NOLINT
+    return cor_retcode_OK;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
-/////////////////////////// INPUT IMPLEMENTATION ///////////////////////////////
+////////////////////////// GRAPHICS IMPL ///////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef struct {
-    u32 placeholder;
-    // pool_t
-} state_inp_t;
-static state_inp_t state_inp; // NOLINT
-
 ////////////////////////////////////////////////////////////////////////////////
-/////////////////////////// AUDIO IMPLEMENTATION ///////////////////////////////
+//////////////////////////// PHYSICS IMPL //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef struct {
-    u32 placeholder;
-    // pool_t
-} state_aud_t;
-static state_aud_t state_aud; // NOLINT
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////////// INPUT IMPL ////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////// AUDIO IMPL ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// LICENSE //////////////////////////////////////
@@ -813,9 +799,5 @@ void tmp(void) // suppress 'unused' warnings temporarily
     (void)F32_MAX;
     (void)NULL;
 
-    state_aud.placeholder = 1;
-    state_phy.placeholder = 1;
-    state_inp.placeholder = 1;
-    state_gfx.placeholder = 1;
-    state_cor.placeholder = 1;
+    mutable_state_cor.placeholder = 1;
 }

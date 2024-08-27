@@ -21,11 +21,12 @@ void tst_init(void);
 typedef struct {
     bool suppress_logs;
 } state_tst_t;
-static state_tst_t state_tst; 
+static state_tst_t mutable_state_tst; 
+static const state_tst_t* state_tst = &mutable_state_tst; 
 
 void tst_logger_cb(ctp_log_t log)
 {
-    if (state_tst.suppress_logs == true)
+    if (state_tst->suppress_logs == true)
         return;
 
     const char* lvl = "UNKNOWN";
@@ -64,5 +65,5 @@ void tst_init(void)
 {
     ctp_init((ctp_init_args_t){.logger_cb = tst_logger_cb,
                                .panic_cb = tst_panic_cb});
-    state_tst.suppress_logs = false;
+    mutable_state_tst.suppress_logs = false;
 }
