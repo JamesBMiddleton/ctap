@@ -76,7 +76,7 @@ ctp_retcode_e ctp_init(ctp_init_args_t args);
 ////////////////////////////////// CORE API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum { cor_retcode_MAP_INVALID, cor_retcode_OK } cor_retcode_e;
+typedef enum { cor_retcode_OK, cor_retcode_MAP_INVALID } cor_retcode_e;
 
 typedef struct {
     u32 placeholder;
