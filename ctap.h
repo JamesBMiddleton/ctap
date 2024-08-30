@@ -61,7 +61,7 @@ typedef enum {
 typedef struct {
     ctp_loglvl_e lvl;
     u32 line_num;
-    str func_name;
+    const char* func_name;
     char message[MAX_LOG_SZ];
 } ctp_log_t;
 
@@ -120,7 +120,7 @@ static cor_retcode_e cor_init(cor_init_args_t args);
 #define MAX_FMT_ARGS 5
 
 typedef union {
-    str s;
+    const char* s;
     char c;
     i32 d;
     u32 u;
@@ -148,7 +148,7 @@ typedef enum {
 typedef struct {
     utl_loglvl_e lvl;
     u32 line_num;
-    str func_name;
+    const char* func_name;
     char message[MAX_LOG_SZ];
 } utl_log_t;
 
@@ -168,12 +168,11 @@ static utl_retcode_e utl_init(utl_init_args_t args);
 
 static utl_retcode_log_t utl_get_log(void);
 
-static str utl_sprintf(char* buf, usize bufsz, str format,
-                               utl_fmts_t vals);
+static const char* utl_sprintf(char* buf, usize bufsz, str format, utl_fmts_t vals);
 
 static const void* utl_memcpy(void* dest, const void* src, usize count);
 
-static inline usize utl_strlen(str string);
+static inline usize utl_strlen(const char* string);
 
 static inline i32 utl_powi(i32 base, u32 exp);
 static inline u32 utl_powu(u32 base, u32 exp);
@@ -196,7 +195,7 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
  * LOG_W(format, ...)
  * LOG_E(format, ...)
  * PANIC(msg)
- * ASSIGN_IF_ZERO(var, value)
+ * ASSIGN_IF_ZERO(lvalue, rvalue)
  * ASSERT(cond)
  * STATIC_ASSERT(cond, msg)
  *
@@ -215,7 +214,7 @@ typedef struct {
 } state_utl_t;
 
 //NOLINTBEGIN
-static state_utl_t mutable_state_utl; // API func !l-value! usage only
+static state_utl_t mutable_state_utl = {0}; // API func !l-value! usage only
 static const state_utl_t* state_utl = &mutable_state_utl; // API func usage only
 //NOLINTEND
 
@@ -230,11 +229,12 @@ static utl_retcode_log_t utl_get_log(void)
 {
     if (state_utl->log.line_num == 0)
         return (utl_retcode_log_t){.retcode = utl_retcode_NULL_LOG};
-    return (utl_retcode_log_t){.retcode = utl_retcode_OK};
+    return (utl_retcode_log_t){.log = state_utl->log,
+                               .retcode = utl_retcode_OK};
 }
 
-static utl_log_t new_log_utl(const utl_loglvl_e lvl, const str func_name,
-                             const u32 line_num, const str format,
+static utl_log_t new_log_utl(const utl_loglvl_e lvl, const char* const func_name,
+                             const u32 line_num, const char* const format,
                              const utl_fmts_t values)
 {
     utl_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
@@ -242,24 +242,24 @@ static utl_log_t new_log_utl(const utl_loglvl_e lvl, const str func_name,
     return log;
 }
 
-#define LOG(loglvl, msg)                                        \
-    do                                                          \
-    {                                                           \
+#define LOG(loglvl, msg)                                           \
+    do                                                             \
+    {                                                              \
         mutable_state_utl.log = (utl_log_t){.lvl = (loglvl),       \
-                                         .line_num = __LINE__,  \
-                                         .func_name = __func__, \
-                                         .message = #msg};     \
-        state_utl->log_update_cb();                             \
+                                            .line_num = __LINE__,  \
+                                            .func_name = __func__, \
+                                            .message = #msg};      \
+        state_utl->log_update_cb();                                \
     } while (0)
 
 #ifdef DEBUG
-#define LOG_D(format, ...)                                                        \
-    do                                                                            \
-    {                                                                             \
-        mutable_state_utl.log = new_log_utl(utl_loglvl_DEBUG, __func__, __LINE__, \
-                                         format,                               \
-                                         (utl_fmts_t){.arr = {__VA_ARGS__}});    \
-        state_utl->log_update_cb();                                               \
+#define LOG_D(format, ...)                                            \
+    do                                                                \
+    {                                                                 \
+        mutable_state_utl.log =                                       \
+            new_log_utl(utl_loglvl_DEBUG, __func__, __LINE__, format, \
+                        (utl_fmts_t){.arr = {__VA_ARGS__}});          \
+        state_utl->log_update_cb();                                   \
     } while (0)
 #else
 #define LOG_D(...)
@@ -332,7 +332,7 @@ STATIC_ASSERT(sizeof(void*) == sizeof(usize), ptr_usize_bytes);
 
 /*
  * If aligned copy 32bit chunks from dest to src, else copy bytes. 
- * Assumes no overlap. Redundant void cast to silence -Wcast-align
+ * Assumes no overlap. 
  *
  * @param dest - copy destination 
  * @param src  - copy source
@@ -432,11 +432,11 @@ static inline bool utl_isinf(const f32 val)
 }
 
 /* Null terminator not included.*/
-static inline usize utl_strlen(str string)
+static inline usize utl_strlen(const char* str)
 {
-    ASSERT(string);
+    ASSERT(str);
     usize len = 0;
-    while (*string++ != '\0')
+    while (*str++ != '\0')
         ++len;
     return len;
 }
@@ -516,14 +516,14 @@ utl_f32tostr(const f32 val, char* buf, u8 decimals)
 
     if (utl_isnan(val))
     {
-        static str nan = "NaN";
+        static const char* nan = "NaN";
         utl_memcpy(buf, nan, utl_strlen(nan) + NULL_TERMINATOR_SZ);
         return buf;
     }
 
     if (utl_isinf(val))
     {
-        static str inf = "Inf";
+        static const char* inf = "Inf";
         utl_memcpy(buf, inf, utl_strlen(inf) + NULL_TERMINATOR_SZ);
         return buf;
     }
@@ -562,14 +562,14 @@ utl_f32tostr(const f32 val, char* buf, u8 decimals)
  * @param vals - struct wrapped array of format specifier values
  * @return - the destination string buffer
 */
-static str utl_sprintf(char* buf, const usize bufsz, str format,
-                               const utl_fmts_t vals)
+static const char* utl_sprintf(char* buf, const usize bufsz, str format,
+                       const utl_fmts_t vals)
 {
     ASSERT(buf);
     ASSERT(format);
 
-    str first = buf;
-    str last = buf + bufsz - 1;
+    const char* first = buf;
+    const char* last = buf + bufsz - 1;
     usize i_vals = 0;
 
     while (*format != '\0')
@@ -619,11 +619,11 @@ static str utl_sprintf(char* buf, const usize bufsz, str format,
                     utl_f32tostr(val.f, buf, 3);
                     break;
                 case 's': {
-                    str str_val = val.s;
+                    const char* str = val.s;
                     do
                     {
-                        *buf = *str_val;
-                    } while (*str_val++ != '\0' && ++buf);
+                        *buf = *str;
+                    } while (*str++ != '\0' && ++buf);
                     break;
                 }
                 default:
@@ -638,7 +638,7 @@ static str utl_sprintf(char* buf, const usize bufsz, str format,
     return first;
 }
 
-static void do_nothing_utl(void) 
+static void do_nothing_utl(void)
 {
 }
 
@@ -668,7 +668,7 @@ typedef struct {
 } state_ctp_t;
 
 //NOLINTBEGIN
-static state_ctp_t mutable_state_ctp; // API func !l-value! usage only
+static state_ctp_t mutable_state_ctp = {0}; // API func !l-value! usage only
 static const state_ctp_t* state_ctp = &mutable_state_ctp; // API func usage only
 //NOLINTEND
 
@@ -725,7 +725,7 @@ typedef struct {
 } state_cor_t;
 
 //NOLINTBEGIN
-static state_cor_t mutable_state_cor; // API func !l-value! usage only
+static state_cor_t mutable_state_cor = {0}; // API func !l-value! usage only
 static const state_cor_t* state_cor = &mutable_state_cor; // API func usage only
 //NOLINTEND
 

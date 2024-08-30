@@ -51,7 +51,7 @@ void tst_cb_log_update(void)
             lvl = "ASSERT";
             break;
     }
-    printf("%s | %s::%d  %s\n", lvl, ret.log.func_name, ret.log.line_num, ret.log.message);
+    printf("%s | %s::%d | %s\n", lvl, ret.log.func_name, ret.log.line_num, ret.log.message);
     (void)fflush(stdout);
 }
 
