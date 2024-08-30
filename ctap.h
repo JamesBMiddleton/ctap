@@ -12,6 +12,7 @@
 #define false 0
 #define NULL ((void*)0)
 
+typedef const char* str;
 typedef float f32;
 typedef unsigned char u8;
 typedef unsigned short int u16;
@@ -58,15 +59,15 @@ typedef enum {
 } ctp_loglvl_e;
 
 typedef struct {
-    const ctp_loglvl_e lvl;
-    const u32 line_num;
-    const char* func_name;
+    ctp_loglvl_e lvl;
+    u32 line_num;
+    str func_name;
     char message[MAX_LOG_SZ];
 } ctp_log_t;
 
 typedef struct {
-    const ctp_log_t log;
-    const ctp_retcode_e retcode;
+    ctp_log_t log;
+    ctp_retcode_e retcode;
 } ctp_retcode_log_t;
 
 typedef void (*ctp_cb_log_update)(void);
@@ -119,11 +120,11 @@ static cor_retcode_e cor_init(cor_init_args_t args);
 #define MAX_FMT_ARGS 5
 
 typedef union {
-    const char c;
-    const char* s;
-    const i32 d;
-    const u32 u;
-    const f32 f;
+    str s;
+    char c;
+    i32 d;
+    u32 u;
+    f32 f;
 } utl_fmt_u;
 
 typedef struct {
@@ -147,13 +148,13 @@ typedef enum {
 typedef struct {
     utl_loglvl_e lvl;
     u32 line_num;
-    const char* func_name;
+    str func_name;
     char message[MAX_LOG_SZ];
 } utl_log_t;
 
 typedef struct {
-    const utl_log_t log;
-    const utl_retcode_e retcode;
+    utl_log_t log;
+    utl_retcode_e retcode;
 } utl_retcode_log_t;
 
 typedef void(utl_cb_log_update)(void);
@@ -167,12 +168,12 @@ static utl_retcode_e utl_init(utl_init_args_t args);
 
 static utl_retcode_log_t utl_get_log(void);
 
-static const char* utl_sprintf(char* buf, usize bufsz, const char* format,
+static str utl_sprintf(char* buf, usize bufsz, str format,
                                utl_fmts_t vals);
 
 static const void* utl_memcpy(void* dest, const void* src, usize count);
 
-static inline usize utl_strlen(const char* str);
+static inline usize utl_strlen(str string);
 
 static inline i32 utl_powi(i32 base, u32 exp);
 static inline u32 utl_powu(u32 base, u32 exp);
@@ -232,8 +233,8 @@ static utl_retcode_log_t utl_get_log(void)
     return (utl_retcode_log_t){.retcode = utl_retcode_OK};
 }
 
-static utl_log_t new_log_utl(const utl_loglvl_e lvl, const char* func_name,
-                             const u32 line_num, const char* format,
+static utl_log_t new_log_utl(const utl_loglvl_e lvl, const str func_name,
+                             const u32 line_num, const str format,
                              const utl_fmts_t values)
 {
     utl_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
@@ -408,7 +409,7 @@ static inline f32 utl_powf(f32 base, i32 exp)
     return (exp > 0) ? result : 1.0F / result;
 }
 
-static inline u32 utl_abs(i32 val)
+static inline u32 utl_abs(const i32 val)
 {
     return (val < 0) ? -(u32)val : (u32)val;
 }
@@ -419,23 +420,23 @@ static inline f32 utl_fabs(f32 val)
 }
 
 /* Requires IEEE 754 compliant floats. */
-static inline bool utl_isnan(f32 val)
+static inline bool utl_isnan(const f32 val)
 {
     return val != val;
 }
 
 /* Requires IEEE 754 compliant floats. */
-static inline bool utl_isinf(f32 val)
+static inline bool utl_isinf(const f32 val)
 {
     return !utl_isnan(val) && utl_isnan(val - val);
 }
 
 /* Null terminator not included.*/
-static inline usize utl_strlen(const char* str)
+static inline usize utl_strlen(str string)
 {
-    ASSERT(str);
+    ASSERT(string);
     usize len = 0;
-    while (*str++ != '\0')
+    while (*string++ != '\0')
         ++len;
     return len;
 }
@@ -508,21 +509,21 @@ static char* utl_i32tostr(i32 val, char* buf)
  * @return buf
 */
 __attribute__((no_sanitize("undefined"))) static char*
-utl_f32tostr(f32 val, char* buf, u8 decimals)
+utl_f32tostr(const f32 val, char* buf, u8 decimals)
 {
     ASSERT(buf);
     static const f32 base = 10;
 
     if (utl_isnan(val))
     {
-        static const char* nan = "NaN";
+        static str nan = "NaN";
         utl_memcpy(buf, nan, utl_strlen(nan) + NULL_TERMINATOR_SZ);
         return buf;
     }
 
     if (utl_isinf(val))
     {
-        static const char* inf = "Inf";
+        static str inf = "Inf";
         utl_memcpy(buf, inf, utl_strlen(inf) + NULL_TERMINATOR_SZ);
         return buf;
     }
@@ -561,14 +562,14 @@ utl_f32tostr(f32 val, char* buf, u8 decimals)
  * @param vals - struct wrapped array of format specifier values
  * @return - the destination string buffer
 */
-static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
+static str utl_sprintf(char* buf, const usize bufsz, str format,
                                const utl_fmts_t vals)
 {
     ASSERT(buf);
     ASSERT(format);
 
-    const char* first = buf;
-    const char* last = buf + bufsz - 1;
+    str first = buf;
+    str last = buf + bufsz - 1;
     usize i_vals = 0;
 
     while (*format != '\0')
@@ -618,11 +619,11 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
                     utl_f32tostr(val.f, buf, 3);
                     break;
                 case 's': {
-                    const char* str = val.s;
+                    str str_val = val.s;
                     do
                     {
-                        *buf = *str;
-                    } while (*str++ != '\0' && ++buf);
+                        *buf = *str_val;
+                    } while (*str_val++ != '\0' && ++buf);
                     break;
                 }
                 default:
@@ -637,12 +638,24 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
     return first;
 }
 
-static utl_retcode_e utl_init(utl_init_args_t args)
+static void do_nothing_utl(void) 
 {
-    if (args.log_update_cb == NULL || args.panic_cb == NULL)
-        return utl_retcode_NULL_CB;
+}
+
+/* Intentionally trigger a 'divide by zero' trap */
+static void divzero_utl(void)
+{
+    u32 zero = 0;
+    (void)(1 / zero);
+}
+
+static utl_retcode_e utl_init(const utl_init_args_t args)
+{
     mutable_state_utl.log_update_cb = args.log_update_cb;
     mutable_state_utl.panic_cb = args.panic_cb;
+
+    ASSIGN_IF_ZERO(mutable_state_utl.log_update_cb, do_nothing_utl);
+    ASSIGN_IF_ZERO(mutable_state_utl.panic_cb, divzero_utl);
     return utl_retcode_OK;
 }
 
@@ -659,20 +672,9 @@ static state_ctp_t mutable_state_ctp; // API func !l-value! usage only
 static const state_ctp_t* state_ctp = &mutable_state_ctp; // API func usage only
 //NOLINTEND
 
-static void null_log_update_cb_ctp(void)
+ctp_retcode_log_t ctp_get_log(void)
 {
-}
-
-/* Intentionally trigger a 'divide by zero' trap */
-static void null_panic_cb_ctp(void)
-{
-    u32 zero = 0;
-    (void)(1 / zero);
-}
-
-static ctp_retcode_log_t ctp_get_log(void)
-{
-    utl_retcode_log_t ret = utl_get_log();
+    const utl_retcode_log_t ret = utl_get_log();
     if (ret.retcode == utl_retcode_NULL_LOG)
         return (ctp_retcode_log_t){.retcode = ctp_retcode_NULL_LOG};
 
@@ -702,11 +704,8 @@ static ctp_retcode_log_t ctp_get_log(void)
     return (ctp_retcode_log_t){.log = log, .retcode = ctp_retcode_OK};
 }
 
-ctp_retcode_e ctp_init(ctp_args_init_t args)
+ctp_retcode_e ctp_init(const ctp_args_init_t args)
 {
-    ASSIGN_IF_ZERO(args.log_update_cb, null_log_update_cb_ctp);
-    ASSIGN_IF_ZERO(args.panic_cb, null_panic_cb_ctp);
-
     utl_init((utl_init_args_t){.log_update_cb = args.log_update_cb,
                                .panic_cb = args.panic_cb});
 
