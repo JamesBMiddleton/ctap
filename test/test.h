@@ -13,9 +13,8 @@ i32 main(void)
 #include <stdio.h>
 #include <stdlib.h>
 
-void tst_logger_cb(ctp_log_t log);
-void tst_null_logger_cb(ctp_log_t log);
-void tst_panic_cb(void);
+void tst_cb_log_update(void);
+void tst_cb_panic(void);
 void tst_init(void);
 
 typedef struct {
@@ -24,13 +23,17 @@ typedef struct {
 static state_tst_t mutable_state_tst; 
 static const state_tst_t* state_tst = &mutable_state_tst; 
 
-void tst_logger_cb(ctp_log_t log)
+void tst_cb_log_update(void)
 {
     if (state_tst->suppress_logs == true)
         return;
 
+    ctp_retcode_log_t ret = ctp_get_log();
+    if (ret.retcode != ctp_retcode_OK)
+        printf("PAANICIICICIC");
+
     const char* lvl = "UNKNOWN";
-    switch (log.lvl)
+    switch (ret.log.lvl)
     {
         case ctp_loglvl_DEBUG:
             lvl = "DEBUG";
@@ -48,11 +51,11 @@ void tst_logger_cb(ctp_log_t log)
             lvl = "ASSERT";
             break;
     }
-    printf("%s | %s::%d  %s\n", lvl, log.func_name, log.line_num, log.message);
+    printf("%s | %s::%d  %s\n", lvl, ret.log.func_name, ret.log.line_num, ret.log.message);
     (void)fflush(stdout);
 }
 
-__attribute__((noreturn)) void tst_panic_cb(void)
+__attribute__((noreturn)) void tst_cb_panic(void)
 {
     (void)fflush(stdout);
     abort();
@@ -63,7 +66,7 @@ __attribute__((noreturn)) void tst_panic_cb(void)
 
 void tst_init(void)
 {
-    ctp_init((ctp_init_args_t){.logger_cb = tst_logger_cb,
-                               .panic_cb = tst_panic_cb});
+    ctp_init((ctp_args_init_t){.log_update_cb = tst_cb_log_update,
+                               .panic_cb = tst_cb_panic});
     mutable_state_tst.suppress_logs = false;
 }

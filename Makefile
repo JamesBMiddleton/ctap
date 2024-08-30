@@ -16,6 +16,7 @@ DEBUG_CFLAGS := -DDEBUG -O0 -Weverything -Werror -fsanitize=address \
 				-fsanitize=undefined -fno-omit-frame-pointer \
 				-fstack-protector-strong -fno-inline \
 				-Wno-declaration-after-statement \
+				-Wno-padded \
 				$(CFLAGS)
 
 # Find all tests we want to compile

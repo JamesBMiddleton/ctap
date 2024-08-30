@@ -41,7 +41,11 @@ typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 ////////////////////////////////// CTAP API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum { ctp_retcode_OK, ctp_retcode_NULL_CB } ctp_retcode_e;
+typedef enum {
+    ctp_retcode_OK,
+    ctp_retcode_NULL_CB,
+    ctp_retcode_NULL_LOG
+} ctp_retcode_e;
 
 #define MAX_LOG_SZ 256
 
@@ -60,17 +64,25 @@ typedef struct {
     char message[MAX_LOG_SZ];
 } ctp_log_t;
 
-typedef void (*ctp_logger_cb)(const ctp_log_t);
-typedef void (*ctp_panic_cb)(void);
+typedef struct {
+    const ctp_log_t log;
+    const ctp_retcode_e retcode;
+} ctp_retcode_log_t;
+
+typedef void (*ctp_cb_log_update)(void);
+typedef void (*ctp_cb_panic)(void);
 
 typedef struct {
-    ctp_logger_cb logger_cb; // Optional.
-    ctp_panic_cb panic_cb; // Optional.
     // map..
     // input_cb..
-} ctp_init_args_t;
+    ctp_cb_log_update log_update_cb; // Optional.
+    ctp_cb_panic panic_cb; // Optional.
+} ctp_args_init_t;
 
-ctp_retcode_e ctp_init(ctp_init_args_t args);
+ctp_retcode_e ctp_init(ctp_args_init_t args);
+ctp_retcode_log_t ctp_get_log(void);
+// ctp_ret_frame_t ctp_get_frame(void).. ctp_frame_notify_cb
+// ctp_retcode_e
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CORE API ////////////////////////////////////
@@ -118,7 +130,11 @@ typedef struct {
     utl_fmt_u arr[MAX_FMT_ARGS];
 } utl_fmts_t;
 
-typedef enum { utl_retcode_OK, utl_retcode_NULL_CB } utl_retcode_e;
+typedef enum {
+    utl_retcode_OK,
+    utl_retcode_NULL_CB,
+    utl_retcode_NULL_LOG
+} utl_retcode_e;
 
 typedef enum {
     utl_loglvl_ASSERT,
@@ -129,20 +145,27 @@ typedef enum {
 } utl_loglvl_e;
 
 typedef struct {
-    const utl_loglvl_e lvl;
-    const u32 line_num;
+    utl_loglvl_e lvl;
+    u32 line_num;
     const char* func_name;
     char message[MAX_LOG_SZ];
 } utl_log_t;
 
-typedef void(utl_logger_cb)(const utl_log_t);
-typedef void(utl_panic_cb)(void);
 typedef struct {
-    utl_logger_cb* logger_cb;
-    utl_panic_cb* panic_cb;
+    const utl_log_t log;
+    const utl_retcode_e retcode;
+} utl_retcode_log_t;
+
+typedef void(utl_cb_log_update)(void);
+typedef void(utl_cb_panic)(void);
+typedef struct {
+    utl_cb_log_update* log_update_cb;
+    utl_cb_panic* panic_cb;
 } utl_init_args_t;
 
 static utl_retcode_e utl_init(utl_init_args_t args);
+
+static utl_retcode_log_t utl_get_log(void);
 
 static const char* utl_sprintf(char* buf, usize bufsz, const char* format,
                                utl_fmts_t vals);
@@ -183,8 +206,10 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-    utl_logger_cb* logger_cb;
-    utl_panic_cb* panic_cb;
+    utl_cb_panic* panic_cb;
+
+    utl_cb_log_update* log_update_cb;
+    utl_log_t log;
     // pool_t
 } state_utl_t;
 
@@ -200,6 +225,13 @@ static const state_utl_t* state_utl = &mutable_state_utl; // API func usage only
 #define F32_MAX_CHARS \
     (1 + U32_MAX_CHARS + 1 + F32_DECIMAL_CHARS) // '-2147483648.123'
 
+static utl_retcode_log_t utl_get_log(void)
+{
+    if (state_utl->log.line_num == 0)
+        return (utl_retcode_log_t){.retcode = utl_retcode_NULL_LOG};
+    return (utl_retcode_log_t){.retcode = utl_retcode_OK};
+}
+
 static utl_log_t new_log_utl(const utl_loglvl_e lvl, const char* func_name,
                              const u32 line_num, const char* format,
                              const utl_fmts_t values)
@@ -212,62 +244,68 @@ static utl_log_t new_log_utl(const utl_loglvl_e lvl, const char* func_name,
 #define LOG(loglvl, msg)                                        \
     do                                                          \
     {                                                           \
-        state_utl->logger_cb((utl_log_t){.lvl = (loglvl),       \
+        mutable_state_utl.log = (utl_log_t){.lvl = (loglvl),       \
                                          .line_num = __LINE__,  \
                                          .func_name = __func__, \
-                                         .message = #msg});     \
+                                         .message = #msg};     \
+        state_utl->log_update_cb();                             \
     } while (0)
 
 #ifdef DEBUG
-#define LOG_D(format, ...)                                                     \
-    do                                                                         \
-    {                                                                          \
-        state_utl->logger_cb(new_log_utl(utl_loglvl_DEBUG, __func__, __LINE__, \
+#define LOG_D(format, ...)                                                        \
+    do                                                                            \
+    {                                                                             \
+        mutable_state_utl.log = new_log_utl(utl_loglvl_DEBUG, __func__, __LINE__, \
                                          format,                               \
-                                         (utl_fmts_t){.arr = {__VA_ARGS__}})); \
+                                         (utl_fmts_t){.arr = {__VA_ARGS__}});    \
+        state_utl->log_update_cb();                                               \
     } while (0)
 #else
 #define LOG_D(...)
 #endif
 
-#define LOG_W(format, ...)                                                     \
-    do                                                                         \
-    {                                                                          \
-        state_utl->logger_cb(new_log_utl(utl_loglvl_WARN, __func__, __LINE__,  \
-                                         format,                               \
-                                         (utl_fmts_t){.arr = {__VA_ARGS__}})); \
+#define LOG_W(format, ...)                                           \
+    do                                                               \
+    {                                                                \
+        mutable_state_utl.log =                                      \
+            new_log_utl(utl_loglvl_WARN, __func__, __LINE__, format, \
+                        (utl_fmts_t){.arr = {__VA_ARGS__}});         \
+        state_utl->log_update_cb();                                  \
     } while (0)
 
-#define LOG_E(format, ...)                                                     \
-    do                                                                         \
-    {                                                                          \
-        state_utl->logger_cb(new_log_utl(utl_loglvl_ERROR, __func__, __LINE__, \
-                                         format,                               \
-                                         (utl_fmts_t){.arr = {__VA_ARGS__}})); \
+#define LOG_E(format, ...)                                            \
+    do                                                                \
+    {                                                                 \
+        mutable_state_utl.log =                                       \
+            new_log_utl(utl_loglvl_ERROR, __func__, __LINE__, format, \
+                        (utl_fmts_t){.arr = {__VA_ARGS__}});          \
+        state_utl->log_update_cb();                                   \
     } while (0)
 
-#define PANIC(msg)                                                \
-    do                                                            \
-    {                                                             \
-        state_utl->logger_cb((utl_log_t){.lvl = utl_loglvl_PANIC, \
-                                         .line_num = __LINE__,    \
-                                         .func_name = __func__,   \
-                                         .message = #msg});       \
-        state_utl->panic_cb();                                    \
+#define PANIC(msg)                                                   \
+    do                                                               \
+    {                                                                \
+        mutable_state_utl.log = (utl_log_t){.lvl = utl_loglvl_PANIC, \
+                                            .line_num = __LINE__,    \
+                                            .func_name = __func__,   \
+                                            .message = #msg};        \
+        state_utl->log_update_cb();                                  \
+        state_utl->panic_cb();                                       \
     } while (0)
 
 #ifdef DEBUG
-#define ASSERT(cond)                                                  \
-    do                                                                \
-    {                                                                 \
-        if (!(cond))                                                  \
-        {                                                             \
-            state_utl->logger_cb((utl_log_t){.lvl = utl_loglvl_ERROR, \
-                                             .line_num = __LINE__,    \
-                                             .func_name = __func__,   \
-                                             .message = #cond});      \
-            state_utl->panic_cb();                                    \
-        }                                                             \
+#define ASSERT(cond)                                                     \
+    do                                                                   \
+    {                                                                    \
+        if (!(cond))                                                     \
+        {                                                                \
+            mutable_state_utl.log = (utl_log_t){.lvl = utl_loglvl_ERROR, \
+                                                .line_num = __LINE__,    \
+                                                .func_name = __func__,   \
+                                                .message = #cond};       \
+            state_utl->log_update_cb();                                  \
+            state_utl->panic_cb();                                       \
+        }                                                                \
     } while (0)
 #else
 #define ASSERT(...)
@@ -601,9 +639,9 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
 
 static utl_retcode_e utl_init(utl_init_args_t args)
 {
-    if (args.logger_cb == NULL || args.panic_cb == NULL)
+    if (args.log_update_cb == NULL || args.panic_cb == NULL)
         return utl_retcode_NULL_CB;
-    mutable_state_utl.logger_cb = args.logger_cb;
+    mutable_state_utl.log_update_cb = args.log_update_cb;
     mutable_state_utl.panic_cb = args.panic_cb;
     return utl_retcode_OK;
 }
@@ -613,7 +651,7 @@ static utl_retcode_e utl_init(utl_init_args_t args)
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-    ctp_logger_cb logger_cb;
+    u32 placeholder;
 } state_ctp_t;
 
 //NOLINTBEGIN
@@ -621,9 +659,8 @@ static state_ctp_t mutable_state_ctp; // API func !l-value! usage only
 static const state_ctp_t* state_ctp = &mutable_state_ctp; // API func usage only
 //NOLINTEND
 
-static void null_logger_cb_ctp(const ctp_log_t log)
+static void null_log_update_cb_ctp(void)
 {
-    (void)log;
 }
 
 /* Intentionally trigger a 'divide by zero' trap */
@@ -633,41 +670,44 @@ static void null_panic_cb_ctp(void)
     (void)(1 / zero);
 }
 
-static void fwd_logger_cb_ctp(const utl_log_t in_log)
+static ctp_retcode_log_t ctp_get_log(void)
 {
-    ctp_loglvl_e out_lvl = ctp_loglvl_DEBUG;
-    switch (in_log.lvl)
+    utl_retcode_log_t ret = utl_get_log();
+    if (ret.retcode == utl_retcode_NULL_LOG)
+        return (ctp_retcode_log_t){.retcode = ctp_retcode_NULL_LOG};
+
+    ctp_loglvl_e lvl = ctp_loglvl_DEBUG;
+    switch (ret.log.lvl)
     {
         case utl_loglvl_DEBUG:
-            out_lvl = ctp_loglvl_DEBUG;
+            lvl = ctp_loglvl_DEBUG;
             break;
         case utl_loglvl_WARN:
-            out_lvl = ctp_loglvl_WARN;
+            lvl = ctp_loglvl_WARN;
             break;
         case utl_loglvl_ERROR:
-            out_lvl = ctp_loglvl_ERROR;
+            lvl = ctp_loglvl_ERROR;
             break;
         case utl_loglvl_PANIC:
-            out_lvl = ctp_loglvl_PANIC;
+            lvl = ctp_loglvl_PANIC;
             break;
         case utl_loglvl_ASSERT:
-            out_lvl = ctp_loglvl_ASSERT;
+            lvl = ctp_loglvl_ASSERT;
             break;
     }
-    ctp_log_t out_log = {.lvl = out_lvl,
-                         .line_num = in_log.line_num,
-                         .func_name = in_log.func_name};
-    utl_memcpy(out_log.message, in_log.message, utl_strlen(in_log.message) + 1);
-    mutable_state_ctp.logger_cb(out_log);
+    ctp_log_t log = {.lvl = lvl,
+                     .line_num = ret.log.line_num,
+                     .func_name = ret.log.func_name};
+    utl_memcpy(log.message, ret.log.message, utl_strlen(ret.log.message) + 1);
+    return (ctp_retcode_log_t){.log = log, .retcode = ctp_retcode_OK};
 }
 
-ctp_retcode_e ctp_init(ctp_init_args_t args)
+ctp_retcode_e ctp_init(ctp_args_init_t args)
 {
-    ASSIGN_IF_ZERO(args.logger_cb, null_logger_cb_ctp);
+    ASSIGN_IF_ZERO(args.log_update_cb, null_log_update_cb_ctp);
     ASSIGN_IF_ZERO(args.panic_cb, null_panic_cb_ctp);
 
-    mutable_state_ctp.logger_cb = args.logger_cb;
-    utl_init((utl_init_args_t){.logger_cb = fwd_logger_cb_ctp,
+    utl_init((utl_init_args_t){.log_update_cb = args.log_update_cb,
                                .panic_cb = args.panic_cb});
 
     const u32 placeholder = 42;
