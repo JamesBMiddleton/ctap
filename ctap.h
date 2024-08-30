@@ -12,7 +12,6 @@
 #define false 0
 #define NULL ((void*)0)
 
-typedef const char* str;
 typedef float f32;
 typedef unsigned char u8;
 typedef unsigned short int u16;
