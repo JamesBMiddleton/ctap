@@ -81,8 +81,7 @@ typedef struct {
 
 ctp_retcode_e ctp_init(ctp_args_init_t args);
 ctp_retcode_log_t ctp_get_log(void);
-// ctp_ret_frame_t ctp_get_frame(void).. ctp_frame_notify_cb
-// ctp_retcode_e
+// ctp_retcode_frame_t ctp_get_frame(void).. ctp_frame_notify_cb
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CORE API ////////////////////////////////////
@@ -826,6 +825,9 @@ SOFTWARE.
 void tmp(void);
 void tmp(void) // suppress 'unused' warnings temporarily
 {
+    FEQUAL(1,1);
+    MIN(1,3);
+    MAX(1,3);
     LOG_D("Hello World", 0);
     LOG_W("Hello World", 0);
     LOG_E("Hello World", 0);
