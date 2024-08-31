@@ -167,7 +167,8 @@ static utl_retcode_e utl_init(utl_init_args_t args);
 
 static utl_retcode_log_t utl_get_log(void);
 
-static const char* utl_sprintf(char* buf, usize bufsz, str format, utl_fmts_t vals);
+static const char* utl_sprintf(char* buf, usize bufsz, const char* format,
+                               utl_fmts_t vals);
 
 static const void* utl_memcpy(void* dest, const void* src, usize count);
 
@@ -197,6 +198,9 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
  * ASSIGN_IF_ZERO(lvalue, rvalue)
  * ASSERT(cond)
  * STATIC_ASSERT(cond, msg)
+ * FEQUAL(left, right)
+ * MIN(left, right)
+ * MAX(left, right)
  *
 */
 
@@ -232,9 +236,9 @@ static utl_retcode_log_t utl_get_log(void)
                                .retcode = utl_retcode_OK};
 }
 
-static utl_log_t new_log_utl(const utl_loglvl_e lvl, const char* const func_name,
-                             const u32 line_num, const char* const format,
-                             const utl_fmts_t values)
+static utl_log_t new_log_utl(const utl_loglvl_e lvl,
+                             const char* const func_name, const u32 line_num,
+                             const char* const format, const utl_fmts_t values)
 {
     utl_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
     utl_sprintf(log.message, sizeof(log.message), format, values);
@@ -320,6 +324,15 @@ static utl_log_t new_log_utl(const utl_loglvl_e lvl, const char* const func_name
 #define STATIC_ASSERT(cond, msg) \
     typedef char static_assert_##msg[(cond) ? 1 : -1]
 
+#define FEQUAL_DELTA 1E-6f
+#define FEQUAL(left, right)                    \
+    ((((left) - (right)) > -(FEQUAL_DELTA)) && \
+     (((left) - (right)) < (FEQUAL_DELTA)))
+
+#define MIN(left, right) (((left)<(right))?(left):(right))
+
+#define MAX(left, right) (((left)>(right))?(left):(right))
+
 STATIC_ASSERT(sizeof(u8) == 1, u8_1_byte);
 STATIC_ASSERT(sizeof(u16) == 2, u16_2_bytes);
 STATIC_ASSERT(sizeof(u32) == 4, u32_4_bytes);
@@ -394,7 +407,7 @@ static inline f32 utl_powf(f32 base, i32 exp)
 {
     f32 result = 1;
     if (exp == 0)
-        return result;
+        return (base < 0) ? -result : result;
     u32 abs_exp = utl_abs(exp);
     while (true)
     {
@@ -561,8 +574,8 @@ utl_f32tostr(const f32 val, char* buf, u8 decimals)
  * @param vals - struct wrapped array of format specifier values
  * @return - the destination string buffer
 */
-static const char* utl_sprintf(char* buf, const usize bufsz, str format,
-                       const utl_fmts_t vals)
+static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
+                               const utl_fmts_t vals)
 {
     ASSERT(buf);
     ASSERT(format);
