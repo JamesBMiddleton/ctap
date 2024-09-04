@@ -2,27 +2,22 @@
 
 static void powi_check(void)
 {
-    LOG_D("%d", {.d=utl_powi(-5, 2)});
-    LOG_D("%d", {.d=utl_powi(-1, 1)});
     ASSERT(utl_powi(0, 0) == 1);
-
     ASSERT(utl_powi(0, 1) == 0);
+
     ASSERT(utl_powi(1, 0) == 1);
-    ASSERT(utl_powi(1, 1) == 1);
     ASSERT(utl_powi(1, 1) == 1);
     ASSERT(utl_powi(1, 5) == 1);
     ASSERT(utl_powi(2, 5) == 32);
     ASSERT(utl_powi(5, 2) == 25);
     ASSERT(utl_powi(14, 8) == 1475789056);
 
-    ASSERT(utl_powi(-0, 1) == -0);
-    ASSERT(utl_powi(-1, 0) == -1);
-    ASSERT(utl_powi(-1, 1) == -1);
+    ASSERT(utl_powi(-1, 0) == 1);
     ASSERT(utl_powi(-1, 1) == -1);
     ASSERT(utl_powi(-1, 5) == -1);
     ASSERT(utl_powi(-2, 5) == -32);
-    ASSERT(utl_powi(-5, 2) == -25);
-    ASSERT(utl_powi(-14, 8) == -1475789056);
+    ASSERT(utl_powi(-5, 2) == 25);
+    ASSERT(utl_powi(-14, 7) == -105413504);
 }
 
 static void powu_check(void)
@@ -40,18 +35,28 @@ static void powu_check(void)
 
 static void powf_check(void)
 {
-    ASSERT(FEQUAL(utl_powf(0, 1), 0));
-    ASSERT(FEQUAL(utl_powf(-1, 0), -1));
     ASSERT(FEQUAL(utl_powf(0, 0), 1));
+    ASSERT(FEQUAL(utl_powf(0, 1), 0));
+    ASSERT(FEQUAL(utl_powf(-1, 0), 1));
+    ASSERT(utl_isinf(utl_powf(0, -1)));
+
     ASSERT(FEQUAL(utl_powf(42, 0), 1));
+    ASSERT(FEQUAL(utl_powf(42, 1), 42));
+    ASSERT(FEQUAL(utl_powf(42, 2), 1764));
+    ASSERT(FEQUAL(utl_powf(42, 3), 74088));
+
+    ASSERT(FEQUAL(utl_powf(-42, 0), 1));
+    ASSERT(FEQUAL(utl_powf(-42, 1), -42));
+    ASSERT(FEQUAL(utl_powf(-42, 2), 1764));
+    ASSERT(FEQUAL(utl_powf(-42, 3), -74088));
+
     ASSERT(FEQUAL(utl_powf(0.1f, -1), 10));
-    ASSERT(FEQUAL(utl_powf(1, 2), 1));
-    ASSERT(FEQUAL(utl_powf(2, 2), 4));
-    ASSERT(FEQUAL(utl_powf(2, 2), 4));
     ASSERT(FEQUAL(utl_powf(1.5f, 42), 24878997.7221f));
     ASSERT(FEQUAL(utl_powf(1.5f, -42), 4.01945452614e-8f));
 
-    ASSERT(utl_isinf(utl_powf(0, -1)));
+    ASSERT(FEQUAL(utl_powf(-0.1f, -1), -10));
+    ASSERT(FEQUAL(utl_powf(-1.5f, 42), 24878997.7221f));
+    ASSERT(FEQUAL(utl_powf(-1.5f, -42), 4.01945452614e-8f));
 }
 
 static void abs_check(void)

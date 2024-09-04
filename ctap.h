@@ -389,6 +389,8 @@ static inline i32 utl_powi(i32 base, u32 exp)
 static inline u32 utl_powu(u32 base, u32 exp)
 {
     u32 result = 1;
+    if (exp == 0)
+        return result;
     while (true)
     {
         if (exp & 1U)
@@ -406,7 +408,7 @@ static inline f32 utl_powf(f32 base, i32 exp)
 {
     f32 result = 1;
     if (exp == 0)
-        return (base < 0) ? -result : result;
+        return result;
     u32 abs_exp = utl_abs(exp);
     while (true)
     {
