@@ -29,9 +29,9 @@ typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 #define U32_MAX (4294967295U)
 #define I8_MIN (-128)
 #define I8_MAX (127)
-#define I16_MIN (-32767 - 1)
+#define I16_MIN (-32768)
 #define I16_MAX (32767)
-#define I32_MIN (-2147483647 - 1)
+#define I32_MIN (-2147483648)
 #define I32_MAX (2147483647)
 
 #define F32_MIN (1.17549435e-38F) //! Assumes IEEE-754 compliance.
@@ -226,7 +226,7 @@ static const state_utl_t* state_utl = &mutable_state_utl; // API func usage only
 #define U32_MAX_CHARS (10) // '4294967295'
 #define U32_MAX_CHAR_THRESHOLD 1000000000
 #define F32_DECIMAL_CHARS (3)
-#define F32_MAX_CHARS \
+#define NUMERIC_MAX_CHARS \
     (1 + U32_MAX_CHARS + 1 + F32_DECIMAL_CHARS) // '-2147483648.123'
 
 static utl_log_t utl_get_log(void)
@@ -609,7 +609,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
             const utl_fmt_u val = vals.arr[i_vals++];
 
             if (((specifier == 'd' || specifier == 'u' || specifier == 'f') &&
-                 (buf + F32_MAX_CHARS) > last) ||
+                 (buf + NUMERIC_MAX_CHARS) > last) ||
                 ((specifier == 's') && (buf + utl_strlen(val.s) > last)))
             {
                 LOG(utl_loglvl_ERROR, "Destination buffer too small.");

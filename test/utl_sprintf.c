@@ -30,7 +30,7 @@ static void error_check(void)
     utl_sprintf(arr, 16, "floatdon'tfit%f", (utl_fmts_t){.arr = {{.f = 1.0f}}});
     ASSERT(strcmp(arr, "floatdon'tfit") == 0);
 
-    utl_sprintf(arr, 15 + F32_MAX_CHARS, "intjustdon'tfit%d",
+    utl_sprintf(arr, 15 + NUMERIC_MAX_CHARS, "intjustdon'tfit%d",
                 (utl_fmts_t){.arr = {{.d = 1}}});
     ASSERT(strcmp(arr, "intjustdon'tfit") == 0);
 }
@@ -44,11 +44,11 @@ static void u32_check(void)
     ASSERT(strcmp(arr, "0") == 0);
 
     utl_sprintf(arr, sizeof(arr), "%u",
-                (utl_fmts_t){.arr = {{.u = 4294967295}}});
+                (utl_fmts_t){.arr = {{.u = U32_MAX}}});
     ASSERT(strcmp(arr, "4294967295") == 0);
 
     utl_sprintf(arr, sizeof(arr), "a%ua",
-                (utl_fmts_t){.arr = {{.u = 4294967295}}});
+                (utl_fmts_t){.arr = {{.u = U32_MAX}}});
     ASSERT(strcmp(arr, "a4294967295a") == 0);
 }
 
@@ -64,15 +64,15 @@ static void i32_check(void)
     ASSERT(strcmp(arr, "0") == 0);
 
     utl_sprintf(arr, sizeof(arr), "%d",
-                (utl_fmts_t){.arr = {{.d = -2147483648}}});
+                (utl_fmts_t){.arr = {{.d = I32_MIN}}});
     ASSERT(strcmp(arr, "-2147483648") == 0);
 
     utl_sprintf(arr, sizeof(arr), "%d",
-                (utl_fmts_t){.arr = {{.d = 2147483647}}});
+                (utl_fmts_t){.arr = {{.d = I32_MAX}}});
     ASSERT(strcmp(arr, "2147483647") == 0);
 
     utl_sprintf(arr, sizeof(arr), "a%da",
-                (utl_fmts_t){.arr = {{.d = -2147483648}}});
+                (utl_fmts_t){.arr = {{.d = I32_MIN}}});
     ASSERT(strcmp(arr, "a-2147483648a") == 0);
 }
 
@@ -145,7 +145,6 @@ i32 main(void)
     tst_init();
 
     error_check();
-
     u32_check();
     i32_check();
     f32_check();
