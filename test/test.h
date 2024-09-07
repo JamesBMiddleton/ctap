@@ -13,27 +13,25 @@ i32 main(void)
 #include <stdio.h>
 #include <stdlib.h>
 
-void tst_cb_log_update(void);
-void tst_cb_panic(void);
+void tst_log_update_callback(void);
+void tst_panic_callback(void);
 void tst_init(void);
 
 typedef struct {
     bool suppress_logs;
 } state_tst_t;
-static state_tst_t mutable_state_tst; 
-static const state_tst_t* state_tst = &mutable_state_tst; 
+static state_tst_t mutable_state_tst;
+static const state_tst_t* state_tst = &mutable_state_tst;
 
-void tst_cb_log_update(void)
+void tst_log_update_callback(void)
 {
     if (state_tst->suppress_logs == true)
         return;
 
-    ctp_retcode_log_t ret = ctp_get_log();
-    if (ret.retcode != ctp_retcode_OK)
-        printf("PAANICIICICIC");
+    ctp_log_t log = ctp_get_log();
 
     const char* lvl = "UNKNOWN";
-    switch (ret.log.lvl)
+    switch (log.lvl)
     {
         case ctp_loglvl_DEBUG:
             lvl = "DEBUG";
@@ -51,11 +49,11 @@ void tst_cb_log_update(void)
             lvl = "ASSERT";
             break;
     }
-    printf("%s | %s::%d | %s\n", lvl, ret.log.func_name, ret.log.line_num, ret.log.message);
+    printf("%s | %s::%d | %s\n", lvl, log.func_name, log.line_num, log.message);
     (void)fflush(stdout);
 }
 
-__attribute__((noreturn)) void tst_cb_panic(void)
+__attribute__((noreturn)) void tst_panic_callback(void)
 {
     (void)fflush(stdout);
     abort();
@@ -66,7 +64,15 @@ __attribute__((noreturn)) void tst_cb_panic(void)
 
 void tst_init(void)
 {
-    ctp_init((ctp_args_init_t){.log_update_cb = tst_cb_log_update,
-                               .panic_cb = tst_cb_panic});
+    ctp_init_retcode_e retcode = ctp_init(
+        (ctp_init_args_t){.log_update_callback = tst_log_update_callback,
+                          .panic_callback = tst_panic_callback});
+    switch (retcode)
+    {
+        case ctp_init_retcode_OK:
+            break;
+        case ctp_init_retcode_NULL_CALLBACK:
+            abort();
+    }
     mutable_state_tst.suppress_logs = false;
 }

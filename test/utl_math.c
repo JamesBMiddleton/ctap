@@ -66,7 +66,7 @@ static void abs_check(void)
     ASSERT(utl_abs(-0) == 0);
     ASSERT(utl_abs(-123) == 123);
     ASSERT(utl_abs(123) == 123);
-    ASSERT(utl_abs(I32_MIN+1) == I32_MAX);
+    ASSERT(utl_abs(I32_MIN + 1) == I32_MAX);
 }
 
 static void fabs_check(void)
@@ -87,17 +87,16 @@ static void isnan_check(void)
     ASSERT(utl_isnan(F32_MAX) == false);
     ASSERT(utl_isnan(F32_MIN) == false);
     ASSERT(utl_isnan(-0.0f / 0.0f) == true);
-
 }
 static void isinf_check(void)
 {
     ASSERT(utl_isinf(0.0f) == false);
-    ASSERT(utl_isinf(1.0f) == false); 
-    ASSERT(utl_isinf(-1.0f) == false); 
-    ASSERT(utl_isinf(-0.0f / 0.0f) == false); 
+    ASSERT(utl_isinf(1.0f) == false);
+    ASSERT(utl_isinf(-1.0f) == false);
+    ASSERT(utl_isinf(-0.0f / 0.0f) == false);
     ASSERT(utl_isinf(F32_MAX) == false);
     ASSERT(utl_isinf(F32_MIN) == false);
-    ASSERT(utl_isinf(-1.0f / 0.0f) == true); 
+    ASSERT(utl_isinf(-1.0f / 0.0f) == true);
 }
 
 i32 main(void)
@@ -108,7 +107,7 @@ i32 main(void)
     powu_check();
     powf_check();
     abs_check();
-    fabs_check(); 
+    fabs_check();
     isnan_check();
     isinf_check();
 
