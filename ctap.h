@@ -43,10 +43,7 @@ typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 ////////////////////////////////// CTAP API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum {
-    ctp_retcode_OK,
-    ctp_retcode_NULL_CALLBACK
-} ctp_retcode_e;
+typedef enum { ctp_retcode_OK, ctp_retcode_NULL_CALLBACK } ctp_retcode_e;
 
 typedef struct {
     // map..
@@ -54,7 +51,6 @@ typedef struct {
     void (*log_update_callback)(void); // Optional.
     void (*panic_callback)(void); // Optional.
 } ctp_init_args_t;
-
 
 typedef enum {
     ctp_loglvl_ASSERT,
@@ -73,7 +69,6 @@ typedef struct {
     char message[MAX_LOG_SZ];
 } ctp_log_t;
 
-
 ctp_retcode_e ctp_init(ctp_init_args_t args);
 ctp_log_t ctp_get_log(void);
 
@@ -81,17 +76,12 @@ ctp_log_t ctp_get_log(void);
 //     u32 pixel_matrix;
 // } ctp_frame_t;
 //
-// typedef enum {
-//     ctp_get_frame_retcode_OK,
-//     ctp_get_frame_retcode_NOT_OKAY_PANIC
-// } ctp_get_frame_retcode_e;
-//
 // typedef struct {
 //     ctp_frame_t frame;
-//     ctp_get_frame_retcode_e retcode;
+//     ctp_retcode_e retcode;
 // } ctp_get_frame_retpkg_t;
 //
-//  ctp_get_frame_retpkg_t ctp_get_frame(void);
+//  ctp_retpkg_frame_t ctp_get_frame(void);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CORE API ////////////////////////////////////
@@ -216,10 +206,10 @@ typedef struct {
 
     utl_log_t log;
     // pool_t
-} state_utl_t;
+} iutl_state_t;
 
 //NOLINTBEGIN
-static state_utl_t state_utl = {0}; // API func !l-value! usage only
+static iutl_state_t iutl_state = {0}; // API func !l-value! usage only
 //NOLINTEND
 
 #define NULL_TERMINATOR_SZ 1
@@ -229,85 +219,88 @@ static state_utl_t state_utl = {0}; // API func !l-value! usage only
 #define NUMERIC_MAX_CHARS \
     (1 + U32_MAX_CHARS + 1 + F32_DECIMAL_CHARS) // '-2147483648.123'
 
+/*
+ * @return the last logged message.
+*/
 static utl_log_t utl_get_log(void)
 {
-    return state_utl.log;
+    return iutl_state.log;
 }
 
 static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
-                             const char* const func_name, const u32 line_num,
-                             const char* const format, const utl_fmts_t values)
+                              const char* const func_name, const u32 line_num,
+                              const char* const format, const utl_fmts_t values)
 {
     utl_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
     utl_sprintf(log.message, sizeof(log.message), format, values);
     return log;
 }
 
-#define LOG(loglvl, msg)                                           \
-    do                                                             \
-    {                                                              \
-        state_utl.log = (utl_log_t){.lvl = (loglvl),       \
-                                            .line_num = __LINE__,  \
-                                            .func_name = __func__, \
-                                            .message = #msg};      \
-        state_utl.log_update_callback();                          \
+#define LOG(loglvl, msg)                                    \
+    do                                                      \
+    {                                                       \
+        iutl_state.log = (utl_log_t){.lvl = (loglvl),       \
+                                     .line_num = __LINE__,  \
+                                     .func_name = __func__, \
+                                     .message = #msg};      \
+        iutl_state.log_update_callback();                   \
     } while (0)
 
 #ifdef DEBUG
-#define LOG_D(format, ...)                                            \
-    do                                                                \
-    {                                                                 \
-        state_utl.log =                                       \
+#define LOG_D(format, ...)                                             \
+    do                                                                 \
+    {                                                                  \
+        iutl_state.log =                                               \
             iutl_new_log(utl_loglvl_DEBUG, __func__, __LINE__, format, \
-                        (utl_fmts_t){.arr = {__VA_ARGS__}});          \
-        state_utl.log_update_callback();                             \
+                         (utl_fmts_t){.arr = {__VA_ARGS__}});          \
+        iutl_state.log_update_callback();                              \
     } while (0)
 #else
 #define LOG_D(...)
 #endif
 
-#define LOG_W(format, ...)                                           \
-    do                                                               \
-    {                                                                \
-        state_utl.log =                                      \
-            iutl_new_log(utl_loglvl_WARN, __func__, __LINE__, format, \
-                        (utl_fmts_t){.arr = {__VA_ARGS__}});         \
-        state_utl.log_update_callback();                            \
-    } while (0)
-
-#define LOG_E(format, ...)                                            \
+#define LOG_W(format, ...)                                            \
     do                                                                \
     {                                                                 \
-        state_utl.log =                                       \
-            iutl_new_log(utl_loglvl_ERROR, __func__, __LINE__, format, \
-                        (utl_fmts_t){.arr = {__VA_ARGS__}});          \
-        state_utl.log_update_callback();                             \
+        iutl_state.log =                                              \
+            iutl_new_log(utl_loglvl_WARN, __func__, __LINE__, format, \
+                         (utl_fmts_t){.arr = {__VA_ARGS__}});         \
+        iutl_state.log_update_callback();                             \
     } while (0)
 
-#define PANIC(msg)                                                   \
-    do                                                               \
-    {                                                                \
-        state_utl.log = (utl_log_t){.lvl = utl_loglvl_PANIC, \
-                                            .line_num = __LINE__,    \
-                                            .func_name = __func__,   \
-                                            .message = #msg};        \
-        state_utl.log_update_callback();                            \
-        state_utl.panic_callback();                                 \
+#define LOG_E(format, ...)                                             \
+    do                                                                 \
+    {                                                                  \
+        iutl_state.log =                                               \
+            iutl_new_log(utl_loglvl_ERROR, __func__, __LINE__, format, \
+                         (utl_fmts_t){.arr = {__VA_ARGS__}});          \
+        iutl_state.log_update_callback();                              \
+    } while (0)
+
+#define PANIC(msg)                                            \
+    do                                                        \
+    {                                                         \
+        iutl_state.log = (utl_log_t){.lvl = utl_loglvl_PANIC, \
+                                     .line_num = __LINE__,    \
+                                     .func_name = __func__,   \
+                                     .message = #msg};        \
+        iutl_state.log_update_callback();                     \
+        iutl_state.panic_callback();                          \
     } while (0)
 
 #ifdef DEBUG
-#define ASSERT(cond)                                                     \
-    do                                                                   \
-    {                                                                    \
-        if (!(cond))                                                     \
-        {                                                                \
-            state_utl.log = (utl_log_t){.lvl = utl_loglvl_ERROR, \
-                                                .line_num = __LINE__,    \
-                                                .func_name = __func__,   \
-                                                .message = #cond};       \
-            state_utl.log_update_callback();                            \
-            state_utl.panic_callback();                                 \
-        }                                                                \
+#define ASSERT(cond)                                              \
+    do                                                            \
+    {                                                             \
+        if (!(cond))                                              \
+        {                                                         \
+            iutl_state.log = (utl_log_t){.lvl = utl_loglvl_ERROR, \
+                                         .line_num = __LINE__,    \
+                                         .func_name = __func__,   \
+                                         .message = #cond};       \
+            iutl_state.log_update_callback();                     \
+            iutl_state.panic_callback();                          \
+        }                                                         \
     } while (0)
 #else
 #define ASSERT(...)
@@ -370,6 +363,11 @@ static const void* utl_memcpy(void* dest, const void* src, const usize count)
     return dest;
 }
 
+/*
+ * @param base - base.
+ * @param exp - exponent. 
+ * @return power.
+*/
 static inline i32 utl_powi(i32 base, u32 exp)
 {
     i32 result = 1;
@@ -385,6 +383,11 @@ static inline i32 utl_powi(i32 base, u32 exp)
     return result;
 }
 
+/*
+ * @param base - base.
+ * @param exp - exponent. 
+ * @return power.
+*/
 static inline u32 utl_powu(u32 base, u32 exp)
 {
     u32 result = 1;
@@ -402,7 +405,13 @@ static inline u32 utl_powu(u32 base, u32 exp)
     return result;
 }
 
-/* Can handle negative powers. */
+/*
+ * Can handle negative powers.
+ *
+ * @param base - base.
+ * @param exp - exponent. 
+ * @return power.
+*/
 static inline f32 utl_powf(f32 base, i32 exp)
 {
     f32 result = 1;
@@ -421,29 +430,50 @@ static inline f32 utl_powf(f32 base, i32 exp)
     return (exp > 0) ? result : 1.0F / result;
 }
 
+/* 
+ * @param val - pos/neg value.
+ * @return absolute value.
+*/
 static inline u32 utl_abs(const i32 val)
 {
     return (val < 0) ? -(u32)val : (u32)val;
 }
 
+/* 
+ * @param val - pos/neg value.
+ * @return absolute value.
+*/
 static inline f32 utl_fabs(f32 val)
 {
     return (val < 0) ? -val : val;
 }
 
-/* Requires IEEE 754 compliant floats. */
+/* 
+ * Requires IEEE 754 compliant floats. 
+ *
+ * @param val - potentially NaN float value.
+ * @return val is NaN.
+*/
 static inline bool utl_isnan(const f32 val)
 {
     return val != val;
 }
 
-/* Requires IEEE 754 compliant floats. */
+/* 
+ * Requires IEEE 754 compliant floats. 
+ *
+ * @param val - potentially infinite float value.
+ * @return val is infinity.
+*/
 static inline bool utl_isinf(const f32 val)
 {
     return !utl_isnan(val) && utl_isnan(val - val);
 }
 
-/* Null terminator not included.*/
+/* 
+ * @param str - null terminated string.
+ * @return length of str, null terminator not included.
+ * */
 static inline usize utl_strlen(const char* str)
 {
     ASSERT(str);
@@ -661,14 +691,20 @@ static void iutl_divzero(void)
     (void)(1 / zero);
 }
 
+/*
+ * Initialise the utilities module. 
+ *
+ * @param args initialisation arguments.
+ * @throw NULL_LOG, NULL_CALLBACK 
+*/
 static utl_retcode_e utl_init(const utl_init_args_t args)
 {
-    state_utl.log_update_callback = args.log_update_callback;
-    state_utl.panic_callback = args.panic_callback;
-    ASSIGN_IF_ZERO(state_utl.log_update_callback, iutl_do_nothing);
-    ASSIGN_IF_ZERO(state_utl.panic_callback, iutl_divzero);
+    iutl_state.log_update_callback = args.log_update_callback;
+    iutl_state.panic_callback = args.panic_callback;
+    ASSIGN_IF_ZERO(iutl_state.log_update_callback, iutl_do_nothing);
+    ASSIGN_IF_ZERO(iutl_state.panic_callback, iutl_divzero);
 
-    state_utl.log = (utl_log_t){
+    iutl_state.log = (utl_log_t){
         .func_name = __func__, .line_num = __LINE__, .message = EMPTY_STR};
 
     return utl_retcode_OK;
@@ -720,13 +756,20 @@ ctp_log_t ctp_get_log(void)
     return out_log;
 }
 
+/* 
+ * Initialise the ctap runtime.
+ *
+ * @param args - runtime initialisation arguments
+ * @throw NULL_CALLBACK, NULL_LOG 
+*/
 ctp_retcode_e ctp_init(const ctp_init_args_t args)
 {
-    switch (utl_init((utl_init_args_t){.log_update_callback = args.log_update_callback,
-                               .panic_callback = args.panic_callback}))
+    switch (utl_init(
+        (utl_init_args_t){.log_update_callback = args.log_update_callback,
+                          .panic_callback = args.panic_callback}))
     {
         case utl_retcode_OK:
-            LOG_D("utl initialisation successful.",0);
+            LOG_D("utl initialisation successful.", 0);
             break;
         default:
             PANIC("utl initialisaton failed");
@@ -758,18 +801,19 @@ typedef struct {
 static icor_state_t icor_state = {0}; // API func usage only
 //NOLINTEND
 
-typedef enum {
-    icor_retcode_OK,
-    icor_retcode_MAP_INVALID
-} icor_retcode_e;
-
-
+typedef enum { icor_retcode_OK, icor_retcode_MAP_INVALID } icor_retcode_e;
 
 typedef struct {
     u32 startiness;
     u32 num_horses;
 } icor_engine_starter_t;
 
+/*
+ * placeholder.
+ *
+ * @param starter - placeholder
+ * @throw MAP_INVALID
+*/
 static icor_retcode_e icor_start_the_engines(icor_engine_starter_t starter)
 {
     LOG_D("Engines started with %u startiness and %u horses!",
@@ -777,12 +821,18 @@ static icor_retcode_e icor_start_the_engines(icor_engine_starter_t starter)
     return icor_retcode_OK;
 }
 
+/*
+ * Initialise the core module. 
+ *
+ * @param args - initialisation arguments.
+ * @throw MAP_INVALID
+*/
 static cor_retcode_e cor_init(cor_init_args_t args)
 {
     icor_state.placeholder = args.placeholder;
     switch (icor_start_the_engines(
         (icor_engine_starter_t){.num_horses = icor_state.placeholder,
-                               .startiness = icor_state.placeholder}))
+                                .startiness = icor_state.placeholder}))
     {
         case icor_retcode_MAP_INVALID:
             LOG_E("Invalid map.", 0);
