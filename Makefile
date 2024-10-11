@@ -52,9 +52,9 @@ clean:
 
 # Build the test binaries
 $(TEST_BINS): $(TEST_OBJS)
-	$(CC) $(CFLAGS) -o $@ "$@.c.o"
+	$(CC) -o $@ "$@.c.o" $(CFLAGS) 
 
 # Build test object files
 $(BUILD_DIR)/$(TEST_DIR)/%.c.o: $(TEST_DIR)/%.c $(LIB_HEADER_NAME)
 	mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) -c $< -o $@ $(CFLAGS) 
