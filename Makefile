@@ -3,6 +3,8 @@ MAKEFLAGS += -j$(shell nproc)
 
 .SILENT: 
 
+.PHONY: check analyze format clean
+
 LIB_HEADER_NAME := ctap.h
 BUILD_DIR := out/build
 TEST_DIR := test
@@ -29,26 +31,21 @@ TEST_BINS = $(patsubst %.c.o,%,$(TEST_OBJS))
 # test log filepath = test binary filepath + .log
 TEST_LOGS = $(patsubst %.c.o,%.log,$(TEST_OBJS))
 
-
-.PHONY: check
 check: CFLAGS = $(DEBUG_CFLAGS)
 check: $(TEST_LOGS)
 
 $(TEST_LOGS): $(TEST_BINS)
 	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
-.PHONY: analyze
 analyze: CFLAGS = $(DEBUG_CFLAGS)
 analyze:
 	+ scan-build-15 make check
 
-.PHONY: format
 format: $(LIB_HEADER_NAME) $(TESTS)
 	clang-format-15 --verbose -i $(LIB_HEADER_NAME) $(TESTS)
 
-.PHONY: clean
 clean:
-	rm -r $(BUILD_DIR)
+	-rm -r $(BUILD_DIR)
 
 # Build the test binaries
 $(TEST_BINS): $(TEST_OBJS)
