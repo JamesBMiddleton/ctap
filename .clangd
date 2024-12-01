@@ -1,0 +1,2 @@
+CompileFlags:
+  Add: [-Wno-unsafe-buffer-usage] # clang-15 compiler doesn't recognise this for some reason
