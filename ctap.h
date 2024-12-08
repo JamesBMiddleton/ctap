@@ -43,7 +43,7 @@ typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 ////////////////////////////////// CTAP API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum { ctp_retcode_OK, ctp_retcode_NULL_CALLBACK } ctp_retcode_e;
+typedef enum { ctp_rc_OK, ctp_rc_NULL_CALLBACK } ctp_rc_e;
 
 typedef struct {
     // map..
@@ -69,31 +69,26 @@ typedef struct {
     char message[MAX_LOG_SZ];
 } ctp_log_t;
 
-ctp_retcode_e ctp_init(ctp_init_args_t args);
+void ctp_init(ctp_init_args_t args, ctp_rc_e* rc);
 ctp_log_t ctp_get_log(void);
 
 // typedef struct {
 //     u32 pixel_matrix;
 // } ctp_frame_t;
 //
-// typedef struct {
-//     ctp_frame_t frame;
-//     ctp_retcode_e retcode;
-// } ctp_get_frame_retpkg_t;
-//
-//  ctp_retpkg_frame_t ctp_get_frame(void);
+//  ctp_frame_t ctp_get_frame(ctp_retcode_e* retcode);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CORE API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum { cor_retcode_OK, cor_retcode_MAP_INVALID } cor_retcode_e;
+typedef enum { cor_rc_OK, cor_rc_MAP_INVALID } cor_rc_e;
 
 typedef struct {
     u32 placeholder;
 } cor_init_args_t;
 
-static cor_retcode_e cor_init(cor_init_args_t args);
+static void cor_init(cor_init_args_t args, cor_rc_e* rc);
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// GRAPHICS API ///////////////////////////////////
@@ -129,11 +124,7 @@ typedef struct {
     utl_fmt_u arr[MAX_FMT_ARGS];
 } utl_fmts_t;
 
-typedef enum {
-    utl_retcode_OK,
-    utl_retcode_NULL_CALLBACK,
-    utl_retcode_NULL_LOG
-} utl_retcode_e;
+typedef enum { utl_rc_OK, utl_rc_NULL_CALLBACK, utl_rc_NULL_LOG } utl_rc_e;
 
 typedef enum {
     utl_loglvl_ASSERT,
@@ -155,7 +146,7 @@ typedef struct {
     void (*panic_callback)(void);
 } utl_init_args_t;
 
-static utl_retcode_e utl_init(utl_init_args_t args);
+static void utl_init(utl_init_args_t args, utl_rc_e* rc);
 
 static utl_log_t utl_get_log(void);
 
@@ -697,7 +688,7 @@ static void iutl_divzero(void)
  * @param args initialisation arguments.
  * @throw NULL_LOG, NULL_CALLBACK 
 */
-static utl_retcode_e utl_init(const utl_init_args_t args)
+static void utl_init(utl_init_args_t args, utl_rc_e* rc)
 {
     iutl_state.log_update_callback = args.log_update_callback;
     iutl_state.panic_callback = args.panic_callback;
@@ -707,7 +698,7 @@ static utl_retcode_e utl_init(const utl_init_args_t args)
     iutl_state.log = (utl_log_t){
         .func_name = __func__, .line_num = __LINE__, .message = EMPTY_STR};
 
-    return utl_retcode_OK;
+    *rc = utl_rc_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -762,30 +753,36 @@ ctp_log_t ctp_get_log(void)
  * @param args - runtime initialisation arguments
  * @throw NULL_CALLBACK, NULL_LOG 
 */
-ctp_retcode_e ctp_init(const ctp_init_args_t args)
+void ctp_init(ctp_init_args_t args, ctp_rc_e* rc)
 {
-    switch (utl_init(
-        (utl_init_args_t){.log_update_callback = args.log_update_callback,
-                          .panic_callback = args.panic_callback}))
+    utl_rc_e utl_rc = utl_rc_OK;
+    utl_init((utl_init_args_t){.log_update_callback = args.log_update_callback,
+                               .panic_callback = args.panic_callback},
+             &utl_rc);
+    switch (utl_rc)
     {
-        case utl_retcode_OK:
+        case utl_rc_OK:
             LOG_D("utl initialisation successful.", 0);
             break;
+        case utl_rc_NULL_LOG:
+            LOG_W("utl initialisation failed", 0);
+            *rc = ctp_rc_NULL_CALLBACK;
+            return;
         default:
-            PANIC("utl initialisaton failed");
+            PANIC("utl initialisation failed with return code: ...");
     }
 
     const u32 placeholder = 42;
-    switch (cor_init((cor_init_args_t){.placeholder = placeholder}))
+    cor_rc_e cor_rc = cor_rc_OK;
+    cor_init((cor_init_args_t){.placeholder = placeholder}, &cor_rc);
+    switch (cor_rc)
     {
-        case cor_retcode_OK:
+        case cor_rc_OK:
             LOG_D("cor initialisation successful.", 0);
             break;
         default:
             PANIC("cor initialisation failed.");
     }
-
-    return ctp_retcode_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -801,8 +798,6 @@ typedef struct {
 static icor_state_t icor_state = {0}; // API func usage only
 //NOLINTEND
 
-typedef enum { icor_retcode_OK, icor_retcode_MAP_INVALID } icor_retcode_e;
-
 typedef struct {
     u32 startiness;
     u32 num_horses;
@@ -814,11 +809,18 @@ typedef struct {
  * @param starter - placeholder
  * @throw MAP_INVALID
 */
-static icor_retcode_e icor_start_the_engines(icor_engine_starter_t starter)
+static void icor_start_the_engines(icor_engine_starter_t starter, cor_rc_e* rc)
 {
+    if (starter.startiness == 0)
+        *rc = cor_rc_MAP_INVALID;
     LOG_D("Engines started with %u startiness and %u horses!",
           {.u = starter.startiness}, {.u = starter.num_horses});
-    return icor_retcode_OK;
+}
+
+static void icor_spaghettify_value(u32* value, cor_rc_e* rc)
+{
+    *value = 0;
+    *rc = cor_rc_OK;
 }
 
 /*
@@ -827,20 +829,22 @@ static icor_retcode_e icor_start_the_engines(icor_engine_starter_t starter)
  * @param args - initialisation arguments.
  * @throw MAP_INVALID
 */
-static cor_retcode_e cor_init(cor_init_args_t args)
+static void cor_init(cor_init_args_t args, cor_rc_e* rc)
 {
     icor_state.placeholder = args.placeholder;
-    switch (icor_start_the_engines(
+
+    icor_spaghettify_value(&icor_state.placeholder, rc);
+    if (rc != cor_rc_OK)
+        return;
+
+    icor_start_the_engines(
         (icor_engine_starter_t){.num_horses = icor_state.placeholder,
-                                .startiness = icor_state.placeholder}))
-    {
-        case icor_retcode_MAP_INVALID:
-            LOG_E("Invalid map.", 0);
-            return cor_retcode_MAP_INVALID;
-        case icor_retcode_OK:
-            LOG_D("Map loaded.", 0);
-    }
-    return cor_retcode_OK;
+                                .startiness = icor_state.placeholder},
+        rc);
+    if (*rc != cor_rc_OK)
+        return;
+
+    LOG_D("Map loaded.", 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

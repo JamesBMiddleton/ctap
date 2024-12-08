@@ -64,14 +64,14 @@ __attribute__((noreturn)) void tst_panic_callback(void)
 
 void tst_init(void)
 {
-    ctp_retcode_e retcode = ctp_init(
-        (ctp_init_args_t){.log_update_callback = tst_log_update_callback,
-                          .panic_callback = tst_panic_callback});
-    switch (retcode)
+    ctp_rc_e rc = ctp_rc_OK;
+    ctp_init((ctp_init_args_t){.log_update_callback = tst_log_update_callback,
+                          .panic_callback = tst_panic_callback}, &rc);
+    switch (rc)
     {
-        case ctp_retcode_OK:
+        case ctp_rc_OK:
             break;
-        case ctp_retcode_NULL_CALLBACK:
+        case ctp_rc_NULL_CALLBACK:
             abort();
     }
     mutable_state_tst.suppress_logs = false;
