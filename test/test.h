@@ -64,15 +64,9 @@ __attribute__((noreturn)) void tst_panic_callback(void)
 
 void tst_init(void)
 {
-    ctp_rc_e rc = ctp_rc_OK;
+    ctp_rc_e rc = {0};
     ctp_init((ctp_init_args_t){.log_update_callback = tst_log_update_callback,
                           .panic_callback = tst_panic_callback}, &rc);
-    switch (rc)
-    {
-        case ctp_rc_OK:
-            break;
-        case ctp_rc_NULL_CALLBACK:
-            abort();
-    }
+    ASSERT(rc == ctp_rc_OK);
     mutable_state_tst.suppress_logs = false;
 }

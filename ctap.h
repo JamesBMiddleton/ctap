@@ -37,13 +37,11 @@ typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 #define F32_MIN (1.17549435e-38F) //! Assumes IEEE-754 compliance.
 #define F32_MAX (3.40282347e+38F) //! Assumes IEEE-754 compliance.
 
-#define EMPTY_STR ""
-
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CTAP API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum { ctp_rc_OK, ctp_rc_NULL_CALLBACK } ctp_rc_e;
+typedef enum { ctp_rc_NONE, ctp_rc_OK, ctp_rc_NULL_CALLBACK } ctp_rc_e;
 
 typedef struct {
     // map..
@@ -82,7 +80,7 @@ ctp_log_t ctp_get_log(void);
 ////////////////////////////////// CORE API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum { cor_rc_OK, cor_rc_MAP_INVALID } cor_rc_e;
+typedef enum { cor_rc_NONE, cor_rc_OK, cor_rc_MAP_INVALID } cor_rc_e;
 
 typedef struct {
     u32 placeholder;
@@ -124,7 +122,7 @@ typedef struct {
     utl_fmt_u arr[MAX_FMT_ARGS];
 } utl_fmts_t;
 
-typedef enum { utl_rc_OK, utl_rc_NULL_CALLBACK, utl_rc_NULL_LOG } utl_rc_e;
+typedef enum { utl_rc_NONE, utl_rc_OK, utl_rc_NULL_CALLBACK, utl_rc_NULL_LOG } utl_rc_e;
 
 typedef enum {
     utl_loglvl_ASSERT,
@@ -696,7 +694,7 @@ static void utl_init(utl_init_args_t args, utl_rc_e* rc)
     ASSIGN_IF_ZERO(iutl_state.panic_callback, iutl_divzero);
 
     iutl_state.log = (utl_log_t){
-        .func_name = __func__, .line_num = __LINE__, .message = EMPTY_STR};
+        .func_name = __func__, .line_num = __LINE__, .message = ""};
 
     *rc = utl_rc_OK;
 }
@@ -755,7 +753,7 @@ ctp_log_t ctp_get_log(void)
 */
 void ctp_init(ctp_init_args_t args, ctp_rc_e* rc)
 {
-    utl_rc_e utl_rc = utl_rc_OK;
+    utl_rc_e utl_rc = {0};
     utl_init((utl_init_args_t){.log_update_callback = args.log_update_callback,
                                .panic_callback = args.panic_callback},
              &utl_rc);
@@ -773,7 +771,7 @@ void ctp_init(ctp_init_args_t args, ctp_rc_e* rc)
     }
 
     const u32 placeholder = 42;
-    cor_rc_e cor_rc = cor_rc_OK;
+    cor_rc_e cor_rc = {0};
     cor_init((cor_init_args_t){.placeholder = placeholder}, &cor_rc);
     switch (cor_rc)
     {
@@ -783,6 +781,8 @@ void ctp_init(ctp_init_args_t args, ctp_rc_e* rc)
         default:
             PANIC("cor initialisation failed.");
     }
+
+    *rc = ctp_rc_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -811,7 +811,7 @@ typedef struct {
 */
 static void icor_start_the_engines(icor_engine_starter_t starter, cor_rc_e* rc)
 {
-    if (starter.startiness == 0)
+    if (starter.startiness != 0)
         *rc = cor_rc_MAP_INVALID;
     LOG_D("Engines started with %u startiness and %u horses!",
           {.u = starter.startiness}, {.u = starter.num_horses});
@@ -834,7 +834,7 @@ static void cor_init(cor_init_args_t args, cor_rc_e* rc)
     icor_state.placeholder = args.placeholder;
 
     icor_spaghettify_value(&icor_state.placeholder, rc);
-    if (rc != cor_rc_OK)
+    if (*rc != cor_rc_OK)
         return;
 
     icor_start_the_engines(
