@@ -122,7 +122,12 @@ typedef struct {
     utl_fmt_u arr[MAX_FMT_ARGS];
 } utl_fmts_t;
 
-typedef enum { utl_rc_NONE, utl_rc_OK, utl_rc_NULL_CALLBACK, utl_rc_NULL_LOG } utl_rc_e;
+typedef enum {
+    utl_rc_NONE,
+    utl_rc_OK,
+    utl_rc_NULL_CALLBACK,
+    utl_rc_NULL_LOG
+} utl_rc_e;
 
 typedef enum {
     utl_loglvl_ASSERT,
@@ -172,10 +177,14 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
 /* MACROS 
  *
  * LOG(loglvl, msg)
- * LOG_D(format, ...)
- * LOG_W(format, ...)
- * LOG_E(format, ...)
- * PANIC(msg)
+ * LOG_DEBUG(msg)
+ * LOG_WARN(msg)
+ * LOG_ERROR(msg)
+ * LOG_PANIC(msg)
+ * LOGF_DEBUG(format, ...)
+ * LOGF_WARN(format, ...)
+ * LOGF_ERROR(format, ...)
+ * LOGF_PANIC(format, ...)
  * ASSIGN_IF_ZERO(lvalue, rvalue)
  * ASSERT(cond)
  * STATIC_ASSERT(cond, msg)
@@ -236,7 +245,13 @@ static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
     } while (0)
 
 #ifdef DEBUG
-#define LOG_D(format, ...)                                             \
+#define LOG_DEBUG(msg)               \
+    do                               \
+    {                                \
+        LOG(utl_loglvl_DEBUG, msg); \
+    } while (0)
+
+#define LOGF_DEBUG(format, ...)                                        \
     do                                                                 \
     {                                                                  \
         iutl_state.log =                                               \
@@ -245,10 +260,17 @@ static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
         iutl_state.log_update_callback();                              \
     } while (0)
 #else
-#define LOG_D(...)
+#define LOG_DEBUG(...)
+#define LOGF_DEBUG(...)
 #endif
 
-#define LOG_W(format, ...)                                            \
+#define LOG_WARN(msg)               \
+    do                              \
+    {                               \
+        LOG(utl_loglvl_WARN, msg); \
+    } while (0)
+
+#define LOGF_WARN(format, ...)                                        \
     do                                                                \
     {                                                                 \
         iutl_state.log =                                              \
@@ -257,7 +279,13 @@ static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
         iutl_state.log_update_callback();                             \
     } while (0)
 
-#define LOG_E(format, ...)                                             \
+#define LOG_ERROR(msg)               \
+    do                               \
+    {                                \
+        LOG(utl_loglvl_ERROR, msg); \
+    } while (0)
+
+#define LOGF_ERROR(format, ...)                                        \
     do                                                                 \
     {                                                                  \
         iutl_state.log =                                               \
@@ -266,15 +294,11 @@ static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
         iutl_state.log_update_callback();                              \
     } while (0)
 
-#define PANIC(msg)                                            \
-    do                                                        \
-    {                                                         \
-        iutl_state.log = (utl_log_t){.lvl = utl_loglvl_PANIC, \
-                                     .line_num = __LINE__,    \
-                                     .func_name = __func__,   \
-                                     .message = #msg};        \
-        iutl_state.log_update_callback();                     \
-        iutl_state.panic_callback();                          \
+#define PANIC()               \
+    do                               \
+    {                                \
+        LOG(utl_loglvl_PANIC, "Wuh Woh"); \
+        iutl_state.panic_callback(); \
     } while (0)
 
 #ifdef DEBUG
@@ -607,7 +631,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
     {
         if (buf == last)
         {
-            LOG(utl_loglvl_ERROR, "Destination buffer too small.");
+            LOG_ERROR("Destination buffer too small.");
             break;
         }
 
@@ -619,7 +643,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
         {
             if (i_vals == MAX_FMT_ARGS)
             {
-                LOG(utl_loglvl_ERROR, "Too many specifiers in format string.");
+                LOG_ERROR("Too many specifiers in format string.");
                 break;
             }
 
@@ -631,7 +655,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
                  (buf + NUMERIC_MAX_CHARS) > last) ||
                 ((specifier == 's') && (buf + utl_strlen(val.s) > last)))
             {
-                LOG(utl_loglvl_ERROR, "Destination buffer too small.");
+                LOG_ERROR("Destination buffer too small.");
                 break;
             }
 
@@ -658,7 +682,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
                     break;
                 }
                 default:
-                    LOG(utl_loglvl_ERROR, "Invalid specifier used.");
+                    LOG_ERROR("Invalid specifier used.");
                     *buf = '\0';
                     return first;
             }
@@ -693,8 +717,8 @@ static void utl_init(utl_init_args_t args, utl_rc_e* rc)
     ASSIGN_IF_ZERO(iutl_state.log_update_callback, iutl_do_nothing);
     ASSIGN_IF_ZERO(iutl_state.panic_callback, iutl_divzero);
 
-    iutl_state.log = (utl_log_t){
-        .func_name = __func__, .line_num = __LINE__, .message = ""};
+    iutl_state.log =
+        (utl_log_t){.func_name = __func__, .line_num = __LINE__, .message = ""};
 
     *rc = utl_rc_OK;
 }
@@ -760,14 +784,14 @@ void ctp_init(ctp_init_args_t args, ctp_rc_e* rc)
     switch (utl_rc)
     {
         case utl_rc_OK:
-            LOG_D("utl initialisation successful.", 0);
+            LOG_DEBUG("utl initialisation success.");
             break;
         case utl_rc_NULL_LOG:
-            LOG_W("utl initialisation failed", 0);
+            LOG_WARN("utl initialisation failed.");
             *rc = ctp_rc_NULL_CALLBACK;
             return;
         default:
-            PANIC("utl initialisation failed with return code: ...");
+            PANIC();
     }
 
     const u32 placeholder = 42;
@@ -776,10 +800,10 @@ void ctp_init(ctp_init_args_t args, ctp_rc_e* rc)
     switch (cor_rc)
     {
         case cor_rc_OK:
-            LOG_D("cor initialisation successful.", 0);
+            LOG_DEBUG("cor initialisation successful.");
             break;
         default:
-            PANIC("cor initialisation failed.");
+            PANIC();
     }
 
     *rc = ctp_rc_OK;
@@ -813,8 +837,8 @@ static void icor_start_the_engines(icor_engine_starter_t starter, cor_rc_e* rc)
 {
     if (starter.startiness != 0)
         *rc = cor_rc_MAP_INVALID;
-    LOG_D("Engines started with %u startiness and %u horses!",
-          {.u = starter.startiness}, {.u = starter.num_horses});
+    LOGF_DEBUG("Engines started with %u startiness and %u horses!",
+               {.u = starter.startiness}, {.u = starter.num_horses});
 }
 
 static void icor_spaghettify_value(u32* value, cor_rc_e* rc)
@@ -844,7 +868,7 @@ static void cor_init(cor_init_args_t args, cor_rc_e* rc)
     if (*rc != cor_rc_OK)
         return;
 
-    LOG_D("Map loaded.", 0);
+    LOG_DEBUG("Map loaded.");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -906,10 +930,13 @@ void tmp(void) // suppress 'unused' warnings temporarily
     FEQUAL(1, 1);
     MIN(1, 3);
     MAX(1, 3);
-    LOG_D("Hello World", 0);
-    LOG_W("Hello World", 0);
-    LOG_E("Hello World", 0);
-    PANIC("Hello World");
+    LOGF_DEBUG("Hello World", 0);
+    LOGF_WARN("Hello World", 0);
+    LOGF_ERROR("Hello World", 0);
+    PANIC();
+    LOG_DEBUG("Hello World");
+    LOG_WARN("Hello World");
+    LOG_ERROR("Hello World");
     u32 var = 0;
     u32 val = 1;
     ASSIGN_IF_ZERO(var, val);
