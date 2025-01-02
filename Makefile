@@ -9,7 +9,7 @@ LIB_HEADER_NAME := ctap.h
 BUILD_DIR := out/build
 TEST_DIR := test
 
-CC := clang-15
+CC := clang-18
 CFLAGS := -std=c99 -MMD -MP -g -I. 
 RELEASE_CFLAGS := -O3 -flto -finline-functions \
 				  -ffunction-sections -fdata-sections \
@@ -19,7 +19,7 @@ DEBUG_CFLAGS := -DDEBUG -O0 -Weverything -Werror -fsanitize=address \
 				-fstack-protector-strong -fno-inline \
 				-Wno-declaration-after-statement \
 				-Wno-padded \
-				-Wno-switch-enum \
+				-Wno-unsafe-buffer-usage \
 				$(CFLAGS)
 
 # Find all tests we want to compile

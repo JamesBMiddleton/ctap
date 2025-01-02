@@ -41,15 +41,6 @@ typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 ////////////////////////////////// CTAP API ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef enum { ctp_rc_NONE, ctp_rc_OK, ctp_rc_NULL_CALLBACK } ctp_rc_e;
-
-typedef struct {
-    // map..
-    // input_cb..
-    void (*log_update_callback)(void); // Optional.
-    void (*panic_callback)(void); // Optional.
-} ctp_init_args_t;
-
 typedef enum {
     ctp_loglvl_ASSERT,
     ctp_loglvl_DEBUG,
@@ -67,14 +58,26 @@ typedef struct {
     char message[MAX_LOG_SZ];
 } ctp_log_t;
 
-void ctp_init(ctp_init_args_t args, ctp_rc_e* rc);
+typedef struct {
+    // map..
+    // input_cb..
+    void (*log_update_callback)(void); // Optional.
+    void (*panic_callback)(void); // Optional.
+} ctp_init_arg_t;
+typedef enum { ctp_init_OK, ctp_init_NULL_CALLBACK } ctp_init_e;
+ctp_init_e ctp_init(ctp_init_arg_t arg);
+
 ctp_log_t ctp_get_log(void);
 
 // typedef struct {
-//     u32 pixel_matrix;
-// } ctp_frame_t;
-//
-//  ctp_frame_t ctp_get_frame(ctp_retcode_e* retcode);
+//     u32 framewidth;
+//     u32 framelength;
+// } ctp_get_frame_arg_t;
+// typedef struct {
+//     u32* data;
+//     enum { ctp_get_frame_OK, ctp_get_frame_NOTOK } rc;
+// } ctp_get_frame_t;
+// ctp_get_frame_t ctp_get_frame(ctp_get_frame_arg_t arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// CORE API ////////////////////////////////////
@@ -245,9 +248,9 @@ static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
     } while (0)
 
 #ifdef DEBUG
-#define LOG_DEBUG(msg)               \
-    do                               \
-    {                                \
+#define LOG_DEBUG(msg)              \
+    do                              \
+    {                               \
         LOG(utl_loglvl_DEBUG, msg); \
     } while (0)
 
@@ -264,9 +267,9 @@ static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
 #define LOGF_DEBUG(...)
 #endif
 
-#define LOG_WARN(msg)               \
-    do                              \
-    {                               \
+#define LOG_WARN(msg)              \
+    do                             \
+    {                              \
         LOG(utl_loglvl_WARN, msg); \
     } while (0)
 
@@ -279,9 +282,9 @@ static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
         iutl_state.log_update_callback();                             \
     } while (0)
 
-#define LOG_ERROR(msg)               \
-    do                               \
-    {                                \
+#define LOG_ERROR(msg)              \
+    do                              \
+    {                               \
         LOG(utl_loglvl_ERROR, msg); \
     } while (0)
 
@@ -294,11 +297,11 @@ static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
         iutl_state.log_update_callback();                              \
     } while (0)
 
-#define PANIC()               \
-    do                               \
-    {                                \
+#define PANIC()                           \
+    do                                    \
+    {                                     \
         LOG(utl_loglvl_PANIC, "Wuh Woh"); \
-        iutl_state.panic_callback(); \
+        iutl_state.panic_callback();      \
     } while (0)
 
 #ifdef DEBUG
@@ -787,8 +790,7 @@ void ctp_init(ctp_init_args_t args, ctp_rc_e* rc)
             LOG_DEBUG("utl initialisation success.");
             break;
         case utl_rc_NULL_LOG:
-            LOG_WARN("utl initialisation failed.");
-            *rc = ctp_rc_NULL_CALLBACK;
+            *rc = ctp_init_NULL_CALLBACK;
             return;
         default:
             PANIC();
@@ -800,7 +802,7 @@ void ctp_init(ctp_init_args_t args, ctp_rc_e* rc)
     switch (cor_rc)
     {
         case cor_rc_OK:
-            LOG_DEBUG("cor initialisation successful.");
+            LOG_DEBUG("cor initialisation success.");
             break;
         default:
             PANIC();
@@ -836,7 +838,10 @@ typedef struct {
 static void icor_start_the_engines(icor_engine_starter_t starter, cor_rc_e* rc)
 {
     if (starter.startiness != 0)
+    {
         *rc = cor_rc_MAP_INVALID;
+        return;
+    }
     LOGF_DEBUG("Engines started with %u startiness and %u horses!",
                {.u = starter.startiness}, {.u = starter.num_horses});
 }
@@ -956,6 +961,24 @@ void tmp(void) // suppress 'unused' warnings temporarily
     (void)F32_MIN;
     (void)F32_MAX;
     (void)NULL;
+
+    //
+    // switch (myenum)
+    // {
+    //     case 0:
+    //         var = 1;
+    //         break;
+    //     case cor_rc_OK:
+    //         var = 2;
+    //         break;
+    //     case ctp_rc_NULL_CALLBACK:
+    //         break;
+    // }
+
+
+    // ctp_rc_e myenum = cor_rc_OK;
+    // myenum = 0;
+    // var = myenum;
 
     icor_state.placeholder = 1;
 }
