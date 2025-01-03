@@ -45,13 +45,6 @@ typedef struct {
 } utl_fmts_t;
 
 typedef enum {
-    utl_rc_NONE,
-    utl_rc_OK,
-    utl_rc_NULL_CALLBACK,
-    utl_rc_NULL_LOG
-} utl_rc_e;
-
-typedef enum {
     utl_loglvl_ASSERT,
     utl_loglvl_DEBUG,
     utl_loglvl_WARN,
@@ -69,9 +62,13 @@ typedef struct {
 typedef struct {
     void (*log_update_callback)(void);
     void (*panic_callback)(void);
-} utl_init_args_t;
-
-static void utl_init(utl_init_args_t args, utl_rc_e* rc);
+} utl_init_arg_t;
+typedef enum {
+    utl_init_OK,
+    utl_init_NULL_CALLBACK,
+    utl_init_NULL_LOG
+} utl_init_e;
+static utl_init_e utl_init(utl_init_arg_t args);
 
 static utl_log_t utl_get_log(void);
 
@@ -126,10 +123,10 @@ typedef struct {
 
     utl_log_t log;
     // pool_t
-} iutl_state_t;
+} state_utl_t;
 
 //NOLINTBEGIN
-static iutl_state_t iutl_state = {0}; // API func !l-value! usage only
+static state_utl_t state_utl = {0}; // API func !l-value! usage only
 //NOLINTEND
 
 #define NULL_TERMINATOR_SZ 1
@@ -144,26 +141,26 @@ static iutl_state_t iutl_state = {0}; // API func !l-value! usage only
 */
 static utl_log_t utl_get_log(void)
 {
-    return iutl_state.log;
+    return state_utl.log;
 }
 
-static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
-                              const char* const func_name, const u32 line_num,
-                              const char* const format, const utl_fmts_t values)
+static utl_log_t new_log(const utl_loglvl_e lvl, const char* const func_name,
+                         const u32 line_num, const char* const format,
+                         const utl_fmts_t values)
 {
     utl_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
     utl_sprintf(log.message, sizeof(log.message), format, values);
     return log;
 }
 
-#define LOG(loglvl, msg)                                    \
-    do                                                      \
-    {                                                       \
-        iutl_state.log = (utl_log_t){.lvl = (loglvl),       \
-                                     .line_num = __LINE__,  \
-                                     .func_name = __func__, \
-                                     .message = #msg};      \
-        iutl_state.log_update_callback();                   \
+#define LOG(loglvl, msg)                                   \
+    do                                                     \
+    {                                                      \
+        state_utl.log = (utl_log_t){.lvl = (loglvl),       \
+                                    .line_num = __LINE__,  \
+                                    .func_name = __func__, \
+                                    .message = #msg};      \
+        state_utl.log_update_callback();                   \
     } while (0)
 
 #ifdef DEBUG
@@ -173,13 +170,12 @@ static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
         LOG(utl_loglvl_DEBUG, msg); \
     } while (0)
 
-#define LOGF_DEBUG(format, ...)                                        \
-    do                                                                 \
-    {                                                                  \
-        iutl_state.log =                                               \
-            iutl_new_log(utl_loglvl_DEBUG, __func__, __LINE__, format, \
-                         (utl_fmts_t){.arr = {__VA_ARGS__}});          \
-        iutl_state.log_update_callback();                              \
+#define LOGF_DEBUG(format, ...)                                               \
+    do                                                                        \
+    {                                                                         \
+        state_utl.log = new_log(utl_loglvl_DEBUG, __func__, __LINE__, format, \
+                                (utl_fmts_t){.arr = {__VA_ARGS__}});          \
+        state_utl.log_update_callback();                                      \
     } while (0)
 #else
 #define LOG_DEBUG(...)
@@ -192,13 +188,12 @@ static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
         LOG(utl_loglvl_WARN, msg); \
     } while (0)
 
-#define LOGF_WARN(format, ...)                                        \
-    do                                                                \
-    {                                                                 \
-        iutl_state.log =                                              \
-            iutl_new_log(utl_loglvl_WARN, __func__, __LINE__, format, \
-                         (utl_fmts_t){.arr = {__VA_ARGS__}});         \
-        iutl_state.log_update_callback();                             \
+#define LOGF_WARN(format, ...)                                               \
+    do                                                                       \
+    {                                                                        \
+        state_utl.log = new_log(utl_loglvl_WARN, __func__, __LINE__, format, \
+                                (utl_fmts_t){.arr = {__VA_ARGS__}});         \
+        state_utl.log_update_callback();                                     \
     } while (0)
 
 #define LOG_ERROR(msg)              \
@@ -207,35 +202,34 @@ static utl_log_t iutl_new_log(const utl_loglvl_e lvl,
         LOG(utl_loglvl_ERROR, msg); \
     } while (0)
 
-#define LOGF_ERROR(format, ...)                                        \
-    do                                                                 \
-    {                                                                  \
-        iutl_state.log =                                               \
-            iutl_new_log(utl_loglvl_ERROR, __func__, __LINE__, format, \
-                         (utl_fmts_t){.arr = {__VA_ARGS__}});          \
-        iutl_state.log_update_callback();                              \
+#define LOGF_ERROR(format, ...)                                               \
+    do                                                                        \
+    {                                                                         \
+        state_utl.log = new_log(utl_loglvl_ERROR, __func__, __LINE__, format, \
+                                (utl_fmts_t){.arr = {__VA_ARGS__}});          \
+        state_utl.log_update_callback();                                      \
     } while (0)
 
 #define PANIC()                           \
     do                                    \
     {                                     \
         LOG(utl_loglvl_PANIC, "Wuh Woh"); \
-        iutl_state.panic_callback();      \
+        state_utl.panic_callback();       \
     } while (0)
 
 #ifdef DEBUG
-#define ASSERT(cond)                                              \
-    do                                                            \
-    {                                                             \
-        if (!(cond))                                              \
-        {                                                         \
-            iutl_state.log = (utl_log_t){.lvl = utl_loglvl_ERROR, \
-                                         .line_num = __LINE__,    \
-                                         .func_name = __func__,   \
-                                         .message = #cond};       \
-            iutl_state.log_update_callback();                     \
-            iutl_state.panic_callback();                          \
-        }                                                         \
+#define ASSERT(cond)                                             \
+    do                                                           \
+    {                                                            \
+        if (!(cond))                                             \
+        {                                                        \
+            state_utl.log = (utl_log_t){.lvl = utl_loglvl_ERROR, \
+                                        .line_num = __LINE__,    \
+                                        .func_name = __func__,   \
+                                        .message = #cond};       \
+            state_utl.log_update_callback();                     \
+            state_utl.panic_callback();                          \
+        }                                                        \
     } while (0)
 #else
 #define ASSERT(...)
@@ -615,12 +609,12 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
     return first;
 }
 
-static void iutl_do_nothing(void)
+static void do_nothing(void)
 {
 }
 
 /* Intentionally trigger a 'divide by zero' trap */
-static void iutl_divzero(void)
+static void div_zero(void)
 {
     u32 zero = 0;
     (void)(1 / zero);
@@ -632,20 +626,18 @@ static void iutl_divzero(void)
  * @param args initialisation arguments.
  * @throw NULL_LOG, NULL_CALLBACK 
 */
-static void utl_init(utl_init_args_t args, utl_rc_e* rc)
+static utl_init_e utl_init(utl_init_arg_t args)
 {
-    iutl_state.log_update_callback = args.log_update_callback;
-    iutl_state.panic_callback = args.panic_callback;
-    ASSIGN_IF_ZERO(iutl_state.log_update_callback, iutl_do_nothing);
-    ASSIGN_IF_ZERO(iutl_state.panic_callback, iutl_divzero);
+    state_utl.log_update_callback = args.log_update_callback;
+    state_utl.panic_callback = args.panic_callback;
+    ASSIGN_IF_ZERO(state_utl.log_update_callback, do_nothing);
+    ASSIGN_IF_ZERO(state_utl.panic_callback, div_zero);
 
-    iutl_state.log =
+    state_utl.log =
         (utl_log_t){.func_name = __func__, .line_num = __LINE__, .message = ""};
 
-    *rc = utl_rc_OK;
+    return utl_init_OK;
 }
-
-
 
 void tmp(void);
 void tmp(void) // suppress 'unused' warnings temporarily

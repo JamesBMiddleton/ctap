@@ -1,11 +1,11 @@
 SHELL = /bin/sh
-MAKEFLAGS += -j$(shell nproc)
+# MAKEFLAGS += -j$(shell nproc)
 
 .SILENT: 
 
 .PHONY: check analyze format clean
 
-LIB_HEADER_NAME := ctap.h
+LIB_HEADER_NAME := src/ctap.h
 BUILD_DIR := out/build
 TEST_DIR := test
 
@@ -20,6 +20,7 @@ DEBUG_CFLAGS := -DDEBUG -O0 -Weverything -Werror -fsanitize=address \
 				-Wno-declaration-after-statement \
 				-Wno-padded \
 				-Wno-unsafe-buffer-usage \
+				-Wno-switch-default \
 				$(CFLAGS)
 
 # Find all tests we want to compile

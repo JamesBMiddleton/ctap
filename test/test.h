@@ -9,7 +9,7 @@ i32 main(void)
 }
 */
 
-#include "ctap.h"
+#include "src/ctap.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -64,9 +64,7 @@ __attribute__((noreturn)) void tst_panic_callback(void)
 
 void tst_init(void)
 {
-    ctp_rc_e rc = {0};
-    ctp_init((ctp_init_args_t){.log_update_callback = tst_log_update_callback,
-                          .panic_callback = tst_panic_callback}, &rc);
-    ASSERT(rc == ctp_rc_OK);
+    ASSERT(ctp_init((ctp_init_arg_t){.log_update_callback = tst_log_update_callback,
+                          .panic_callback = tst_panic_callback}) == ctp_init_OK);
     mutable_state_tst.suppress_logs = false;
 }

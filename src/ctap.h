@@ -1,4 +1,4 @@
-#include "src/utils.h"
+#include "core.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////// API ////////////////////////////////////////
@@ -46,10 +46,10 @@ ctp_log_t ctp_get_log(void);
 
 typedef struct {
     u32 placeholder;
-} state_t;
+} state_ctp_t;
 
 //NOLINTBEGIN
-static state_t state = {0}; // API func !l-value! usage only
+static state_ctp_t state_ctp = {0}; // API func !l-value! usage only
 //NOLINTEND
 
 /* 
@@ -89,38 +89,26 @@ ctp_log_t ctp_get_log(void)
 /* 
  * Initialise the ctap runtime.
  *
- * @param args - runtime initialisation arguments
+ * @param arg - runtime initialisation arguments
  * @throw NULL_CALLBACK, NULL_LOG 
 */
-void ctp_init(ctp_init_args_t args, ctp_rc_e* rc)
+ctp_init_e ctp_init(ctp_init_arg_t arg)
 {
-    utl_rc_e utl_rc = {0};
-    utl_init((utl_init_args_t){.log_update_callback = args.log_update_callback,
-                               .panic_callback = args.panic_callback},
-             &utl_rc);
-    switch (utl_rc)
+    switch(utl_init((utl_init_arg_t){.log_update_callback = arg.log_update_callback,
+                               .panic_callback = arg.panic_callback}))
     {
-        case utl_rc_OK:
-            LOG_DEBUG("utl initialisation success.");
-            break;
-        case utl_rc_NULL_LOG:
-            *rc = ctp_init_NULL_CALLBACK;
-            return;
-        default:
-            PANIC();
+        case utl_init_OK: LOG_DEBUG("utl initialisation success."); break;
+        case utl_init_NULL_LOG:
+        case utl_init_NULL_CALLBACK: PANIC();
     }
 
     const u32 placeholder = 42;
-    cor_rc_e cor_rc = {0};
-    cor_init((cor_init_args_t){.placeholder = placeholder}, &cor_rc);
-    switch (cor_rc)
+    switch (cor_init((cor_init_arg_t){.placeholder = placeholder}))
     {
-        case cor_rc_OK:
-            LOG_DEBUG("cor initialisation success.");
-            break;
-        default:
+        case cor_init_OK: LOG_DEBUG("cor initialisation success."); break;
+        case cor_init_MAP_INVALID:
             PANIC();
     }
 
-    *rc = ctp_rc_OK;
+    return ctp_init_OK;
 }

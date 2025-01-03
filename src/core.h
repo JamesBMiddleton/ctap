@@ -1,12 +1,10 @@
-#include "src/utils.h"
-
-typedef enum { cor_rc_NONE, cor_rc_OK, cor_rc_MAP_INVALID } cor_rc_e;
+#include "utils.h"
 
 typedef struct {
     u32 placeholder;
-} cor_init_args_t;
-
-static void cor_init(cor_init_args_t args, cor_rc_e* rc);
+} cor_init_arg_t;
+typedef enum { cor_init_OK, cor_init_MAP_INVALID } cor_init_e;
+static cor_init_e cor_init(cor_init_arg_t arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////// IMPL /////////////////////////////////////////
@@ -15,38 +13,38 @@ static void cor_init(cor_init_args_t args, cor_rc_e* rc);
 typedef struct {
     u32 placeholder;
     // pool_t
-} icor_state_t;
+} state_cor_t;
 
 //NOLINTBEGIN
-static icor_state_t icor_state = {0}; // API func usage only
+static state_cor_t state_cor = {0}; // API func usage only
 //NOLINTEND
 
 typedef struct {
     u32 startiness;
     u32 num_horses;
-} icor_engine_starter_t;
+} engine_starter_t;
 
+typedef enum { start_the_engines_OK, start_the_engines_MAP_INVALID } start_the_engines_e;
 /*
  * placeholder.
  *
  * @param starter - placeholder
  * @throw MAP_INVALID
 */
-static void icor_start_the_engines(icor_engine_starter_t starter, cor_rc_e* rc)
+static start_the_engines_e start_the_engines(engine_starter_t starter)
 {
     if (starter.startiness != 0)
-    {
-        *rc = cor_rc_MAP_INVALID;
-        return;
-    }
+        return start_the_engines_MAP_INVALID;
     LOGF_DEBUG("Engines started with %u startiness and %u horses!",
                {.u = starter.startiness}, {.u = starter.num_horses});
+    return start_the_engines_OK;
 }
 
-static void icor_spaghettify_value(u32* value, cor_rc_e* rc)
+typedef enum { spaghettify_value_OK, spaghettify_value_NOTOK } spaghettify_value_e;
+static spaghettify_value_e spaghettify_value(u32* value)
 {
     *value = 0;
-    *rc = cor_rc_OK;
+    return spaghettify_value_OK;
 }
 
 /*
@@ -55,21 +53,20 @@ static void icor_spaghettify_value(u32* value, cor_rc_e* rc)
  * @param args - initialisation arguments.
  * @throw MAP_INVALID
 */
-static void cor_init(cor_init_args_t args, cor_rc_e* rc)
+static cor_init_e cor_init(cor_init_arg_t args)
 {
-    icor_state.placeholder = args.placeholder;
+    state_cor.placeholder = args.placeholder;
 
-    icor_spaghettify_value(&icor_state.placeholder, rc);
-    if (*rc != cor_rc_OK)
-        return;
+    if (spaghettify_value(&state_cor.placeholder) != spaghettify_value_OK)
+        return cor_init_MAP_INVALID;
 
-    icor_start_the_engines(
-        (icor_engine_starter_t){.num_horses = icor_state.placeholder,
-                                .startiness = icor_state.placeholder},
-        rc);
-    if (*rc != cor_rc_OK)
-        return;
+    if (start_the_engines(
+        (engine_starter_t){.num_horses = state_cor.placeholder,
+                                .startiness = state_cor.placeholder}) != start_the_engines_OK)
+        return cor_init_MAP_INVALID;
 
     LOG_DEBUG("Map loaded.");
+
+    return cor_init_OK;
 }
 
