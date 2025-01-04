@@ -1,3 +1,10 @@
+#ifndef UTILS_H
+#define UTILS_H
+
+////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////// API DECL //////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 #define bool _Bool
 #define true 1
 #define false 0
@@ -12,6 +19,8 @@ typedef signed short int i16;
 typedef signed int i32;
 typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-macros"
 #define U8_MIN (0U)
 #define U8_MAX (255U)
 #define U16_MIN (0U)
@@ -24,12 +33,11 @@ typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 #define I16_MAX (32767)
 #define I32_MIN (-2147483648)
 #define I32_MAX (2147483647)
-
 #define F32_MIN (1.17549435e-38F) //! Assumes IEEE-754 compliance.
 #define F32_MAX (3.40282347e+38F) //! Assumes IEEE-754 compliance.
+#pragma GCC diagnostic pop
 
 #define MAX_LOG_SZ 256
-
 #define MAX_FMT_ARGS 5
 
 typedef union {
@@ -93,7 +101,7 @@ static char* utl_u32tostr(u32 val, char* buf);
 static char* utl_i32tostr(i32 val, char* buf);
 static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
 
-/* MACROS 
+/* MACROS
  *
  * LOG(loglvl, msg)
  * LOG_DEBUG(msg)
@@ -111,23 +119,46 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
  * MIN(left, right)
  * MAX(left, right)
  *
-*/
+ */
 
 ////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////// IMPL /////////////////////////////////////////
+///////////////////////////// INTERNAL IMPL ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef struct {
+static utl_log_t new_log(const utl_loglvl_e lvl, const char* const func_name,
+                         const u32 line_num, const char* const format,
+                         const utl_fmts_t values)
+{
+    utl_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
+    utl_sprintf(log.message, sizeof(log.message), format, values);
+    return log;
+}
+
+static void do_nothing(void)
+{
+}
+
+/* Intentionally trigger a 'divide by zero' trap */
+static void div_zero(void)
+{
+    u32 zero = 0;
+    (void)(1 / zero);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////// API IMPL ////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-macros"
+#pragma GCC diagnostic ignored "-Wunused-function"
+
+struct state_utl_t {
     void (*panic_callback)(void);
     void (*log_update_callback)(void);
 
     utl_log_t log;
     // pool_t
-} state_utl_t;
-
-//NOLINTBEGIN
-static state_utl_t state_utl = {0}; // API func !l-value! usage only
-//NOLINTEND
+} static state_utl = {0}; // NOLINT
 
 #define NULL_TERMINATOR_SZ 1
 #define U32_MAX_CHARS (10) // '4294967295'
@@ -138,19 +169,10 @@ static state_utl_t state_utl = {0}; // API func !l-value! usage only
 
 /*
  * @return the last logged message.
-*/
+ */
 static utl_log_t utl_get_log(void)
 {
     return state_utl.log;
-}
-
-static utl_log_t new_log(const utl_loglvl_e lvl, const char* const func_name,
-                         const u32 line_num, const char* const format,
-                         const utl_fmts_t values)
-{
-    utl_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
-    utl_sprintf(log.message, sizeof(log.message), format, values);
-    return log;
 }
 
 #define LOG(loglvl, msg)                                   \
@@ -263,14 +285,14 @@ STATIC_ASSERT(sizeof(f32) == 4, f32_4_bytes);
 STATIC_ASSERT(sizeof(void*) == sizeof(usize), ptr_usize_bytes);
 
 /*
- * If aligned copy 32bit chunks from dest to src, else copy bytes. 
- * Assumes no overlap. 
+ * If aligned copy 32bit chunks from dest to src, else copy bytes.
+ * Assumes no overlap.
  *
- * @param dest - copy destination 
+ * @param dest - copy destination
  * @param src  - copy source
  * @param count - number of bytes to copy
  * @return copy destination
-*/
+ */
 static const void* utl_memcpy(void* dest, const void* src, const usize count)
 {
     ASSERT(dest);
@@ -294,9 +316,9 @@ static const void* utl_memcpy(void* dest, const void* src, const usize count)
 
 /*
  * @param base - base.
- * @param exp - exponent. 
+ * @param exp - exponent.
  * @return power.
-*/
+ */
 static inline i32 utl_powi(i32 base, u32 exp)
 {
     i32 result = 1;
@@ -314,9 +336,9 @@ static inline i32 utl_powi(i32 base, u32 exp)
 
 /*
  * @param base - base.
- * @param exp - exponent. 
+ * @param exp - exponent.
  * @return power.
-*/
+ */
 static inline u32 utl_powu(u32 base, u32 exp)
 {
     u32 result = 1;
@@ -338,9 +360,9 @@ static inline u32 utl_powu(u32 base, u32 exp)
  * Can handle negative powers.
  *
  * @param base - base.
- * @param exp - exponent. 
+ * @param exp - exponent.
  * @return power.
-*/
+ */
 static inline f32 utl_powf(f32 base, i32 exp)
 {
     f32 result = 1;
@@ -359,47 +381,47 @@ static inline f32 utl_powf(f32 base, i32 exp)
     return (exp > 0) ? result : 1.0F / result;
 }
 
-/* 
+/*
  * @param val - pos/neg value.
  * @return absolute value.
-*/
+ */
 static inline u32 utl_abs(const i32 val)
 {
     return (val < 0) ? -(u32)val : (u32)val;
 }
 
-/* 
+/*
  * @param val - pos/neg value.
  * @return absolute value.
-*/
+ */
 static inline f32 utl_fabs(f32 val)
 {
     return (val < 0) ? -val : val;
 }
 
-/* 
- * Requires IEEE 754 compliant floats. 
+/*
+ * Requires IEEE 754 compliant floats.
  *
  * @param val - potentially NaN float value.
  * @return val is NaN.
-*/
+ */
 static inline bool utl_isnan(const f32 val)
 {
     return val != val;
 }
 
-/* 
- * Requires IEEE 754 compliant floats. 
+/*
+ * Requires IEEE 754 compliant floats.
  *
  * @param val - potentially infinite float value.
  * @return val is infinity.
-*/
+ */
 static inline bool utl_isinf(const f32 val)
 {
     return !utl_isnan(val) && utl_isnan(val - val);
 }
 
-/* 
+/*
  * @param str - null terminated string.
  * @return length of str, null terminator not included.
  * */
@@ -418,7 +440,7 @@ static inline usize utl_strlen(const char* str)
  * @param val - value to convert
  * @param buf - destination string buffer
  * @return buf
-*/
+ */
 static char* utl_u32tostr(u32 val, char* buf)
 {
     ASSERT(buf);
@@ -444,7 +466,7 @@ static char* utl_u32tostr(u32 val, char* buf)
  * @param val - value to convert
  * @param buf - destination string buffer
  * @return buf
-*/
+ */
 static char* utl_i32tostr(i32 val, char* buf)
 {
     ASSERT(buf);
@@ -476,9 +498,9 @@ static char* utl_i32tostr(i32 val, char* buf)
  *
  * @param val - value to convert
  * @param buf - destination string buffer
- * @param decimals - number of decimal places 
+ * @param decimals - number of decimal places
  * @return buf
-*/
+ */
 __attribute__((no_sanitize("undefined"))) static char*
 utl_f32tostr(const f32 val, char* buf, u8 decimals)
 {
@@ -526,13 +548,13 @@ utl_f32tostr(const f32 val, char* buf, u8 decimals)
 /*
  * Takes format specifiers of type %d, %u, %f, %s or %c.
  * e.g. utl_sprintf(buf, bufsz, "%f", (utl_fmts_t){.arr = {{.f = 123.456f}}})
- * 
+ *
  * @param buf - the destination string buffer
  * @param bufsz - size of destination string buffer
  * @param format - the string format
  * @param vals - struct wrapped array of format specifier values
  * @return - the destination string buffer
-*/
+ */
 static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
                                const utl_fmts_t vals)
 {
@@ -577,18 +599,10 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
 
             switch (specifier)
             {
-                case 'c':
-                    *buf++ = val.c;
-                    continue;
-                case 'd':
-                    utl_i32tostr(val.d, buf);
-                    break;
-                case 'u':
-                    utl_u32tostr(val.u, buf);
-                    break;
-                case 'f':
-                    utl_f32tostr(val.f, buf, 3);
-                    break;
+                case 'c': *buf++ = val.c; continue;
+                case 'd': utl_i32tostr(val.d, buf); break;
+                case 'u': utl_u32tostr(val.u, buf); break;
+                case 'f': utl_f32tostr(val.f, buf, 3); break;
                 case 's': {
                     const char* str = val.s;
                     do
@@ -609,23 +623,12 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
     return first;
 }
 
-static void do_nothing(void)
-{
-}
-
-/* Intentionally trigger a 'divide by zero' trap */
-static void div_zero(void)
-{
-    u32 zero = 0;
-    (void)(1 / zero);
-}
-
 /*
- * Initialise the utilities module. 
+ * Initialise the utilities module.
  *
  * @param args initialisation arguments.
- * @throw NULL_LOG, NULL_CALLBACK 
-*/
+ * @throw NULL_LOG, NULL_CALLBACK
+ */
 static utl_init_e utl_init(utl_init_arg_t args)
 {
     state_utl.log_update_callback = args.log_update_callback;
@@ -636,39 +639,13 @@ static utl_init_e utl_init(utl_init_arg_t args)
     state_utl.log =
         (utl_log_t){.func_name = __func__, .line_num = __LINE__, .message = ""};
 
+    LOGF_DEBUG("Initialisation complete.", 0);
     return utl_init_OK;
 }
 
-void tmp(void);
-void tmp(void) // suppress 'unused' warnings temporarily
-{
-    FEQUAL(1, 1);
-    MIN(1, 3);
-    MAX(1, 3);
-    LOGF_DEBUG("Hello World", 0);
-    LOGF_WARN("Hello World", 0);
-    LOGF_ERROR("Hello World", 0);
-    PANIC();
-    LOG_DEBUG("Hello World");
-    LOG_WARN("Hello World");
-    LOG_ERROR("Hello World");
-    u32 var = 0;
-    u32 val = 1;
-    ASSIGN_IF_ZERO(var, val);
+#pragma GCC diagnostic pop
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-    (void)U8_MIN;
-    (void)U8_MAX;
-    (void)U16_MIN;
-    (void)U16_MAX;
-    (void)U32_MIN;
-    (void)U32_MAX;
-    (void)I8_MIN;
-    (void)I8_MAX;
-    (void)I16_MIN;
-    (void)I16_MAX;
-    (void)I32_MIN;
-    (void)I32_MAX;
-    (void)F32_MIN;
-    (void)F32_MAX;
-    (void)NULL;
-}
+#endif // UTILS_H

@@ -1,7 +1,10 @@
+#ifndef CTAP_H
+#define CTAP_H
+
 #include "core.h"
 
 ////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////// API ////////////////////////////////////////
+//////////////////////////////// API DECL //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef enum {
@@ -41,16 +44,16 @@ ctp_log_t ctp_get_log(void);
 // ctp_get_frame_t ctp_get_frame(ctp_get_frame_arg_t arg);
 
 ////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////// IMPL /////////////////////////////////////////
+///////////////////////////// INTERNAL IMPL ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-typedef struct {
-    u32 placeholder;
-} state_ctp_t;
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////// API IMPL ////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-//NOLINTBEGIN
-static state_ctp_t state_ctp = {0}; // API func !l-value! usage only
-//NOLINTEND
+struct state_ctp_t {
+    u32 placeholder;
+} static state_ctp = {0}; // NOLINT
 
 /* 
  * Retrieve the last log message created.
@@ -64,21 +67,11 @@ ctp_log_t ctp_get_log(void)
     ctp_loglvl_e lvl = ctp_loglvl_DEBUG;
     switch (in_log.lvl)
     {
-        case utl_loglvl_DEBUG:
-            lvl = ctp_loglvl_DEBUG;
-            break;
-        case utl_loglvl_WARN:
-            lvl = ctp_loglvl_WARN;
-            break;
-        case utl_loglvl_ERROR:
-            lvl = ctp_loglvl_ERROR;
-            break;
-        case utl_loglvl_PANIC:
-            lvl = ctp_loglvl_PANIC;
-            break;
-        case utl_loglvl_ASSERT:
-            lvl = ctp_loglvl_ASSERT;
-            break;
+        case utl_loglvl_DEBUG: lvl = ctp_loglvl_DEBUG; break;
+        case utl_loglvl_WARN: lvl = ctp_loglvl_WARN; break;
+        case utl_loglvl_ERROR: lvl = ctp_loglvl_ERROR; break;
+        case utl_loglvl_PANIC: lvl = ctp_loglvl_PANIC; break;
+        case utl_loglvl_ASSERT: lvl = ctp_loglvl_ASSERT; break;
     }
     ctp_log_t out_log = {
         .lvl = lvl, .line_num = in_log.line_num, .func_name = in_log.func_name};
@@ -94,8 +87,9 @@ ctp_log_t ctp_get_log(void)
 */
 ctp_init_e ctp_init(ctp_init_arg_t arg)
 {
-    switch(utl_init((utl_init_arg_t){.log_update_callback = arg.log_update_callback,
-                               .panic_callback = arg.panic_callback}))
+    switch (utl_init(
+        (utl_init_arg_t){.log_update_callback = arg.log_update_callback,
+                         .panic_callback = arg.panic_callback}))
     {
         case utl_init_OK: LOG_DEBUG("utl initialisation success."); break;
         case utl_init_NULL_LOG:
@@ -106,9 +100,14 @@ ctp_init_e ctp_init(ctp_init_arg_t arg)
     switch (cor_init((cor_init_arg_t){.placeholder = placeholder}))
     {
         case cor_init_OK: LOG_DEBUG("cor initialisation success."); break;
-        case cor_init_MAP_INVALID:
-            PANIC();
+        case cor_init_MAP_INVALID: PANIC();
     }
 
     return ctp_init_OK;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+#endif // CTAP_H
