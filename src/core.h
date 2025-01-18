@@ -30,7 +30,6 @@ typedef enum {
  * placeholder.
  *
  * @param starter - placeholder
- * @throw MAP_INVALID
 */
 static start_the_engines_e start_the_engines(engine_starter_t starter)
 {
@@ -66,7 +65,6 @@ struct state_cor_t {
  * Initialise the core module. 
  *
  * @param args - initialisation arguments.
- * @throw MAP_INVALID
 */
 static cor_init_e cor_init(cor_init_arg_t args)
 {

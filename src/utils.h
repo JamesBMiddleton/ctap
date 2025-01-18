@@ -627,7 +627,6 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
  * Initialise the utilities module.
  *
  * @param args initialisation arguments.
- * @throw NULL_LOG, NULL_CALLBACK
  */
 static utl_init_e utl_init(utl_init_arg_t args)
 {

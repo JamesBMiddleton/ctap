@@ -36,10 +36,12 @@ ctp_log_t ctp_get_log(void);
 // typedef struct {
 //     u32 framewidth;
 //     u32 framelength;
+//     enum { ctp_get_frame_arg_bitrate_OPTION1 } bitrate;
 // } ctp_get_frame_arg_t;
 // typedef struct {
 //     u32* data;
 //     enum { ctp_get_frame_OK, ctp_get_frame_NOTOK } rc;
+//     enum { ctp_get_frame_frame_size_OPT1, ctp_get_frame_frame_size_OPT2 } frame_size;
 // } ctp_get_frame_t;
 // ctp_get_frame_t ctp_get_frame(ctp_get_frame_arg_t arg);
 
@@ -83,7 +85,6 @@ ctp_log_t ctp_get_log(void)
  * Initialise the ctap runtime.
  *
  * @param arg - runtime initialisation arguments
- * @throw NULL_CALLBACK, NULL_LOG 
 */
 ctp_init_e ctp_init(ctp_init_arg_t arg)
 {
