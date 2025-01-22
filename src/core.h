@@ -10,8 +10,8 @@
 typedef struct {
     u32 placeholder;
 } cor_init_arg_t;
-typedef enum { cor_init_OK, cor_init_MAP_INVALID } cor_init_e;
-static cor_init_e cor_init(cor_init_arg_t arg);
+typedef enum { cor_init_OK, cor_init_MAP_INVALID } cor_init_ret_e;
+static cor_init_ret_e cor_init(cor_init_arg_t arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -25,13 +25,13 @@ typedef struct {
 typedef enum {
     start_the_engines_OK,
     start_the_engines_MAP_INVALID
-} start_the_engines_e;
+} start_the_engines_ret_e;
 /*
  * placeholder.
  *
  * @param starter - placeholder
 */
-static start_the_engines_e start_the_engines(engine_starter_t starter)
+static start_the_engines_ret_e start_the_engines(engine_starter_t starter)
 {
     if (starter.startiness != 0)
         return start_the_engines_MAP_INVALID;
@@ -66,7 +66,7 @@ struct state_cor_t {
  *
  * @param args - initialisation arguments.
 */
-static cor_init_e cor_init(cor_init_arg_t args)
+static cor_init_ret_e cor_init(cor_init_arg_t args)
 {
     state_cor.placeholder = args.placeholder;
 

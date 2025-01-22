@@ -75,8 +75,8 @@ typedef enum {
     utl_init_OK,
     utl_init_NULL_CALLBACK,
     utl_init_NULL_LOG
-} utl_init_e;
-static utl_init_e utl_init(utl_init_arg_t args);
+} utl_init_ret_e;
+static utl_init_ret_e utl_init(utl_init_arg_t args);
 
 static utl_log_t utl_get_log(void);
 
@@ -628,7 +628,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
  *
  * @param args initialisation arguments.
  */
-static utl_init_e utl_init(utl_init_arg_t args)
+static utl_init_ret_e utl_init(utl_init_arg_t args)
 {
     state_utl.log_update_callback = args.log_update_callback;
     state_utl.panic_callback = args.panic_callback;
