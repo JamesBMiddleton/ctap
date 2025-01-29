@@ -1,54 +1,13 @@
 #ifndef CTAP_H
 #define CTAP_H
 
-#include "src/pubmod_utils.c"
-#include "mod_core.c"
+#include "lib.h"
+#include "src/utils.c"
+#include "core.c"
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// API DECL //////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-
-typedef enum {
-    ctp_loglvl_ASSERT,
-    ctp_loglvl_DEBUG,
-    ctp_loglvl_WARN,
-    ctp_loglvl_ERROR,
-    ctp_loglvl_PANIC
-} ctp_loglvl_e;
-
-typedef struct {
-    ctp_loglvl_e lvl;
-    u32 line_num;
-    const char* func_name;
-    char message[MAX_LOG_SZ];
-} ctp_log_t;
-
-typedef struct {
-    // map..
-    // input_cb..
-    void (*log_update_callback)(void); // Optional.
-    void (*panic_callback)(void); // Optional.
-} ctp_init_arg_t;
-typedef enum { ctp_init_OK, ctp_init_NULL_CALLBACK } ctp_init_ret_e;
-ctp_init_ret_e ctp_init(ctp_init_arg_t arg);
-
-ctp_log_t ctp_get_log(void);
-
-// typedef struct {
-//     u32 framewidth;
-//     u32 framelength;
-//     enum { ctp_get_frame_arg_bitrate_OPTION1 } bitrate;
-// } ctp_get_frame_arg_t;
-// typedef struct {
-//     struct {
-//         enum { 
-//             ctp_get_frame_frame_size_OPT1, 
-//             ctp_get_frame_frame_size_OPT2 
-//         } frame_size;
-//     } data;
-//     enum { ctp_get_frame_OK, ctp_get_frame_NOTOK } rc;
-// } ctp_get_frame_ret_t;
-// ctp_get_frame_ret_t ctp_get_frame(ctp_get_frame_arg_t arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -58,32 +17,32 @@ ctp_log_t ctp_get_log(void);
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-struct state_ctp_t {
+struct ctp_State_t {
     u32 placeholder;
-} static state_ctp = {0}; // NOLINT
+} static ctp_state = {0}; // NOLINT
 
 /* 
  * Retrieve the last log message created.
- * Set 'ctp_update_cb' to be notified when a new log message is available.
+ * Set 'CTP_update_cb' to be notified when a new log message is available.
  *
  * @return the last log message created
 */
-ctp_log_t ctp_get_log(void)
+CTP_Log_t CTP_GetLog(void)
 {
-    const utl_log_t in_log = utl_get_log();
-    ctp_loglvl_e lvl = ctp_loglvl_DEBUG;
-    switch (in_log.lvl)
+    const UTL_Log_t inLog = UTL_GetLog();
+    CTP_LogLvl_e lvl = CTP_LogLvl_DEBUG;
+    switch (inLog.lvl)
     {
-        case utl_loglvl_DEBUG: lvl = ctp_loglvl_DEBUG; break;
-        case utl_loglvl_WARN: lvl = ctp_loglvl_WARN; break;
-        case utl_loglvl_ERROR: lvl = ctp_loglvl_ERROR; break;
-        case utl_loglvl_PANIC: lvl = ctp_loglvl_PANIC; break;
-        case utl_loglvl_ASSERT: lvl = ctp_loglvl_ASSERT; break;
+        case UTL_LogLvl_DEBUG: lvl = CTP_LogLvl_DEBUG; break;
+        case UTL_LogLvl_WARN: lvl = CTP_LogLvl_WARN; break;
+        case UTL_LogLvl_ERROR: lvl = CTP_LogLvl_ERROR; break;
+        case UTL_LogLvl_PANIC: lvl = CTP_LogLvl_PANIC; break;
+        case UTL_LogLvl_ASSERT: lvl = CTP_LogLvl_ASSERT; break;
     }
-    ctp_log_t out_log = {
-        .lvl = lvl, .line_num = in_log.line_num, .func_name = in_log.func_name};
-    utl_memcpy(out_log.message, in_log.message, utl_strlen(in_log.message) + 1);
-    return out_log;
+    CTP_Log_t outLog = {
+        .lvl = lvl, .lineNum = inLog.lineNum, .funcName = inLog.funcName};
+    UTL_Memcpy(outLog.message, inLog.message, UTL_Strlen(inLog.message) + 1);
+    return outLog;
 }
 
 /* 
@@ -91,25 +50,25 @@ ctp_log_t ctp_get_log(void)
  *
  * @param arg - runtime initialisation arguments
 */
-ctp_init_ret_e ctp_init(ctp_init_arg_t arg)
+CTP_InitRet_e CTP_Init(CTP_InitArg_t arg)
 {
-    switch (utl_init(
-        (utl_init_arg_t){.log_update_callback = arg.log_update_callback,
-                         .panic_callback = arg.panic_callback}))
+    switch (UTL_Init(
+        (UTL_InitArg_t){.logUpdateCallback = arg.logUpdateCallback,
+                         .panicCallback = arg.panicCallback}))
     {
-        case utl_init_OK: LOG_DEBUG("utl initialisation success."); break;
-        case utl_init_NULL_LOG:
-        case utl_init_NULL_CALLBACK: PANIC();
+        case UTL_InitRet_OK: LOG_DEBUG("utl initialisation success."); break;
+        case UTL_InitRet_NULL_LOG:
+        case UTL_InitRet_NULL_CALLBACK: PANIC();
     }
 
     const u32 placeholder = 42;
-    switch (cor_init((cor_init_arg_t){.placeholder = placeholder}))
+    switch (COR_Init((COR_InitArg_t){.placeholder = placeholder}))
     {
-        case cor_init_OK: LOG_DEBUG("cor initialisation success."); break;
-        case cor_init_MAP_INVALID: PANIC();
+        case COR_InitRet_OK: LOG_DEBUG("cor initialisation success."); break;
+        case COR_InitRet_MAP_INVALID: PANIC();
     }
 
-    return ctp_init_OK;
+    return CTP_InitRet_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

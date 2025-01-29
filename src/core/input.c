@@ -1,7 +1,7 @@
 #ifndef INPUT_H
 #define INPUT_H
 
-#include "src/pubmod_utils.c"
+#include "src/utils.c"
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// API DECL //////////////////////////////////////
@@ -9,9 +9,9 @@
 
 typedef struct {
     u32 placeholder;
-} inp_init_arg_t;
-typedef enum { inp_init_OK, inp_init_MAP_INVALID } inp_init_e;
-static inp_init_e inp_init(inp_init_arg_t arg);
+} INP_InitArg_t;
+typedef enum { INP_InitRet_OK, INP_InitRet_MAP_INVALID } INP_InitRet_e;
+static INP_InitRet_e INP_Init(INP_InitArg_t arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -24,24 +24,25 @@ static inp_init_e inp_init(inp_init_arg_t arg);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct state_inp_t {
+struct inp_State_t {
     u32 placeholder;
     // pool_t
-} static state_inp = {0}; // NOLINT
+} static inp_state = {0}; // NOLINT
 
 /*
- * Initialise the input module. 
+ * Initialise the audio module. 
  *
  * @param args - initialisation arguments.
 */
-static inp_init_e inp_init(inp_init_arg_t args)
+static INP_InitRet_e INP_Init(INP_InitArg_t args)
 {
-    return (args.placeholder) ? inp_init_OK : inp_init_MAP_INVALID;
+    return (args.placeholder) ? INP_InitRet_OK : INP_InitRet_MAP_INVALID;
 }
 
 #pragma GCC diagnostic pop
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
 
 #endif // INPUT_H

@@ -37,7 +37,6 @@ typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 #define F32_MAX (3.40282347e+38F) //! Assumes IEEE-754 compliance.
 #pragma GCC diagnostic pop
 
-#define MAX_LOG_SZ 256
 #define MAX_FMT_ARGS 5
 
 typedef union {
@@ -46,64 +45,64 @@ typedef union {
     i32 d;
     u32 u;
     f32 f;
-} utl_fmt_u;
+} UTL_Fmt_u;
 
 typedef struct {
-    utl_fmt_u arr[MAX_FMT_ARGS];
-} utl_fmts_t;
+    UTL_Fmt_u arr[MAX_FMT_ARGS];
+} UTL_Fmts_t;
 
 typedef enum {
-    utl_loglvl_ASSERT,
-    utl_loglvl_DEBUG,
-    utl_loglvl_WARN,
-    utl_loglvl_ERROR,
-    utl_loglvl_PANIC
-} utl_loglvl_e;
+    UTL_LogLvl_ASSERT,
+    UTL_LogLvl_DEBUG,
+    UTL_LogLvl_WARN,
+    UTL_LogLvl_ERROR,
+    UTL_LogLvl_PANIC
+} UTL_LogLvl_e;
 
 typedef struct {
-    utl_loglvl_e lvl;
-    u32 line_num;
-    const char* func_name;
+    UTL_LogLvl_e lvl;
+    u32 lineNum;
+    const char* funcName;
     char message[MAX_LOG_SZ];
-} utl_log_t;
+} UTL_Log_t;
 
 typedef struct {
-    void (*log_update_callback)(void);
-    void (*panic_callback)(void);
-} utl_init_arg_t;
+    void (*logUpdateCallback)(void);
+    void (*panicCallback)(void);
+} UTL_InitArg_t;
 typedef enum {
-    utl_init_OK,
-    utl_init_NULL_CALLBACK,
-    utl_init_NULL_LOG
-} utl_init_ret_e;
-static utl_init_ret_e utl_init(utl_init_arg_t args);
+    UTL_InitRet_OK,
+    UTL_InitRet_NULL_CALLBACK,
+    UTL_InitRet_NULL_LOG
+} UTL_InitRet_e;
+static UTL_InitRet_e UTL_Init(UTL_InitArg_t args);
 
-static utl_log_t utl_get_log(void);
+static UTL_Log_t UTL_GetLog(void);
 
-static const char* utl_sprintf(char* buf, usize bufsz, const char* format,
-                               utl_fmts_t vals);
+static const char* UTL_Sprintf(char* buf, usize bufsz, const char* format,
+                               UTL_Fmts_t vals);
 
-static const void* utl_memcpy(void* dest, const void* src, usize count);
+static const void* UTL_Memcpy(void* dest, const void* src, usize count);
 
-static inline usize utl_strlen(const char* string);
+static inline usize UTL_Strlen(const char* string);
 
-static inline i32 utl_powi(i32 base, u32 exp);
-static inline u32 utl_powu(u32 base, u32 exp);
-static inline f32 utl_powf(f32 base, i32 exp);
+static inline i32 UTL_Powi(i32 base, u32 exp);
+static inline u32 UTL_Powu(u32 base, u32 exp);
+static inline f32 UTL_Powf(f32 base, i32 exp);
 
-static inline u32 utl_abs(i32 val);
-static inline f32 utl_fabs(f32 val);
+static inline u32 UTL_Abs(i32 val);
+static inline f32 UTL_Fabs(f32 val);
 
-static inline bool utl_isnan(f32 val);
-static inline bool utl_isinf(f32 val);
+static inline bool UTL_Isnan(f32 val);
+static inline bool UTL_Isinf(f32 val);
 
-static char* utl_u32tostr(u32 val, char* buf);
-static char* utl_i32tostr(i32 val, char* buf);
-static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
+static char* UTL_U32tostr(u32 val, char* buf);
+static char* UTL_I32tostr(i32 val, char* buf);
+static char* UTL_F32tostr(f32 val, char* buf, u8 decimals);
 
 /* MACROS
  *
- * LOG(loglvl, msg)
+ * LOG(logLvl, msg)
  * LOG_DEBUG(msg)
  * LOG_WARN(msg)
  * LOG_ERROR(msg)
@@ -125,21 +124,21 @@ static char* utl_f32tostr(f32 val, char* buf, u8 decimals);
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-static utl_log_t new_log(const utl_loglvl_e lvl, const char* const func_name,
-                         const u32 line_num, const char* const format,
-                         const utl_fmts_t values)
+static UTL_Log_t utl_NewLog(const UTL_LogLvl_e lvl, const char* const funcName,
+                         const u32 lineNum, const char* const format,
+                         const UTL_Fmts_t values)
 {
-    utl_log_t log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
-    utl_sprintf(log.message, sizeof(log.message), format, values);
+    UTL_Log_t log = {.lvl = lvl, .lineNum = lineNum, .funcName = funcName};
+    UTL_Sprintf(log.message, sizeof(log.message), format, values);
     return log;
 }
 
-static void do_nothing(void)
+static void utl_DoNothing(void)
 {
 }
 
 /* Intentionally trigger a 'divide by zero' trap */
-static void div_zero(void)
+static void utl_DivZero(void)
 {
     u32 zero = 0;
     (void)(1 / zero);
@@ -152,13 +151,13 @@ static void div_zero(void)
 #pragma GCC diagnostic ignored "-Wunused-macros"
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct state_utl_t {
-    void (*panic_callback)(void);
-    void (*log_update_callback)(void);
+struct utl_State_t {
+    void (*panicCallback)(void);
+    void (*logUpdateCallback)(void);
 
-    utl_log_t log;
+    UTL_Log_t log;
     // pool_t
-} static state_utl = {0}; // NOLINT
+} static utl_state = {0}; // NOLINT
 
 #define NULL_TERMINATOR_SZ 1
 #define U32_MAX_CHARS (10) // '4294967295'
@@ -170,34 +169,34 @@ struct state_utl_t {
 /*
  * @return the last logged message.
  */
-static utl_log_t utl_get_log(void)
+static UTL_Log_t UTL_GetLog(void)
 {
-    return state_utl.log;
+    return utl_state.log;
 }
 
-#define LOG(loglvl, msg)                                   \
+#define LOG(logLvl, msg)                                   \
     do                                                     \
     {                                                      \
-        state_utl.log = (utl_log_t){.lvl = (loglvl),       \
-                                    .line_num = __LINE__,  \
-                                    .func_name = __func__, \
+        utl_state.log = (UTL_Log_t){.lvl = (logLvl),       \
+                                    .lineNum = __LINE__,  \
+                                    .funcName = __func__, \
                                     .message = #msg};      \
-        state_utl.log_update_callback();                   \
+        utl_state.logUpdateCallback();                   \
     } while (0)
 
 #ifdef DEBUG
 #define LOG_DEBUG(msg)              \
     do                              \
     {                               \
-        LOG(utl_loglvl_DEBUG, msg); \
+        LOG(UTL_LogLvl_DEBUG, msg); \
     } while (0)
 
 #define LOGF_DEBUG(format, ...)                                               \
     do                                                                        \
     {                                                                         \
-        state_utl.log = new_log(utl_loglvl_DEBUG, __func__, __LINE__, format, \
-                                (utl_fmts_t){.arr = {__VA_ARGS__}});          \
-        state_utl.log_update_callback();                                      \
+        utl_state.log = utl_NewLog(UTL_LogLvl_DEBUG, __func__, __LINE__, format, \
+                                (UTL_Fmts_t){.arr = {__VA_ARGS__}});          \
+        utl_state.logUpdateCallback();                                      \
     } while (0)
 #else
 #define LOG_DEBUG(...)
@@ -207,36 +206,36 @@ static utl_log_t utl_get_log(void)
 #define LOG_WARN(msg)              \
     do                             \
     {                              \
-        LOG(utl_loglvl_WARN, msg); \
+        LOG(UTL_logLvl_WARN, msg); \
     } while (0)
 
 #define LOGF_WARN(format, ...)                                               \
     do                                                                       \
     {                                                                        \
-        state_utl.log = new_log(utl_loglvl_WARN, __func__, __LINE__, format, \
-                                (utl_fmts_t){.arr = {__VA_ARGS__}});         \
-        state_utl.log_update_callback();                                     \
+        utl_state.log = utl_newLog(UTL_LogLvl_WARN, __func__, __LINE__, format, \
+                                (UTL_fmts_t){.arr = {__VA_ARGS__}});         \
+        utl_state.logUpdateCallback();                                     \
     } while (0)
 
 #define LOG_ERROR(msg)              \
     do                              \
     {                               \
-        LOG(utl_loglvl_ERROR, msg); \
+        LOG(UTL_LogLvl_ERROR, msg); \
     } while (0)
 
 #define LOGF_ERROR(format, ...)                                               \
     do                                                                        \
     {                                                                         \
-        state_utl.log = new_log(utl_loglvl_ERROR, __func__, __LINE__, format, \
-                                (utl_fmts_t){.arr = {__VA_ARGS__}});          \
-        state_utl.log_update_callback();                                      \
+        utl_state.log = utl_newLog(UTL_LogLvl_ERROR, __func__, __LINE__, format, \
+                                (UTL_fmts_t){.arr = {__VA_ARGS__}});          \
+        utl_state.logUpdateCallback();                                      \
     } while (0)
 
 #define PANIC()                           \
     do                                    \
     {                                     \
-        LOG(utl_loglvl_PANIC, "Wuh Woh"); \
-        state_utl.panic_callback();       \
+        LOG(UTL_LogLvl_PANIC, "Wuh Woh"); \
+        utl_state.panicCallback();       \
     } while (0)
 
 #ifdef DEBUG
@@ -245,12 +244,12 @@ static utl_log_t utl_get_log(void)
     {                                                            \
         if (!(cond))                                             \
         {                                                        \
-            state_utl.log = (utl_log_t){.lvl = utl_loglvl_ERROR, \
-                                        .line_num = __LINE__,    \
-                                        .func_name = __func__,   \
+            utl_state.log = (UTL_Log_t){.lvl = UTL_LogLvl_ERROR, \
+                                        .lineNum = __LINE__,    \
+                                        .funcName = __func__,   \
                                         .message = #cond};       \
-            state_utl.log_update_callback();                     \
-            state_utl.panic_callback();                          \
+            utl_state.logUpdateCallback();                     \
+            utl_state.panicCallback();                          \
         }                                                        \
     } while (0)
 #else
@@ -275,14 +274,14 @@ static utl_log_t utl_get_log(void)
 
 #define MAX(left, right) (((left) > (right)) ? (left) : (right))
 
-STATIC_ASSERT(sizeof(u8) == 1, u8_1_byte);
-STATIC_ASSERT(sizeof(u16) == 2, u16_2_bytes);
-STATIC_ASSERT(sizeof(u32) == 4, u32_4_bytes);
-STATIC_ASSERT(sizeof(i8) == 1, i8_1_byte);
-STATIC_ASSERT(sizeof(i16) == 2, i16_2_bytes);
-STATIC_ASSERT(sizeof(i32) == 4, i32_4_bytes);
-STATIC_ASSERT(sizeof(f32) == 4, f32_4_bytes);
-STATIC_ASSERT(sizeof(void*) == sizeof(usize), ptr_usize_bytes);
+STATIC_ASSERT(sizeof(u8) == 1, utl_u8OneByte);
+STATIC_ASSERT(sizeof(u16) == 2, utl_u16TwoBytes);
+STATIC_ASSERT(sizeof(u32) == 4, utl_u32FourBytes);
+STATIC_ASSERT(sizeof(i8) == 1, utl_i8OneByte);
+STATIC_ASSERT(sizeof(i16) == 2, utl_i16TwoBytes);
+STATIC_ASSERT(sizeof(i32) == 4, utl_i32FourBytes);
+STATIC_ASSERT(sizeof(f32) == 4, utl_f32FourBytes);
+STATIC_ASSERT(sizeof(void*) == sizeof(usize), utl_ptrUsizeBytes);
 
 /*
  * If aligned copy 32bit chunks from dest to src, else copy bytes.
@@ -293,7 +292,7 @@ STATIC_ASSERT(sizeof(void*) == sizeof(usize), ptr_usize_bytes);
  * @param count - number of bytes to copy
  * @return copy destination
  */
-static const void* utl_memcpy(void* dest, const void* src, const usize count)
+static const void* UTL_Memcpy(void* dest, const void* src, const usize count)
 {
     ASSERT(dest);
     ASSERT(src);
@@ -319,7 +318,7 @@ static const void* utl_memcpy(void* dest, const void* src, const usize count)
  * @param exp - exponent.
  * @return power.
  */
-static inline i32 utl_powi(i32 base, u32 exp)
+static inline i32 UTL_Powi(i32 base, u32 exp)
 {
     i32 result = 1;
     while (true)
@@ -339,7 +338,7 @@ static inline i32 utl_powi(i32 base, u32 exp)
  * @param exp - exponent.
  * @return power.
  */
-static inline u32 utl_powu(u32 base, u32 exp)
+static inline u32 UTL_Powu(u32 base, u32 exp)
 {
     u32 result = 1;
     if (exp == 0)
@@ -363,18 +362,18 @@ static inline u32 utl_powu(u32 base, u32 exp)
  * @param exp - exponent.
  * @return power.
  */
-static inline f32 utl_powf(f32 base, i32 exp)
+static inline f32 UTL_Powf(f32 base, i32 exp)
 {
     f32 result = 1;
     if (exp == 0)
         return result;
-    u32 abs_exp = utl_abs(exp);
+    u32 absExp = UTL_Abs(exp);
     while (true)
     {
-        if (abs_exp & 1U)
+        if (absExp & 1U)
             result *= base;
-        abs_exp >>= 1U;
-        if (abs_exp == 0)
+        absExp >>= 1U;
+        if (absExp == 0)
             break;
         base *= base;
     }
@@ -385,7 +384,7 @@ static inline f32 utl_powf(f32 base, i32 exp)
  * @param val - pos/neg value.
  * @return absolute value.
  */
-static inline u32 utl_abs(const i32 val)
+static inline u32 UTL_Abs(const i32 val)
 {
     return (val < 0) ? -(u32)val : (u32)val;
 }
@@ -394,7 +393,7 @@ static inline u32 utl_abs(const i32 val)
  * @param val - pos/neg value.
  * @return absolute value.
  */
-static inline f32 utl_fabs(f32 val)
+static inline f32 UTL_Fabs(f32 val)
 {
     return (val < 0) ? -val : val;
 }
@@ -405,7 +404,7 @@ static inline f32 utl_fabs(f32 val)
  * @param val - potentially NaN float value.
  * @return val is NaN.
  */
-static inline bool utl_isnan(const f32 val)
+static inline bool UTL_Isnan(const f32 val)
 {
     return val != val;
 }
@@ -416,16 +415,16 @@ static inline bool utl_isnan(const f32 val)
  * @param val - potentially infinite float value.
  * @return val is infinity.
  */
-static inline bool utl_isinf(const f32 val)
+static inline bool UTL_Isinf(const f32 val)
 {
-    return !utl_isnan(val) && utl_isnan(val - val);
+    return !UTL_Isnan(val) && UTL_Isnan(val - val);
 }
 
 /*
  * @param str - null terminated string.
  * @return length of str, null terminator not included.
  * */
-static inline usize utl_strlen(const char* str)
+static inline usize UTL_Strlen(const char* str)
 {
     ASSERT(str);
     usize len = 0;
@@ -441,7 +440,7 @@ static inline usize utl_strlen(const char* str)
  * @param buf - destination string buffer
  * @return buf
  */
-static char* utl_u32tostr(u32 val, char* buf)
+static char* UTL_U32tostr(u32 val, char* buf)
 {
     ASSERT(buf);
     static const u8 base = 10;
@@ -467,7 +466,7 @@ static char* utl_u32tostr(u32 val, char* buf)
  * @param buf - destination string buffer
  * @return buf
  */
-static char* utl_i32tostr(i32 val, char* buf)
+static char* UTL_I32tostr(i32 val, char* buf)
 {
     ASSERT(buf);
     static const u8 base = 10;
@@ -502,30 +501,30 @@ static char* utl_i32tostr(i32 val, char* buf)
  * @return buf
  */
 __attribute__((no_sanitize("undefined"))) static char*
-utl_f32tostr(const f32 val, char* buf, u8 decimals)
+UTL_F32tostr(const f32 val, char* buf, u8 decimals)
 {
     ASSERT(buf);
     static const f32 base = 10;
 
-    if (utl_isnan(val))
+    if (UTL_Isnan(val))
     {
         static const char* nan = "NaN";
-        utl_memcpy(buf, nan, utl_strlen(nan) + NULL_TERMINATOR_SZ);
+        UTL_Memcpy(buf, nan, UTL_Strlen(nan) + NULL_TERMINATOR_SZ);
         return buf;
     }
 
-    if (utl_isinf(val))
+    if (UTL_Isinf(val))
     {
         static const char* inf = "Inf";
-        utl_memcpy(buf, inf, utl_strlen(inf) + NULL_TERMINATOR_SZ);
+        UTL_Memcpy(buf, inf, UTL_Strlen(inf) + NULL_TERMINATOR_SZ);
         return buf;
     }
 
     i32 whole = (i32)val;
-    f32 fraction = utl_fabs((val - (f32)whole));
-    char* start = utl_i32tostr(whole, buf);
+    f32 fraction = UTL_Fabs((val - (f32)whole));
+    char* start = UTL_I32tostr(whole, buf);
 
-    buf += utl_strlen(buf);
+    buf += UTL_Strlen(buf);
     *buf++ = '.';
 
     if (decimals--)
@@ -538,7 +537,7 @@ utl_f32tostr(const f32 val, char* buf, u8 decimals)
         }
         while (decimals--)
             fraction *= base;
-        utl_u32tostr((u32)fraction, buf);
+        UTL_U32tostr((u32)fraction, buf);
     }
     else
         *buf = '\0';
@@ -547,7 +546,7 @@ utl_f32tostr(const f32 val, char* buf, u8 decimals)
 
 /*
  * Takes format specifiers of type %d, %u, %f, %s or %c.
- * e.g. utl_sprintf(buf, bufsz, "%f", (utl_fmts_t){.arr = {{.f = 123.456f}}})
+ * e.g. UTL_sprintf(buf, bufsz, "%f", (UTL_fmts_t){.arr = {{.f = 123.456f}}})
  *
  * @param buf - the destination string buffer
  * @param bufsz - size of destination string buffer
@@ -555,15 +554,15 @@ utl_f32tostr(const f32 val, char* buf, u8 decimals)
  * @param vals - struct wrapped array of format specifier values
  * @return - the destination string buffer
  */
-static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
-                               const utl_fmts_t vals)
+static const char* UTL_Sprintf(char* buf, const usize bufsz, const char* format,
+                               const UTL_Fmts_t vals)
 {
     ASSERT(buf);
     ASSERT(format);
 
     const char* first = buf;
     const char* last = buf + bufsz - 1;
-    usize i_vals = 0;
+    usize iVals = 0;
 
     while (*format != '\0')
     {
@@ -579,7 +578,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
         }
         else
         {
-            if (i_vals == MAX_FMT_ARGS)
+            if (iVals == MAX_FMT_ARGS)
             {
                 LOG_ERROR("Too many specifiers in format string.");
                 break;
@@ -587,11 +586,11 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
 
             ++format;
             const char specifier = *format++;
-            const utl_fmt_u val = vals.arr[i_vals++];
+            const UTL_Fmt_u val = vals.arr[iVals++];
 
             if (((specifier == 'd' || specifier == 'u' || specifier == 'f') &&
                  (buf + NUMERIC_MAX_CHARS) > last) ||
-                ((specifier == 's') && (buf + utl_strlen(val.s) > last)))
+                ((specifier == 's') && (buf + UTL_Strlen(val.s) > last)))
             {
                 LOG_ERROR("Destination buffer too small.");
                 break;
@@ -600,9 +599,9 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
             switch (specifier)
             {
                 case 'c': *buf++ = val.c; continue;
-                case 'd': utl_i32tostr(val.d, buf); break;
-                case 'u': utl_u32tostr(val.u, buf); break;
-                case 'f': utl_f32tostr(val.f, buf, 3); break;
+                case 'd': UTL_I32tostr(val.d, buf); break;
+                case 'u': UTL_U32tostr(val.u, buf); break;
+                case 'f': UTL_F32tostr(val.f, buf, 3); break;
                 case 's': {
                     const char* str = val.s;
                     do
@@ -616,7 +615,7 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
                     *buf = '\0';
                     return first;
             }
-            buf += utl_strlen(buf);
+            buf += UTL_Strlen(buf);
         }
     }
     *buf = '\0';
@@ -628,18 +627,18 @@ static const char* utl_sprintf(char* buf, const usize bufsz, const char* format,
  *
  * @param args initialisation arguments.
  */
-static utl_init_ret_e utl_init(utl_init_arg_t args)
+static UTL_InitRet_e UTL_Init(UTL_InitArg_t args)
 {
-    state_utl.log_update_callback = args.log_update_callback;
-    state_utl.panic_callback = args.panic_callback;
-    ASSIGN_IF_ZERO(state_utl.log_update_callback, do_nothing);
-    ASSIGN_IF_ZERO(state_utl.panic_callback, div_zero);
+    utl_state.logUpdateCallback = args.logUpdateCallback;
+    utl_state.panicCallback = args.panicCallback;
+    ASSIGN_IF_ZERO(utl_state.logUpdateCallback, utl_DoNothing);
+    ASSIGN_IF_ZERO(utl_state.panicCallback, utl_DivZero);
 
-    state_utl.log =
-        (utl_log_t){.func_name = __func__, .line_num = __LINE__, .message = ""};
+    utl_state.log =
+        (UTL_Log_t){.funcName = __func__, .lineNum = __LINE__, .message = ""};
 
     LOGF_DEBUG("Initialisation complete.", 0);
-    return utl_init_OK;
+    return UTL_InitRet_OK;
 }
 
 #pragma GCC diagnostic pop

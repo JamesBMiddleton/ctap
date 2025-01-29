@@ -45,7 +45,7 @@ void tst_log_update_callback(void)
         case ctp_loglvl_PANIC:
             lvl = "PANIC";
             break;
-        case ctp_loglvl_ASSERT:
+        case CTP_logLvl_ASSERT:
             lvl = "ASSERT";
             break;
     }

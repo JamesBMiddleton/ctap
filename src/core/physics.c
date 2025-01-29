@@ -1,7 +1,7 @@
-#ifndef GRAPHICS_H
-#define GRAPHICS_H
+#ifndef PHYSICS_H
+#define PHYSICS_H
 
-#include "src/pubmod_utils.c"
+#include "src/utils.c"
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// API DECL //////////////////////////////////////
@@ -9,9 +9,9 @@
 
 typedef struct {
     u32 placeholder;
-} gfx_init_arg_t;
-typedef enum { gfx_init_OK, gfx_init_MAP_INVALID } gfx_init_e;
-static gfx_init_e gfx_init(gfx_init_arg_t arg);
+} PHX_InitArg_t;
+typedef enum { PHX_InitRet_OK, PHX_InitRet_MAP_INVALID } PHX_InitRet_e;
+static PHX_InitRet_e PHX_Init(PHX_InitArg_t arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -24,19 +24,19 @@ static gfx_init_e gfx_init(gfx_init_arg_t arg);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct state_gfx_t {
+struct phx_State_t {
     u32 placeholder;
     // pool_t
-} static state_gfx = {0}; // NOLINT
+} static phx_state = {0}; // NOLINT
 
 /*
- * Initialise the graphics module. 
+ * Initialise the audio module. 
  *
  * @param args - initialisation arguments.
 */
-static gfx_init_e gfx_init(gfx_init_arg_t args)
+static PHX_InitRet_e PHX_Init(PHX_InitArg_t args)
 {
-    return (args.placeholder) ? gfx_init_OK : gfx_init_MAP_INVALID;
+    return (args.placeholder) ? PHX_InitRet_OK : PHX_InitRet_MAP_INVALID;
 }
 
 #pragma GCC diagnostic pop
@@ -44,4 +44,5 @@ static gfx_init_e gfx_init(gfx_init_arg_t args)
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-#endif // GRAPHICS_H
+
+#endif // PHYSICS_H

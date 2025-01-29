@@ -1,7 +1,7 @@
 #ifndef CORE_H
 #define CORE_H
 
-#include "src/pubmod_utils.c"
+#include "src/utils.c"
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// API DECL //////////////////////////////////////
@@ -9,9 +9,9 @@
 
 typedef struct {
     u32 placeholder;
-} cor_init_arg_t;
-typedef enum { cor_init_OK, cor_init_MAP_INVALID } cor_init_ret_e;
-static cor_init_ret_e cor_init(cor_init_arg_t arg);
+} COR_InitArg_t;
+typedef enum { COR_InitRet_OK, COR_InitRet_MAP_INVALID } COR_InitRet_e;
+static COR_InitRet_e COR_Init(COR_InitArg_t arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -19,35 +19,35 @@ static cor_init_ret_e cor_init(cor_init_arg_t arg);
 
 typedef struct {
     u32 startiness;
-    u32 num_horses;
-} engine_starter_t;
+    u32 numHorses;
+} utl_EngineStarter_t;
 
 typedef enum {
-    start_the_engines_OK,
-    start_the_engines_MAP_INVALID
-} start_the_engines_ret_e;
+    utl_StartTheEnginesRet_OK,
+    utl_StartTheEnginesRet_MAP_INVALID
+} utl_StartTheEnginesRet_e;
 /*
  * placeholder.
  *
  * @param starter - placeholder
 */
-static start_the_engines_ret_e start_the_engines(engine_starter_t starter)
+static utl_StartTheEnginesRet_e utl_StartTheEngines(utl_EngineStarter_t starter)
 {
     if (starter.startiness != 0)
-        return start_the_engines_MAP_INVALID;
+        return utl_StartTheEnginesRet_MAP_INVALID;
     LOGF_DEBUG("Engines started with %u startiness and %u horses!",
-               {.u = starter.startiness}, {.u = starter.num_horses});
-    return start_the_engines_OK;
+               {.u = starter.startiness}, {.u = starter.numHorses});
+    return utl_StartTheEnginesRet_OK;
 }
 
 typedef enum {
-    spaghettify_value_OK,
-    spaghettify_value_NOTOK
-} spaghettify_value_e;
-static spaghettify_value_e spaghettify_value(u32* value)
+    utl_SpaghettifyValueRet_OK,
+    utl_SpaghettifyValueRet_NOTOK
+} utl_SpaghettifyValueRet_e;
+static utl_SpaghettifyValueRet_e utl_SpaghettifyValue(u32* value)
 {
     *value = 0;
-    return spaghettify_value_OK;
+    return utl_SpaghettifyValueRet_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -56,31 +56,31 @@ static spaghettify_value_e spaghettify_value(u32* value)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct state_cor_t {
+struct cor_State_t {
     u32 placeholder;
     // pool_t
-} static state_cor = {0}; // NOLINT
+} static cor_state = {0}; // NOLINT
 
 /*
  * Initialise the core module. 
  *
  * @param args - initialisation arguments.
 */
-static cor_init_ret_e cor_init(cor_init_arg_t args)
+static COR_InitRet_e COR_Init(COR_InitArg_t args)
 {
-    state_cor.placeholder = args.placeholder;
+    cor_state.placeholder = args.placeholder;
 
-    if (spaghettify_value(&state_cor.placeholder) != spaghettify_value_OK)
-        return cor_init_MAP_INVALID;
+    if (utl_SpaghettifyValue(&cor_state.placeholder) != utl_SpaghettifyValueRet_OK)
+        return COR_InitRet_MAP_INVALID;
 
-    if (start_the_engines((engine_starter_t){
-            .num_horses = state_cor.placeholder,
-            .startiness = state_cor.placeholder}) != start_the_engines_OK)
-        return cor_init_MAP_INVALID;
+    if (utl_StartTheEngines((utl_EngineStarter_t){
+            .numHorses = cor_state.placeholder,
+            .startiness = cor_state.placeholder}) != utl_StartTheEnginesRet_OK)
+        return COR_InitRet_MAP_INVALID;
 
     LOG_DEBUG("Map loaded.");
 
-    return cor_init_OK;
+    return COR_InitRet_OK;
 }
 
 #pragma GCC diagnostic pop
