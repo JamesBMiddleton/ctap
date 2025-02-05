@@ -9,9 +9,9 @@
 
 typedef struct {
     u32 placeholder;
-} GFX_InitArg_t;
-typedef enum { GFX_InitRet_OK, GFX_InitRet_MAP_INVALID } GFX_InitRet_e;
-static GFX_InitRet_e GFX_Init(GFX_InitArg_t arg);
+} GFX_InitArg;
+typedef enum { GFX_InitRet_OK, GFX_InitRet_MAP_INVALID } GFX_InitRet;
+static GFX_InitRet GFX_Init(GFX_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -24,7 +24,7 @@ static GFX_InitRet_e GFX_Init(GFX_InitArg_t arg);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct gfx_State_t {
+struct gfx_State {
     u32 placeholder;
     // pool_t
 } static gfx_state = {0}; // NOLINT
@@ -34,7 +34,7 @@ struct gfx_State_t {
  *
  * @param args - initialisation arguments.
 */
-static GFX_InitRet_e GFX_Init(GFX_InitArg_t args)
+static GFX_InitRet GFX_Init(GFX_InitArg args)
 {
     return (args.placeholder) ? GFX_InitRet_OK : GFX_InitRet_MAP_INVALID;
 }

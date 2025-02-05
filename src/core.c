@@ -9,9 +9,9 @@
 
 typedef struct {
     u32 placeholder;
-} COR_InitArg_t;
-typedef enum { COR_InitRet_OK, COR_InitRet_MAP_INVALID } COR_InitRet_e;
-static COR_InitRet_e COR_init(COR_InitArg_t arg);
+} COR_InitArg;
+typedef enum { COR_InitRet_OK, COR_InitRet_MAP_INVALID } COR_InitRet;
+static COR_InitRet COR_init(COR_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -20,18 +20,18 @@ static COR_InitRet_e COR_init(COR_InitArg_t arg);
 typedef struct {
     u32 startiness;
     u32 num_horses;
-} cor_EngineStarter_t;
+} cor_EngineStarter;
 
 typedef enum {
     cor_StartTheEnginesRet_OK,
     cor_StartTheEnginesRet_MAP_INVALID
-} cor_StartTheEnginesRet_e;
+} cor_StartTheEnginesRet;
 /*
  * placeholder.
  *
  * @param starter - placeholder
 */
-static cor_StartTheEnginesRet_e cor_start_the_engines(cor_EngineStarter_t starter)
+static cor_StartTheEnginesRet cor_start_the_engines(cor_EngineStarter starter)
 {
     if (starter.startiness != 0)
         return cor_StartTheEnginesRet_MAP_INVALID;
@@ -43,8 +43,8 @@ static cor_StartTheEnginesRet_e cor_start_the_engines(cor_EngineStarter_t starte
 typedef enum {
     cor_SpaghettifyValueRet_OK,
     cor_SpaghettifyValueRet_NOTOK
-} cor_SpaghettifyValueRet_e;
-static cor_SpaghettifyValueRet_e cor_spaghettify_value(u32* value)
+} cor_SpaghettifyValueRet;
+static cor_SpaghettifyValueRet cor_spaghettify_value(u32* value)
 {
     *value = 0;
     return cor_SpaghettifyValueRet_OK;
@@ -56,7 +56,7 @@ static cor_SpaghettifyValueRet_e cor_spaghettify_value(u32* value)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct cor_State_t {
+struct cor_State {
     u32 placeholder;
     // pool_t
 } static cor_state = {0}; // NOLINT
@@ -66,14 +66,14 @@ struct cor_State_t {
  *
  * @param args - initialisation arguments.
 */
-static COR_InitRet_e COR_init(COR_InitArg_t args)
+static COR_InitRet COR_init(COR_InitArg args)
 {
     cor_state.placeholder = args.placeholder;
 
     if (cor_spaghettify_value(&cor_state.placeholder) != cor_SpaghettifyValueRet_OK)
         return COR_InitRet_MAP_INVALID;
 
-    if (cor_start_the_engines((cor_EngineStarter_t){
+    if (cor_start_the_engines((cor_EngineStarter){
             .num_horses = cor_state.placeholder,
             .startiness = cor_state.placeholder}) != cor_StartTheEnginesRet_OK)
         return COR_InitRet_MAP_INVALID;

@@ -152,12 +152,12 @@ static void utl_div_zero(void)
 #pragma GCC diagnostic ignored "-Wunused-macros"
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct utl_State_t {
+struct utl_State {
     void (*panic_callback)(void);
     void (*log_update_callback)(void);
 
     UTL_Log log;
-    // pool_t
+    // Pool
 } static utl_state = {0}; // NOLINT
 
 #define NULL_TERMINATOR_SZ 1
@@ -547,7 +547,7 @@ UTL_f32tostr(const f32 val, char* buf, u8 decimals)
 
 /*
  * Takes format specifiers of type %d, %u, %f, %s or %c.
- * e.g. UTL_sprintf(buf, bufsz, "%f", (UTL_fmts_t){.arr = {{.f = 123.456f}}})
+ * e.g. UTL_sprintf(buf, bufsz, "%f", (UTL_Fmts){.arr = {{.f = 123.456f}}})
  *
  * @param buf - the destination string buffer
  * @param bufsz - size of destination string buffer

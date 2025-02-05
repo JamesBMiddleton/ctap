@@ -9,9 +9,9 @@
 
 typedef struct {
     u32 placeholder;
-} INP_InitArg_t;
-typedef enum { INP_InitRet_OK, INP_InitRet_MAP_INVALID } INP_InitRet_e;
-static INP_InitRet_e INP_Init(INP_InitArg_t arg);
+} INP_InitArg;
+typedef enum { INP_InitRet_OK, INP_InitRet_MAP_INVALID } INP_InitRet;
+static INP_InitRet INP_Init(INP_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -24,7 +24,7 @@ static INP_InitRet_e INP_Init(INP_InitArg_t arg);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct inp_State_t {
+struct inp_State {
     u32 placeholder;
     // pool_t
 } static inp_state = {0}; // NOLINT
@@ -34,7 +34,7 @@ struct inp_State_t {
  *
  * @param args - initialisation arguments.
 */
-static INP_InitRet_e INP_Init(INP_InitArg_t args)
+static INP_InitRet INP_Init(INP_InitArg args)
 {
     return (args.placeholder) ? INP_InitRet_OK : INP_InitRet_MAP_INVALID;
 }

@@ -13,7 +13,7 @@
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-struct ctp_State_t {
+struct ctp_State {
     u32 placeholder;
 } static ctp_state = {0}; // NOLINT
 
@@ -26,7 +26,7 @@ struct ctp_State_t {
 CTP_Log CTP_get_log(void)
 {
     const UTL_Log in_log = UTL_get_log();
-    CTP_LogLvl_e lvl = CTP_LogLvl_DEBUG;
+    CTP_LogLvl lvl = CTP_LogLvl_DEBUG;
     switch (in_log.lvl)
     {
         case UTL_LogLvl_DEBUG: lvl = CTP_LogLvl_DEBUG; break;
@@ -46,7 +46,7 @@ CTP_Log CTP_get_log(void)
  *
  * @param arg - runtime initialisation arguments
 */
-CTP_InitRet_e CTP_init(CTP_InitArg arg)
+CTP_InitRet CTP_init(CTP_InitArg arg)
 {
     switch (UTL_init(
         (UTL_InitArg){.log_update_callback = arg.log_update_callback,
@@ -58,7 +58,7 @@ CTP_InitRet_e CTP_init(CTP_InitArg arg)
     }
 
     const u32 placeholder = 42;
-    switch (COR_init((COR_InitArg_t){.placeholder = placeholder}))
+    switch (COR_init((COR_InitArg){.placeholder = placeholder}))
     {
         case COR_InitRet_OK: LOG_DEBUG("cor initialisation success."); break;
         case COR_InitRet_MAP_INVALID: PANIC();

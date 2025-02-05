@@ -9,9 +9,9 @@
 
 typedef struct {
     u32 placeholder;
-} AUD_InitArg_t;
-typedef enum { AUD_InitRet_OK, AUD_InitRet_MAP_INVALID } AUD_InitRet_e;
-static AUD_InitRet_e AUD_Init(AUD_InitArg_t arg);
+} AUD_InitArg;
+typedef enum { AUD_InitRet_OK, AUD_InitRet_MAP_INVALID } AUD_InitRet;
+static AUD_InitRet AUD_Init(AUD_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -24,7 +24,7 @@ static AUD_InitRet_e AUD_Init(AUD_InitArg_t arg);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct aud_State_t {
+struct aud_State {
     u32 placeholder;
     // pool_t
 } static aud_state = {0}; // NOLINT
@@ -34,7 +34,7 @@ struct aud_State_t {
  *
  * @param args - initialisation arguments.
 */
-static AUD_InitRet_e AUD_Init(AUD_InitArg_t args)
+static AUD_InitRet AUD_Init(AUD_InitArg args)
 {
     return (args.placeholder) ? AUD_InitRet_OK : AUD_InitRet_MAP_INVALID;
 }

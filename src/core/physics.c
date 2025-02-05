@@ -9,9 +9,9 @@
 
 typedef struct {
     u32 placeholder;
-} PHX_InitArg_t;
-typedef enum { PHX_InitRet_OK, PHX_InitRet_MAP_INVALID } PHX_InitRet_e;
-static PHX_InitRet_e PHX_Init(PHX_InitArg_t arg);
+} PHX_InitArg;
+typedef enum { PHX_InitRet_OK, PHX_InitRet_MAP_INVALID } PHX_InitRet;
+static PHX_InitRet PHX_Init(PHX_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -24,7 +24,7 @@ static PHX_InitRet_e PHX_Init(PHX_InitArg_t arg);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct phx_State_t {
+struct phx_State {
     u32 placeholder;
     // pool_t
 } static phx_state = {0}; // NOLINT
@@ -34,7 +34,7 @@ struct phx_State_t {
  *
  * @param args - initialisation arguments.
 */
-static PHX_InitRet_e PHX_Init(PHX_InitArg_t args)
+static PHX_InitRet PHX_Init(PHX_InitArg args)
 {
     return (args.placeholder) ? PHX_InitRet_OK : PHX_InitRet_MAP_INVALID;
 }
