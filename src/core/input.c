@@ -11,7 +11,7 @@ typedef struct {
     u32 placeholder;
 } INP_InitArg;
 typedef enum { INP_InitRet_OK, INP_InitRet_MAP_INVALID } INP_InitRet;
-static INP_InitRet INP_init(INP_InitArg arg);
+static INP_InitRet INP_Init(INP_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -34,7 +34,7 @@ struct inp_State {
  *
  * @param args - initialisation arguments.
 */
-static INP_InitRet INP_init(INP_InitArg args)
+static INP_InitRet INP_Init(INP_InitArg args)
 {
     return (args.placeholder) ? INP_InitRet_OK : INP_InitRet_MAP_INVALID;
 }

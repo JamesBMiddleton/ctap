@@ -11,7 +11,7 @@ typedef struct {
     u32 placeholder;
 } AUD_InitArg;
 typedef enum { AUD_InitRet_OK, AUD_InitRet_MAP_INVALID } AUD_InitRet;
-static AUD_InitRet AUD_init(AUD_InitArg arg);
+static AUD_InitRet AUD_Init(AUD_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -34,7 +34,7 @@ struct aud_State {
  *
  * @param args - initialisation arguments.
 */
-static AUD_InitRet AUD_init(AUD_InitArg args)
+static AUD_InitRet AUD_Init(AUD_InitArg args)
 {
     return (args.placeholder) ? AUD_InitRet_OK : AUD_InitRet_MAP_INVALID;
 }

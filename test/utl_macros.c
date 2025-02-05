@@ -1,8 +1,6 @@
-#include "test.h"
+// #include "test.h"
 
-i32 main(void)
+int main(void)
 {
-    tst_init();
-
     return 0;
 }

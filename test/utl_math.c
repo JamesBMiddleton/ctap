@@ -1,115 +1,124 @@
+#include <assert.h>
+#include <limits.h>
+#include <float.h>
 #include "test.h"
+#include "src/utils.c"
 
-static void powi_check(void)
+static void PowiCheck(void)
 {
-    ASSERT(utl_powi(0, 0) == 1);
-    ASSERT(utl_powi(0, 1) == 0);
+    assert(UTL_Powi(0, 0) == 1);
+    assert(UTL_Powi(0, 1) == 0);
 
-    ASSERT(utl_powi(1, 0) == 1);
-    ASSERT(utl_powi(1, 1) == 1);
-    ASSERT(utl_powi(1, 5) == 1);
-    ASSERT(utl_powi(2, 5) == 32);
-    ASSERT(utl_powi(5, 2) == 25);
-    ASSERT(utl_powi(14, 8) == 1475789056);
+    assert(UTL_Powi(1, 0) == 1);
+    assert(UTL_Powi(1, 1) == 1);
+    assert(UTL_Powi(1, 5) == 1);
+    assert(UTL_Powi(2, 5) == 32);
+    assert(UTL_Powi(5, 2) == 25);
+    assert(UTL_Powi(14, 8) == 1475789056);
 
-    ASSERT(utl_powi(-1, 0) == 1);
-    ASSERT(utl_powi(-1, 1) == -1);
-    ASSERT(utl_powi(-1, 5) == -1);
-    ASSERT(utl_powi(-2, 5) == -32);
-    ASSERT(utl_powi(-5, 2) == 25);
-    ASSERT(utl_powi(-14, 7) == -105413504);
+    assert(UTL_Powi(-1, 0) == 1);
+    assert(UTL_Powi(-1, 1) == -1);
+    assert(UTL_Powi(-1, 5) == -1);
+    assert(UTL_Powi(-2, 5) == -32);
+    assert(UTL_Powi(-5, 2) == 25);
+    assert(UTL_Powi(-14, 7) == -105413504);
 }
 
-static void powu_check(void)
+static void Powu_check(void)
 {
-    ASSERT(utl_powu(0, 1) == 0);
-    ASSERT(utl_powu(1, 0) == 1);
-    ASSERT(utl_powu(0, 0) == 1);
-    ASSERT(utl_powu(1, 1) == 1);
-    ASSERT(utl_powu(1, 1) == 1);
-    ASSERT(utl_powu(1, 5) == 1);
-    ASSERT(utl_powu(2, 5) == 32);
-    ASSERT(utl_powu(5, 2) == 25);
-    ASSERT(utl_powu(15, 8) == 2562890625);
+    assert(UTL_Powu(0, 1) == 0);
+    assert(UTL_Powu(1, 0) == 1);
+    assert(UTL_Powu(0, 0) == 1);
+    assert(UTL_Powu(1, 1) == 1);
+    assert(UTL_Powu(1, 1) == 1);
+    assert(UTL_Powu(1, 5) == 1);
+    assert(UTL_Powu(2, 5) == 32);
+    assert(UTL_Powu(5, 2) == 25);
+    assert(UTL_Powu(15, 8) == 2562890625);
 }
 
-static void powf_check(void)
+static void Powf_check(void)
 {
-    ASSERT(FEQUAL(utl_powf(0, 0), 1));
-    ASSERT(FEQUAL(utl_powf(0, 1), 0));
-    ASSERT(FEQUAL(utl_powf(-1, 0), 1));
-    ASSERT(utl_isinf(utl_powf(0, -1)));
+    assert(UTL_FEQUAL(UTL_Powf(0, 0), 1));
+    assert(UTL_FEQUAL(UTL_Powf(0, 1), 0));
+    assert(UTL_FEQUAL(UTL_Powf(-1, 0), 1));
+    assert(UTL_Isinf(UTL_Powf(0, -1)));
 
-    ASSERT(FEQUAL(utl_powf(42, 0), 1));
-    ASSERT(FEQUAL(utl_powf(42, 1), 42));
-    ASSERT(FEQUAL(utl_powf(42, 2), 1764));
-    ASSERT(FEQUAL(utl_powf(42, 3), 74088));
+    assert(UTL_FEQUAL(UTL_Powf(42, 0), 1));
+    assert(UTL_FEQUAL(UTL_Powf(42, 1), 42));
+    assert(UTL_FEQUAL(UTL_Powf(42, 2), 1764));
+    assert(UTL_FEQUAL(UTL_Powf(42, 3), 74088));
 
-    ASSERT(FEQUAL(utl_powf(-42, 0), 1));
-    ASSERT(FEQUAL(utl_powf(-42, 1), -42));
-    ASSERT(FEQUAL(utl_powf(-42, 2), 1764));
-    ASSERT(FEQUAL(utl_powf(-42, 3), -74088));
+    assert(UTL_FEQUAL(UTL_Powf(-42, 0), 1));
+    assert(UTL_FEQUAL(UTL_Powf(-42, 1), -42));
+    assert(UTL_FEQUAL(UTL_Powf(-42, 2), 1764));
+    assert(UTL_FEQUAL(UTL_Powf(-42, 3), -74088));
 
-    ASSERT(FEQUAL(utl_powf(0.1f, -1), 10));
-    ASSERT(FEQUAL(utl_powf(1.5f, 42), 24878997.7221f));
-    ASSERT(FEQUAL(utl_powf(1.5f, -42), 4.01945452614e-8f));
+    assert(UTL_FEQUAL(UTL_Powf(0.1f, -1), 10));
+    assert(UTL_FEQUAL(UTL_Powf(1.5f, 42), 24878997.7221f));
+    assert(UTL_FEQUAL(UTL_Powf(1.5f, -42), 4.01945452614e-8f));
 
-    ASSERT(FEQUAL(utl_powf(-0.1f, -1), -10));
-    ASSERT(FEQUAL(utl_powf(-1.5f, 42), 24878997.7221f));
-    ASSERT(FEQUAL(utl_powf(-1.5f, -42), 4.01945452614e-8f));
+    assert(UTL_FEQUAL(UTL_Powf(-0.1f, -1), -10));
+    assert(UTL_FEQUAL(UTL_Powf(-1.5f, 42), 24878997.7221f));
+    assert(UTL_FEQUAL(UTL_Powf(-1.5f, -42), 4.01945452614e-8f));
 }
 
-static void abs_check(void)
+static void AbsCheck(void)
 {
-    ASSERT(utl_abs(1) == 1);
-    ASSERT(utl_abs(-1) == 1);
-    ASSERT(utl_abs(-0) == 0);
-    ASSERT(utl_abs(-123) == 123);
-    ASSERT(utl_abs(123) == 123);
-    ASSERT(utl_abs(I32_MIN + 1) == I32_MAX);
+    assert(UTL_Abs(1) == 1);
+    assert(UTL_Abs(-1) == 1);
+    assert(UTL_Abs(-0) == 0);
+    assert(UTL_Abs(-123) == 123);
+    assert(UTL_Abs(123) == 123);
+    assert(UTL_Abs(INT_MIN + 1) == INT_MAX);
 }
 
-static void fabs_check(void)
+static void FabsCheck(void)
 {
-    ASSERT(FEQUAL(utl_fabs(-0.0f), 0.0f));
-    ASSERT(FEQUAL(utl_fabs(-1.0f), 1.0f));
-    ASSERT(FEQUAL(utl_fabs(1.0f), 1.0f));
-    ASSERT(FEQUAL(utl_fabs(-123.456f), 123.456f));
-    ASSERT(FEQUAL(utl_fabs(123.456f), 123.456f));
+    assert(UTL_FEQUAL(UTL_Fabs(-0.0f), 0.0f));
+    assert(UTL_FEQUAL(UTL_Fabs(-1.0f), 1.0f));
+    assert(UTL_FEQUAL(UTL_Fabs(1.0f), 1.0f));
+    assert(UTL_FEQUAL(UTL_Fabs(-123.456f), 123.456f));
+    assert(UTL_FEQUAL(UTL_Fabs(123.456f), 123.456f));
 }
 
-static void isnan_check(void)
+static void Isnan_check(void)
 {
-    ASSERT(utl_isnan(0.0f) == false);
-    ASSERT(utl_isnan(1.0f) == false);
-    ASSERT(utl_isnan(-1.0f) == false);
-    ASSERT(utl_isnan(-1.0f / 0.0f) == false);
-    ASSERT(utl_isnan(F32_MAX) == false);
-    ASSERT(utl_isnan(F32_MIN) == false);
-    ASSERT(utl_isnan(-0.0f / 0.0f) == true);
+    assert(UTL_Isnan(0.0f) == false);
+    assert(UTL_Isnan(1.0f) == false);
+    assert(UTL_Isnan(-1.0f) == false);
+    assert(UTL_Isnan(-1.0f / 0.0f) == false);
+    assert(UTL_Isnan(FLT_MAX) == false);
+    assert(UTL_Isnan(FLT_MIN) == false);
+    assert(UTL_Isnan(-0.0f / 0.0f) == true);
 }
-static void isinf_check(void)
+static void Isinf_check(void)
 {
-    ASSERT(utl_isinf(0.0f) == false);
-    ASSERT(utl_isinf(1.0f) == false);
-    ASSERT(utl_isinf(-1.0f) == false);
-    ASSERT(utl_isinf(-0.0f / 0.0f) == false);
-    ASSERT(utl_isinf(F32_MAX) == false);
-    ASSERT(utl_isinf(F32_MIN) == false);
-    ASSERT(utl_isinf(-1.0f / 0.0f) == true);
+    assert(UTL_Isinf(0.0f) == false);
+    assert(UTL_Isinf(1.0f) == false);
+    assert(UTL_Isinf(-1.0f) == false);
+    assert(UTL_Isinf(-0.0f / 0.0f) == false);
+    assert(UTL_Isinf(FLT_MAX) == false);
+    assert(UTL_Isinf(FLT_MIN) == false);
+    assert(UTL_Isinf(-1.0f / 0.0f) == true);
 }
 
 i32 main(void)
 {
-    tst_init();
+    switch (UTL_Init((UTL_InitArg){0}))
+    {
+        case UTL_InitRet_OK: UTL_LOG_DEBUG("utl initialisation success."); break;
+        case UTL_InitRet_NULL_LOG:
+        case UTL_InitRet_NULL_CALLBACK: assert(1 == 2);
+    }
 
-    powi_check();
-    powu_check();
-    powf_check();
-    abs_check();
-    fabs_check();
-    isnan_check();
-    isinf_check();
+    PowiCheck();
+    Powu_check();
+    Powf_check();
+    AbsCheck();
+    FabsCheck();
+    Isnan_check();
+    Isinf_check();
 
     return 0;
 }

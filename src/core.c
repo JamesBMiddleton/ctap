@@ -11,7 +11,7 @@ typedef struct {
     u32 placeholder;
 } COR_InitArg;
 typedef enum { COR_InitRet_OK, COR_InitRet_MAP_INVALID } COR_InitRet;
-static COR_InitRet COR_init(COR_InitArg arg);
+static COR_InitRet COR_Init(COR_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -31,11 +31,11 @@ typedef enum {
  *
  * @param starter - placeholder
 */
-static cor_StartTheEnginesRet cor_start_the_engines(cor_EngineStarter starter)
+static cor_StartTheEnginesRet cor_StartTheEngines(cor_EngineStarter starter)
 {
     if (starter.startiness != 0)
         return cor_StartTheEnginesRet_MAP_INVALID;
-    LOGF_DEBUG("Engines started with %u startiness and %u horses!",
+    UTL_LOGF_DEBUG("Engines started with %u startiness and %u horses!",
                {.u = starter.startiness}, {.u = starter.num_horses});
     return cor_StartTheEnginesRet_OK;
 }
@@ -44,7 +44,7 @@ typedef enum {
     cor_SpaghettifyValueRet_OK,
     cor_SpaghettifyValueRet_NOTOK
 } cor_SpaghettifyValueRet;
-static cor_SpaghettifyValueRet cor_spaghettify_value(u32* value)
+static cor_SpaghettifyValueRet cor_SpaghettifyValue(u32* value)
 {
     *value = 0;
     return cor_SpaghettifyValueRet_OK;
@@ -66,19 +66,19 @@ struct cor_State {
  *
  * @param args - initialisation arguments.
 */
-static COR_InitRet COR_init(COR_InitArg args)
+static COR_InitRet COR_Init(COR_InitArg args)
 {
     cor_state.placeholder = args.placeholder;
 
-    if (cor_spaghettify_value(&cor_state.placeholder) != cor_SpaghettifyValueRet_OK)
+    if (cor_SpaghettifyValue(&cor_state.placeholder) != cor_SpaghettifyValueRet_OK)
         return COR_InitRet_MAP_INVALID;
 
-    if (cor_start_the_engines((cor_EngineStarter){
+    if (cor_StartTheEngines((cor_EngineStarter){
             .num_horses = cor_state.placeholder,
             .startiness = cor_state.placeholder}) != cor_StartTheEnginesRet_OK)
         return COR_InitRet_MAP_INVALID;
 
-    LOG_DEBUG("Map loaded.");
+    UTL_LOG_DEBUG("Map loaded.");
 
     return COR_InitRet_OK;
 }

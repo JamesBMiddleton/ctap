@@ -11,7 +11,7 @@ typedef struct {
     u32 placeholder;
 } GFX_InitArg;
 typedef enum { GFX_InitRet_OK, GFX_InitRet_MAP_INVALID } GFX_InitRet;
-static GFX_InitRet GFX_init(GFX_InitArg arg);
+static GFX_InitRet GFX_Init(GFX_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -34,7 +34,7 @@ struct gfx_State {
  *
  * @param args - initialisation arguments.
 */
-static GFX_InitRet GFX_init(GFX_InitArg args)
+static GFX_InitRet GFX_Init(GFX_InitArg args)
 {
     return (args.placeholder) ? GFX_InitRet_OK : GFX_InitRet_MAP_INVALID;
 }
