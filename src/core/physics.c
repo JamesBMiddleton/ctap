@@ -11,7 +11,7 @@ typedef struct {
     u32 placeholder;
 } PHX_InitArg;
 typedef enum { PHX_InitRet_OK, PHX_InitRet_MAP_INVALID } PHX_InitRet;
-static PHX_InitRet PHX_Init(PHX_InitArg arg);
+static PHX_InitRet PHX_init(PHX_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -34,7 +34,7 @@ struct phx_State {
  *
  * @param args - initialisation arguments.
 */
-static PHX_InitRet PHX_Init(PHX_InitArg args)
+static PHX_InitRet PHX_init(PHX_InitArg args)
 {
     return (args.placeholder) ? PHX_InitRet_OK : PHX_InitRet_MAP_INVALID;
 }
