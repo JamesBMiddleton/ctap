@@ -11,7 +11,7 @@ typedef struct {
     u32 placeholder;
 } COR_InitArg_t;
 typedef enum { COR_InitRet_OK, COR_InitRet_MAP_INVALID } COR_InitRet_e;
-static COR_InitRet_e COR_Init(COR_InitArg_t arg);
+static COR_InitRet_e COR_init(COR_InitArg_t arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -19,35 +19,35 @@ static COR_InitRet_e COR_Init(COR_InitArg_t arg);
 
 typedef struct {
     u32 startiness;
-    u32 numHorses;
-} utl_EngineStarter_t;
+    u32 num_horses;
+} cor_EngineStarter_t;
 
 typedef enum {
-    utl_StartTheEnginesRet_OK,
-    utl_StartTheEnginesRet_MAP_INVALID
-} utl_StartTheEnginesRet_e;
+    cor_StartTheEnginesRet_OK,
+    cor_StartTheEnginesRet_MAP_INVALID
+} cor_StartTheEnginesRet_e;
 /*
  * placeholder.
  *
  * @param starter - placeholder
 */
-static utl_StartTheEnginesRet_e utl_StartTheEngines(utl_EngineStarter_t starter)
+static cor_StartTheEnginesRet_e cor_start_the_engines(cor_EngineStarter_t starter)
 {
     if (starter.startiness != 0)
-        return utl_StartTheEnginesRet_MAP_INVALID;
+        return cor_StartTheEnginesRet_MAP_INVALID;
     LOGF_DEBUG("Engines started with %u startiness and %u horses!",
-               {.u = starter.startiness}, {.u = starter.numHorses});
-    return utl_StartTheEnginesRet_OK;
+               {.u = starter.startiness}, {.u = starter.num_horses});
+    return cor_StartTheEnginesRet_OK;
 }
 
 typedef enum {
-    utl_SpaghettifyValueRet_OK,
-    utl_SpaghettifyValueRet_NOTOK
-} utl_SpaghettifyValueRet_e;
-static utl_SpaghettifyValueRet_e utl_SpaghettifyValue(u32* value)
+    cor_SpaghettifyValueRet_OK,
+    cor_SpaghettifyValueRet_NOTOK
+} cor_SpaghettifyValueRet_e;
+static cor_SpaghettifyValueRet_e cor_spaghettify_value(u32* value)
 {
     *value = 0;
-    return utl_SpaghettifyValueRet_OK;
+    return cor_SpaghettifyValueRet_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -66,16 +66,16 @@ struct cor_State_t {
  *
  * @param args - initialisation arguments.
 */
-static COR_InitRet_e COR_Init(COR_InitArg_t args)
+static COR_InitRet_e COR_init(COR_InitArg_t args)
 {
     cor_state.placeholder = args.placeholder;
 
-    if (utl_SpaghettifyValue(&cor_state.placeholder) != utl_SpaghettifyValueRet_OK)
+    if (cor_spaghettify_value(&cor_state.placeholder) != cor_SpaghettifyValueRet_OK)
         return COR_InitRet_MAP_INVALID;
 
-    if (utl_StartTheEngines((utl_EngineStarter_t){
-            .numHorses = cor_state.placeholder,
-            .startiness = cor_state.placeholder}) != utl_StartTheEnginesRet_OK)
+    if (cor_start_the_engines((cor_EngineStarter_t){
+            .num_horses = cor_state.placeholder,
+            .startiness = cor_state.placeholder}) != cor_StartTheEnginesRet_OK)
         return COR_InitRet_MAP_INVALID;
 
     LOG_DEBUG("Map loaded.");

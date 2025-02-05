@@ -6,10 +6,6 @@
 #include "core.c"
 
 ////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////// API DECL //////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -27,11 +23,11 @@ struct ctp_State_t {
  *
  * @return the last log message created
 */
-CTP_Log_t CTP_GetLog(void)
+CTP_Log CTP_get_log(void)
 {
-    const UTL_Log_t inLog = UTL_GetLog();
+    const UTL_Log in_log = UTL_get_log();
     CTP_LogLvl_e lvl = CTP_LogLvl_DEBUG;
-    switch (inLog.lvl)
+    switch (in_log.lvl)
     {
         case UTL_LogLvl_DEBUG: lvl = CTP_LogLvl_DEBUG; break;
         case UTL_LogLvl_WARN: lvl = CTP_LogLvl_WARN; break;
@@ -39,9 +35,9 @@ CTP_Log_t CTP_GetLog(void)
         case UTL_LogLvl_PANIC: lvl = CTP_LogLvl_PANIC; break;
         case UTL_LogLvl_ASSERT: lvl = CTP_LogLvl_ASSERT; break;
     }
-    CTP_Log_t outLog = {
-        .lvl = lvl, .lineNum = inLog.lineNum, .funcName = inLog.funcName};
-    UTL_Memcpy(outLog.message, inLog.message, UTL_Strlen(inLog.message) + 1);
+    CTP_Log outLog = {
+        .lvl = lvl, .line_num = in_log.line_num, .func_name = in_log.func_name};
+    UTL_memcpy(outLog.message, in_log.message, UTL_strlen(in_log.message) + 1);
     return outLog;
 }
 
@@ -50,11 +46,11 @@ CTP_Log_t CTP_GetLog(void)
  *
  * @param arg - runtime initialisation arguments
 */
-CTP_InitRet_e CTP_Init(CTP_InitArg_t arg)
+CTP_InitRet_e CTP_init(CTP_InitArg arg)
 {
-    switch (UTL_Init(
-        (UTL_InitArg_t){.logUpdateCallback = arg.logUpdateCallback,
-                         .panicCallback = arg.panicCallback}))
+    switch (UTL_init(
+        (UTL_InitArg){.log_update_callback = arg.log_update_callback,
+                         .panic_callback = arg.panic_callback}))
     {
         case UTL_InitRet_OK: LOG_DEBUG("utl initialisation success."); break;
         case UTL_InitRet_NULL_LOG:
@@ -62,7 +58,7 @@ CTP_InitRet_e CTP_Init(CTP_InitArg_t arg)
     }
 
     const u32 placeholder = 42;
-    switch (COR_Init((COR_InitArg_t){.placeholder = placeholder}))
+    switch (COR_init((COR_InitArg_t){.placeholder = placeholder}))
     {
         case COR_InitRet_OK: LOG_DEBUG("cor initialisation success."); break;
         case COR_InitRet_MAP_INVALID: PANIC();

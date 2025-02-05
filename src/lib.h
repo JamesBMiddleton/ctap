@@ -10,21 +10,21 @@ typedef enum {
 
 typedef struct {
     CTP_LogLvl_e lvl;
-    int lineNum;
-    const char* funcName;
+    unsigned int line_num;
+    const char* func_name;
     char message[MAX_LOG_SZ];
-} CTP_Log_t;
+} CTP_Log;
 
 typedef struct {
     // map..
     // input_cb..
-    void (*logUpdateCallback)(void); // Optional.
-    void (*panicCallback)(void); // Optional.
-} CTP_InitArg_t;
+    void (*log_update_callback)(void); // Optional.
+    void (*panic_callback)(void); // Optional.
+} CTP_InitArg;
 typedef enum { CTP_InitRet_OK, CTP_InitRet_NULL_CALLBACK } CTP_InitRet_e;
-CTP_InitRet_e CTP_Init(CTP_InitArg_t arg);
+CTP_InitRet_e CTP_init(CTP_InitArg arg);
 
-CTP_Log_t CTP_GetLog(void);
+CTP_Log CTP_get_log(void);
 
 // typedef struct {
 //     u32 frameWidth;
