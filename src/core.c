@@ -1,5 +1,8 @@
 #ifndef CORE_H
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-macros"
 #define CORE_H
+#pragma GCC diagnostic pop
 
 #include "src/util.c"
 

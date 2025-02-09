@@ -39,6 +39,7 @@ struct input__State {
 */
 static input_InitRet input_Init(input_InitArg args)
 {
+    input__state.placeholder = 1;
     return (args.placeholder) ? input_InitRet_OK : input_InitRet_MAP_INVALID;
 }
 

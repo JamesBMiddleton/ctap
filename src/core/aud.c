@@ -39,6 +39,7 @@ struct aud__State {
 */
 static aud_InitRet aud_Init(aud_InitArg args)
 {
+    aud__state.placeholder = 1;
     return (args.placeholder) ? aud_InitRet_OK : aud_InitRet_MAP_INVALID;
 }
 

@@ -39,6 +39,7 @@ struct gfx__State {
 */
 static gfx_InitRet gfx_Init(gfx_InitArg args)
 {
+    gfx__state.placeholder = 1;
     return (args.placeholder) ? gfx_InitRet_OK : gfx_InitRet_MAP_INVALID;
 }
 

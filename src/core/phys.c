@@ -39,6 +39,7 @@ struct phys__State {
 */
 static phys_InitRet phys_Init(phys_InitArg args)
 {
+    phys__state.placeholder = 1;
     return (args.placeholder) ? phys_InitRet_OK : phys_InitRet_MAP_INVALID;
 }
 
