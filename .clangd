@@ -1,0 +1,8 @@
+CompileFlags:
+  Add: [-DUTIL_UTEST,
+        -DCORE_UTEST, 
+        -DCTAP_UTEST, 
+        -DAUD_UTEST, 
+        -DGFX_UTEST,
+        -DPHYS_UTEST,
+        -DINPUT_UTEST]

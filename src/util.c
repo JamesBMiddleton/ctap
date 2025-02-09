@@ -273,7 +273,7 @@ static util_Log util_GetLog(void)
 #define util_STATIC_ASSERT(cond, msg) \
     typedef char static_assert_##msg[(cond) ? 1 : -1]
 
-#define util__FEQUAL_DELTA 1E-6f
+#define util__FEQUAL_DELTA 1E-6F
 #define util_FEQUAL(left, right)                     \
     ((((left) - (right)) > -(util__FEQUAL_DELTA)) && \
      (((left) - (right)) < (util__FEQUAL_DELTA)))
@@ -656,9 +656,9 @@ static util_InitRet util_Init(util_InitArg args)
 #ifdef UTIL_UTEST
 
 #include <assert.h>
-#include <string.h>
-#include <limits.h>
 #include <float.h>
+#include <limits.h>
+#include <string.h>
 
 static void utest_util_Powi(void)
 {
@@ -710,13 +710,13 @@ static void utest_util_Powf(void)
     assert(util_FEQUAL(util_Powf(-42, 2), 1764));
     assert(util_FEQUAL(util_Powf(-42, 3), -74088));
 
-    assert(util_FEQUAL(util_Powf(0.1f, -1), 10));
-    assert(util_FEQUAL(util_Powf(1.5f, 42), 24878997.7221f));
-    assert(util_FEQUAL(util_Powf(1.5f, -42), 4.01945452614e-8f));
+    assert(util_FEQUAL(util_Powf(0.1F, -1), 10));
+    assert(util_FEQUAL(util_Powf(1.5F, 42), 24878997.7221F));
+    assert(util_FEQUAL(util_Powf(1.5f, -42), 4.01945452614e-8F));
 
-    assert(util_FEQUAL(util_Powf(-0.1f, -1), -10));
-    assert(util_FEQUAL(util_Powf(-1.5f, 42), 24878997.7221f));
-    assert(util_FEQUAL(util_Powf(-1.5f, -42), 4.01945452614e-8f));
+    assert(util_FEQUAL(util_Powf(-0.1F, -1), -10));
+    assert(util_FEQUAL(util_Powf(-1.5F, 42), 24878997.7221F));
+    assert(util_FEQUAL(util_Powf(-1.5F, -42), 4.01945452614e-8F));
 }
 
 static void utest_util_Abs(void)
@@ -731,34 +731,33 @@ static void utest_util_Abs(void)
 
 static void utest_util_Fabs(void)
 {
-    assert(util_FEQUAL(util_Fabs(-0.0f), 0.0f));
-    assert(util_FEQUAL(util_Fabs(-1.0f), 1.0f));
-    assert(util_FEQUAL(util_Fabs(1.0f), 1.0f));
-    assert(util_FEQUAL(util_Fabs(-123.456f), 123.456f));
-    assert(util_FEQUAL(util_Fabs(123.456f), 123.456f));
+    assert(util_FEQUAL(util_Fabs(-0.0F), 0.0F));
+    assert(util_FEQUAL(util_Fabs(-1.0F), 1.0F));
+    assert(util_FEQUAL(util_Fabs(1.0F), 1.0F));
+    assert(util_FEQUAL(util_Fabs(-123.456F), 123.456F));
+    assert(util_FEQUAL(util_Fabs(123.456F), 123.456F));
 }
 
 static void utest_util_Isnan(void)
 {
-    assert(util_Isnan(0.0f) == false);
-    assert(util_Isnan(1.0f) == false);
-    assert(util_Isnan(-1.0f) == false);
-    assert(util_Isnan(-1.0f / 0.0f) == false);
+    assert(util_Isnan(0.0F) == false);
+    assert(util_Isnan(1.0F) == false);
+    assert(util_Isnan(-1.0F) == false);
+    assert(util_Isnan(-1.0F / 0.0F) == false);
     assert(util_Isnan(FLT_MAX) == false);
     assert(util_Isnan(FLT_MIN) == false);
-    assert(util_Isnan(-0.0f / 0.0f) == true);
+    assert(util_Isnan(-0.0F / 0.0F) == true);
 }
 static void utest_util_Isinf(void)
 {
-    assert(util_Isinf(0.0f) == false);
-    assert(util_Isinf(1.0f) == false);
-    assert(util_Isinf(-1.0f) == false);
-    assert(util_Isinf(-0.0f / 0.0f) == false);
+    assert(util_Isinf(0.0F) == false);
+    assert(util_Isinf(1.0F) == false);
+    assert(util_Isinf(-1.0F) == false);
+    assert(util_Isinf(-0.0F / 0.0F) == false);
     assert(util_Isinf(FLT_MAX) == false);
     assert(util_Isinf(FLT_MIN) == false);
-    assert(util_Isinf(-1.0f / 0.0f) == true);
+    assert(util_Isinf(-1.0F / 0.0F) == true);
 }
-
 
 static void utest_util_Sprintf(void)
 {
@@ -787,11 +786,11 @@ static void utest_util_Sprintf(void)
     util_Sprintf(arr, 8, "waytoo%s", (util_Fmts){.arr = {{.s = "manychars"}}});
     assert(strcmp(arr, "waytoo") == 0);
 
-    util_Sprintf(arr, 16, "floatdon'tfit%f", (util_Fmts){.arr = {{.f = 1.0f}}});
+    util_Sprintf(arr, 16, "floatdon'tfit%f", (util_Fmts){.arr = {{.f = 1.0F}}});
     assert(strcmp(arr, "floatdon'tfit") == 0);
 
     util_Sprintf(arr, 15 + util__NUMERIC_MAX_CHARS, "intjustdon'tfit%d",
-                (util_Fmts){.arr = {{.d = 1}}});
+                 (util_Fmts){.arr = {{.d = 1}}});
     assert(strcmp(arr, "intjustdon'tfit") == 0);
 
     // Check u32s.
@@ -801,12 +800,11 @@ static void utest_util_Sprintf(void)
     util_Sprintf(arr, sizeof(arr), "%u", (util_Fmts){.arr = {{.u = 0}}});
     assert(strcmp(arr, "0") == 0);
 
-    util_Sprintf(arr, sizeof(arr), "%u",
-                (util_Fmts){.arr = {{.u = UINT_MAX}}});
+    util_Sprintf(arr, sizeof(arr), "%u", (util_Fmts){.arr = {{.u = UINT_MAX}}});
     assert(strcmp(arr, "4294967295") == 0);
 
     util_Sprintf(arr, sizeof(arr), "a%ua",
-                (util_Fmts){.arr = {{.u = UINT_MAX}}});
+                 (util_Fmts){.arr = {{.u = UINT_MAX}}});
     assert(strcmp(arr, "a4294967295a") == 0);
 
     // Check i32s.
@@ -819,23 +817,21 @@ static void utest_util_Sprintf(void)
     util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = 0}}});
     assert(strcmp(arr, "0") == 0);
 
-    util_Sprintf(arr, sizeof(arr), "%d",
-                (util_Fmts){.arr = {{.d = INT_MIN}}});
+    util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = INT_MIN}}});
     assert(strcmp(arr, "-2147483648") == 0);
 
-    util_Sprintf(arr, sizeof(arr), "%d",
-                (util_Fmts){.arr = {{.d = INT_MAX}}});
+    util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = INT_MAX}}});
     assert(strcmp(arr, "2147483647") == 0);
 
     util_Sprintf(arr, sizeof(arr), "a%da",
-                (util_Fmts){.arr = {{.d = INT_MIN}}});
+                 (util_Fmts){.arr = {{.d = INT_MIN}}});
     assert(strcmp(arr, "a-2147483648a") == 0);
 
     // Check f32s.
-    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = 123.456f}}});
+    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = 123.456F}}});
     assert(strcmp(arr, "123.456") == 0);
 
-    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = .456f}}});
+    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = .456F}}});
     assert(strcmp(arr, "0.456") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = 123}}});
@@ -848,15 +844,15 @@ static void utest_util_Sprintf(void)
     assert(strcmp(arr, "0.000") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                (util_Fmts){.arr = {{.f = -123.456F}}});
+                 (util_Fmts){.arr = {{.f = -123.456F}}});
     assert(strcmp(arr, "-123.456") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                (util_Fmts){.arr = {{.f = -0.0 / 0.0}}});
+                 (util_Fmts){.arr = {{.f = -0.0 / 0.0}}});
     assert(strcmp(arr, "NaN") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                (util_Fmts){.arr = {{.f = -1.0 / 0.0}}});
+                 (util_Fmts){.arr = {{.f = -1.0 / 0.0}}});
     assert(strcmp(arr, "Inf") == 0);
 
     // Check strings.
@@ -864,15 +860,15 @@ static void utest_util_Sprintf(void)
     assert(strcmp(arr, "foobar") == 0);
 
     util_Sprintf(arr, sizeof(arr), "a%s",
-                (util_Fmts){.arr = {{.s = "foobar"}}});
+                 (util_Fmts){.arr = {{.s = "foobar"}}});
     assert(strcmp(arr, "afoobar") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%sa",
-                (util_Fmts){.arr = {{.s = "foobar"}}});
+                 (util_Fmts){.arr = {{.s = "foobar"}}});
     assert(strcmp(arr, "foobara") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%s%s",
-                (util_Fmts){.arr = {{.s = "foo"}, {.s = "bar"}}});
+                 (util_Fmts){.arr = {{.s = "foo"}, {.s = "bar"}}});
     assert(strcmp(arr, "foobar") == 0);
 
     // Check chars.
@@ -886,18 +882,13 @@ static void utest_util_Sprintf(void)
     assert(strcmp(arr, "ac") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%c%c",
-                (util_Fmts){.arr = {{.c = 'a'}, {.c = 'a'}}});
+                 (util_Fmts){.arr = {{.c = 'a'}, {.c = 'a'}}});
     assert(strcmp(arr, "aa") == 0);
 }
 
 i32 main(void)
 {
-    switch (util_Init((util_InitArg){0}))
-    {
-        case util_InitRet_OK: util_LOG_DEBUG("utl initialisation success."); break;
-        case util_InitRet_NULL_LOG:
-        case util_InitRet_NULL_CALLBACK: assert(1 == 2);
-    }
+    assert(util_Init((util_InitArg){0}) == util_InitRet_OK);
 
     utest_util_Sprintf();
     utest_util_Powi();
@@ -907,7 +898,7 @@ i32 main(void)
     utest_util_Fabs();
     utest_util_Isnan();
     utest_util_Isinf();
-    
+
     return 0;
 }
 
