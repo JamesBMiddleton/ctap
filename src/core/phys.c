@@ -1,7 +1,10 @@
-#ifndef AUDIO_H
-#define AUDIO_H
+#ifndef PHYS_H
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-macros"
+#define PHYS_H
+#pragma GCC diagnostic pop
 
-#include "src/utils.c"
+#include "src/util.c"
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// API DECL //////////////////////////////////////
@@ -9,9 +12,9 @@
 
 typedef struct {
     u32 placeholder;
-} AUD_InitArg;
-typedef enum { AUD_InitRet_OK, AUD_InitRet_MAP_INVALID } AUD_InitRet;
-static AUD_InitRet AUD_Init(AUD_InitArg arg);
+} phys_InitArg;
+typedef enum { phys_InitRet_OK, phys_InitRet_MAP_INVALID } phys_InitRet;
+static phys_InitRet phys_Init(phys_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -24,24 +27,31 @@ static AUD_InitRet AUD_Init(AUD_InitArg arg);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct aud_State {
+struct phys__State {
     u32 placeholder;
     // pool_t
-} static aud_state = {0}; // NOLINT
+} static phys__state = {0}; // NOLINT
 
 /*
  * Initialise the audio module. 
  *
  * @param args - initialisation arguments.
 */
-static AUD_InitRet AUD_Init(AUD_InitArg args)
+static phys_InitRet phys_Init(phys_InitArg args)
 {
-    return (args.placeholder) ? AUD_InitRet_OK : AUD_InitRet_MAP_INVALID;
+    return (args.placeholder) ? phys_InitRet_OK : phys_InitRet_MAP_INVALID;
 }
 
 #pragma GCC diagnostic pop
 ////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// UTEST IMPL /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+#ifdef PHYS_UTEST
 
-#endif // AUDIO_H
+i32 main(void)
+{
+    return 0;
+}
+
+#endif // PHYS_UTEST
+#endif // PHYS_H

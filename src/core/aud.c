@@ -1,7 +1,10 @@
-#ifndef GRAPHICS_H
-#define GRAPHICS_H
+#ifndef AUD_H
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-macros"
+#define AUD_H
+#pragma GCC diagnostic pop
 
-#include "src/utils.c"
+#include "src/util.c"
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// API DECL //////////////////////////////////////
@@ -9,9 +12,9 @@
 
 typedef struct {
     u32 placeholder;
-} GFX_InitArg;
-typedef enum { GFX_InitRet_OK, GFX_InitRet_MAP_INVALID } GFX_InitRet;
-static GFX_InitRet GFX_Init(GFX_InitArg arg);
+} aud_InitArg;
+typedef enum { aud_InitRet_OK, aud_InitRet_MAP_INVALID } aud_InitRet;
+static aud_InitRet aud_Init(aud_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -24,24 +27,31 @@ static GFX_InitRet GFX_Init(GFX_InitArg arg);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct gfx_State {
+struct aud__State {
     u32 placeholder;
     // pool_t
-} static gfx_state = {0}; // NOLINT
+} static aud__state = {0}; // NOLINT
 
 /*
  * Initialise the audio module. 
  *
  * @param args - initialisation arguments.
 */
-static GFX_InitRet GFX_Init(GFX_InitArg args)
+static aud_InitRet aud_Init(aud_InitArg args)
 {
-    return (args.placeholder) ? GFX_InitRet_OK : GFX_InitRet_MAP_INVALID;
+    return (args.placeholder) ? aud_InitRet_OK : aud_InitRet_MAP_INVALID;
 }
 
 #pragma GCC diagnostic pop
 ////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// UTEST IMPL /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+#ifdef AUD_UTEST
 
-#endif // GRAPHICS_H
+i32 main(void)
+{
+    return 0;
+}
+
+#endif // AUD_UTEST
+#endif // AUD_H

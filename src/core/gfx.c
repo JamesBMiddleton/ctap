@@ -1,7 +1,10 @@
-#ifndef PHYSICS_H
-#define PHYSICS_H
+#ifndef GFX_H
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-macros"
+#define GFX_H
+#pragma GCC diagnostic pop
 
-#include "src/utils.c"
+#include "src/util.c"
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// API DECL //////////////////////////////////////
@@ -9,9 +12,9 @@
 
 typedef struct {
     u32 placeholder;
-} PHX_InitArg;
-typedef enum { PHX_InitRet_OK, PHX_InitRet_MAP_INVALID } PHX_InitRet;
-static PHX_InitRet PHX_Init(PHX_InitArg arg);
+} gfx_InitArg;
+typedef enum { gfx_InitRet_OK, gfx_InitRet_MAP_INVALID } gfx_InitRet;
+static gfx_InitRet gfx_Init(gfx_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -24,25 +27,31 @@ static PHX_InitRet PHX_Init(PHX_InitArg arg);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct phx_State {
+struct gfx__State {
     u32 placeholder;
     // pool_t
-} static phx_state = {0}; // NOLINT
+} static gfx__state = {0}; // NOLINT
 
 /*
  * Initialise the audio module. 
  *
  * @param args - initialisation arguments.
 */
-static PHX_InitRet PHX_Init(PHX_InitArg args)
+static gfx_InitRet gfx_Init(gfx_InitArg args)
 {
-    return (args.placeholder) ? PHX_InitRet_OK : PHX_InitRet_MAP_INVALID;
+    return (args.placeholder) ? gfx_InitRet_OK : gfx_InitRet_MAP_INVALID;
 }
 
 #pragma GCC diagnostic pop
 ////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// UTEST IMPL /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+#ifdef GFX_UTEST
 
+i32 main(void)
+{
+    return 0;
+}
 
-#endif // PHYSICS_H
+#endif // GFX_UTEST
+#endif // GFX_H

@@ -1,7 +1,10 @@
 #ifndef INPUT_H
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-macros"
 #define INPUT_H
+#pragma GCC diagnostic pop
 
-#include "src/utils.c"
+#include "src/util.c"
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////// API DECL //////////////////////////////////////
@@ -9,9 +12,9 @@
 
 typedef struct {
     u32 placeholder;
-} INP_InitArg;
-typedef enum { INP_InitRet_OK, INP_InitRet_MAP_INVALID } INP_InitRet;
-static INP_InitRet INP_Init(INP_InitArg arg);
+} input_InitArg;
+typedef enum { input_InitRet_OK, input_InitRet_MAP_INVALID } input_InitRet;
+static input_InitRet input_Init(input_InitArg arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -24,25 +27,31 @@ static INP_InitRet INP_Init(INP_InitArg arg);
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
 
-struct inp_State {
+struct input__State {
     u32 placeholder;
     // pool_t
-} static inp_state = {0}; // NOLINT
+} static input__state = {0}; // NOLINT
 
 /*
  * Initialise the audio module. 
  *
  * @param args - initialisation arguments.
 */
-static INP_InitRet INP_Init(INP_InitArg args)
+static input_InitRet input_Init(input_InitArg args)
 {
-    return (args.placeholder) ? INP_InitRet_OK : INP_InitRet_MAP_INVALID;
+    return (args.placeholder) ? input_InitRet_OK : input_InitRet_MAP_INVALID;
 }
 
 #pragma GCC diagnostic pop
 ////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////// UTEST IMPL /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
+#ifdef INPUT_UTEST
 
+i32 main(void)
+{
+    return 0;
+}
 
+#endif // INPUT_UTEST
 #endif // INPUT_H
