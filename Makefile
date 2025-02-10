@@ -38,11 +38,11 @@ $(shell mkdir -p $(BUILD_DIR) $(UTEST_DIR))
 build: CFLAGS = $(DEBUG_CFLAGS)
 build: $(BUILD_DIR)/$(LIB_NAME).a
 
-# Create a static library archive
+# Create a static library archive.
 $(BUILD_DIR)/$(LIB_NAME).a: $(BUILD_DIR)/$(LIB_NAME).o
 	$(AR) rcs $(BUILD_DIR)/$(LIB_NAME).a $(BUILD_DIR)/$(LIB_NAME).o
 
-# Build library object
+# Build library object.
 $(BUILD_DIR)/$(LIB_NAME).o: $(SRCS)
 	mkdir -p $(BUILD_DIR)
 	$(CC) -c $(SRC_DIR)/$(LIB_NAME).c -o $(BUILD_DIR)/$(LIB_NAME).o $(CFLAGS)
@@ -50,7 +50,7 @@ $(BUILD_DIR)/$(LIB_NAME).o: $(SRCS)
 check: CFLAGS = $(DEBUG_CFLAGS)
 check: $(UTEST_LOGS) $(ITEST_LOGS)
 
-# Run the utest binaries, generating the utest logs.
+# Run the itest binaries, generating the itest logs.
 $(ITEST_LOGS): $(ITEST_BINS)
 	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
@@ -58,19 +58,19 @@ $(ITEST_LOGS): $(ITEST_BINS)
 $(UTEST_LOGS): $(UTEST_BINS)
 	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
-# Build itest binaries files.
+# Build itest binaries.
 $(BUILD_DIR)/$(TEST_DIR)/%: $(TEST_DIR)/%.c $(BUILD_DIR)/$(LIB_NAME).a
 	mkdir -p $(dir $@)
 	$(CC) $< -o $@ $(CFLAGS)
 
-# Build utest binaries files, defining MODULE_UTEST for each.
+# Build utest binaries, defining MODULE_UTEST for each.
 $(BUILD_DIR)/$(SRC_DIR)/%_utest: $(SRC_DIR)/%.c
 	mkdir -p $(dir $@)
 	$(CC) $< -o $@ $(CFLAGS) -DUTEST -D$(shell echo $(notdir $@) | tr '[:lower:]' '[:upper:]')
 
 analyze: CFLAGS = $(DEBUG_CFLAGS)
 analyze:
-	+ scan-build-15 make check
+	+ scan-build-18 make check
 
 clean:
 	-rm -r $(BUILD_DIR)
