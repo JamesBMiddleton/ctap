@@ -660,6 +660,7 @@ static util_InitRet util_Init(util_InitArg args)
 #include <limits.h>
 #include <string.h>
 
+// NOLINTBEGIN(readability-magic-numbers)
 static void utest_util_Powi(void)
 {
     assert(util_Powi(0, 0) == 1);
@@ -712,7 +713,7 @@ static void utest_util_Powf(void)
 
     assert(util_FEQUAL(util_Powf(0.1F, -1), 10));
     assert(util_FEQUAL(util_Powf(1.5F, 42), 24878997.7221F));
-    assert(util_FEQUAL(util_Powf(1.5f, -42), 4.01945452614e-8F));
+    assert(util_FEQUAL(util_Powf(1.5F, -42), 4.01945452614e-8F));
 
     assert(util_FEQUAL(util_Powf(-0.1F, -1), -10));
     assert(util_FEQUAL(util_Powf(-1.5F, 42), 24878997.7221F));
@@ -758,13 +759,25 @@ static void utest_util_Isinf(void)
     assert(util_Isinf(FLT_MIN) == false);
     assert(util_Isinf(-1.0F / 0.0F) == true);
 }
+// NOLINTEND(readability-magic-numbers)
 
 static void utest_util_Sprintf(void)
 {
     char arr[util_MAX_LOG_SZ] = {0};
 
+    const u32 u32_num = 123;
+    const i32 i32_num = 123;
+
+    const char* overflowcheck1 = "toomanychars";
+    const char* overflowcheck2 = "toomanychar%c";
+    const char* overflowcheck3 = "toomanychar%s";
+    const char* overflowcheck4 = "waytoo%s";
+    const char* overflowcheck5 = "floatdon'tfit%f";
+    const char* overflowcheck6 = "intjustdon'tfit%d";
+
     // Check error cases.
-    util_Sprintf(arr, 12, "toomanychars", (util_Fmts){0});
+    util_Sprintf(arr, util_Strlen(overflowcheck1), overflowcheck1,
+                 (util_Fmts){0});
     assert(strcmp(arr, "toomanychar") == 0);
 
     util_Sprintf(arr, sizeof(arr), "invalid %t specifier", (util_Fmts){0});
@@ -777,24 +790,28 @@ static void utest_util_Sprintf(void)
                 {.c = 'h'}, {.c = 'e'}, {.c = 'l'}, {.c = 'l'}, {.c = 'o'}}});
     assert(strcmp(arr, "hello") == 0);
 
-    util_Sprintf(arr, 12, "toomanychar%c", (util_Fmts){.arr = {{.c = 's'}}});
+    util_Sprintf(arr, util_Strlen(overflowcheck2) - 1, overflowcheck2,
+                 (util_Fmts){.arr = {{.c = 's'}}});
     assert(strcmp(arr, "toomanychar") == 0);
 
-    util_Sprintf(arr, 12, "toomanychar%s", (util_Fmts){.arr = {{.s = "s"}}});
+    util_Sprintf(arr, util_Strlen(overflowcheck3) - 1, overflowcheck3,
+                 (util_Fmts){.arr = {{.s = "s"}}});
     assert(strcmp(arr, "toomanychar") == 0);
 
-    util_Sprintf(arr, 8, "waytoo%s", (util_Fmts){.arr = {{.s = "manychars"}}});
+    util_Sprintf(arr, util_Strlen(overflowcheck4), overflowcheck4,
+                 (util_Fmts){.arr = {{.s = "manychars"}}});
     assert(strcmp(arr, "waytoo") == 0);
 
-    util_Sprintf(arr, 16, "floatdon'tfit%f", (util_Fmts){.arr = {{.f = 1.0F}}});
+    util_Sprintf(arr, util_Strlen(overflowcheck5) + 1, overflowcheck5,
+                 (util_Fmts){.arr = {{.f = 1.0F}}});
     assert(strcmp(arr, "floatdon'tfit") == 0);
 
-    util_Sprintf(arr, 15 + util__NUMERIC_MAX_CHARS, "intjustdon'tfit%d",
-                 (util_Fmts){.arr = {{.d = 1}}});
+    util_Sprintf(arr, util_Strlen(overflowcheck6) + util__NUMERIC_MAX_CHARS - 2,
+                 overflowcheck6, (util_Fmts){.arr = {{.d = 1}}});
     assert(strcmp(arr, "intjustdon'tfit") == 0);
 
     // Check u32s.
-    util_Sprintf(arr, sizeof(arr), "%u", (util_Fmts){.arr = {{.u = 123}}});
+    util_Sprintf(arr, sizeof(arr), "%u", (util_Fmts){.arr = {{.u = u32_num}}});
     assert(strcmp(arr, "123") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%u", (util_Fmts){.arr = {{.u = 0}}});
@@ -808,10 +825,10 @@ static void utest_util_Sprintf(void)
     assert(strcmp(arr, "a4294967295a") == 0);
 
     // Check i32s.
-    util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = 123}}});
+    util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = i32_num}}});
     assert(strcmp(arr, "123") == 0);
 
-    util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = -123}}});
+    util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = -i32_num}}});
     assert(strcmp(arr, "-123") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = 0}}});
@@ -828,13 +845,19 @@ static void utest_util_Sprintf(void)
     assert(strcmp(arr, "a-2147483648a") == 0);
 
     // Check f32s.
-    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = 123.456F}}});
+    const f32 f32_num = 123.456F;
+    const f32 f32_num_fract_part = .456F;
+    const f32 f32_num_int_part = 123.F;
+
+    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = f32_num}}});
     assert(strcmp(arr, "123.456") == 0);
 
-    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = .456F}}});
+    util_Sprintf(arr, sizeof(arr), "%f",
+                 (util_Fmts){.arr = {{.f = f32_num_fract_part}}});
     assert(strcmp(arr, "0.456") == 0);
 
-    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = 123}}});
+    util_Sprintf(arr, sizeof(arr), "%f",
+                 (util_Fmts){.arr = {{.f = f32_num_int_part}}});
     assert(strcmp(arr, "123.000") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = 0}}});
@@ -843,16 +866,15 @@ static void utest_util_Sprintf(void)
     util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = -0}}});
     assert(strcmp(arr, "0.000") == 0);
 
-    util_Sprintf(arr, sizeof(arr), "%f",
-                 (util_Fmts){.arr = {{.f = -123.456F}}});
+    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = -f32_num}}});
     assert(strcmp(arr, "-123.456") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                 (util_Fmts){.arr = {{.f = -0.0 / 0.0}}});
+                 (util_Fmts){.arr = {{.f = -0.0F / 0.0F}}});
     assert(strcmp(arr, "NaN") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                 (util_Fmts){.arr = {{.f = -1.0 / 0.0}}});
+                 (util_Fmts){.arr = {{.f = -1.0F / 0.0F}}});
     assert(strcmp(arr, "Inf") == 0);
 
     // Check strings.
@@ -886,10 +908,10 @@ static void utest_util_Sprintf(void)
     assert(strcmp(arr, "aa") == 0);
 }
 
-i32 main(void)
+#pragma GCC diagnostic ignored "-Wunused-function"
+static void utest_util(void)
 {
     assert(util_Init((util_InitArg){0}) == util_InitRet_OK);
-
     utest_util_Sprintf();
     utest_util_Powi();
     utest_util_Powu();
@@ -898,9 +920,14 @@ i32 main(void)
     utest_util_Fabs();
     utest_util_Isnan();
     utest_util_Isinf();
-
-    return 0;
 }
 
+#ifdef UTEST
+i32 main(void)
+{
+    utest_util();
+    return 0;
+}
+#endif // UTEST
 #endif // UTIL_UTEST
 #endif // UTIL_H

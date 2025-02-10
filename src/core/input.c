@@ -49,10 +49,17 @@ static input_InitRet input_Init(input_InitArg args)
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef INPUT_UTEST
 
-i32 main(void)
+#pragma GCC diagnostic ignored "-Wunused-function"
+static void utest_input(void)
 {
-    return 0;
 }
 
+#ifdef UTEST
+i32 main(void)
+{
+    utest_input();
+    return 0;
+}
+#endif // UTEST
 #endif // INPUT_UTEST
 #endif // INPUT_H

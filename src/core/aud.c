@@ -49,10 +49,17 @@ static aud_InitRet aud_Init(aud_InitArg args)
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef AUD_UTEST
 
-i32 main(void)
+#pragma GCC diagnostic ignored "-Wunused-function"
+static void utest_aud(void)
 {
-    return 0;
 }
 
+#ifdef UTEST
+i32 main(void)
+{
+    utest_aud();
+    return 0;
+}
+#endif // UTEST
 #endif // AUD_UTEST
 #endif // AUD_H

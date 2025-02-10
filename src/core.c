@@ -93,11 +93,17 @@ static core_InitRet core_Init(core_InitArg args)
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef CORE_UTEST
 
-i32 main(void)
+#pragma GCC diagnostic ignored "-Wunused-function"
+static void utest_core(void)
 {
-    return 0;
 }
 
+#ifdef UTEST
+i32 main(void)
+{
+    utest_core();
+    return 0;
+}
+#endif // UTEST
 #endif // CORE_UTEST
-
 #endif // CORE_H

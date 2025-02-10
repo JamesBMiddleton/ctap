@@ -49,10 +49,17 @@ static gfx_InitRet gfx_Init(gfx_InitArg args)
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef GFX_UTEST
 
-i32 main(void)
+#pragma GCC diagnostic ignored "-Wunused-function"
+static void utest_gfx(void)
 {
-    return 0;
 }
 
+#ifdef UTEST
+i32 main(void)
+{
+    utest_gfx();
+    return 0;
+}
+#endif // UTEST
 #endif // GFX_UTEST
 #endif // GFX_H

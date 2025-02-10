@@ -49,10 +49,17 @@ static phys_InitRet phys_Init(phys_InitArg args)
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef PHYS_UTEST
 
-i32 main(void)
+#pragma GCC diagnostic ignored "-Wunused-function"
+static void utest_phys(void)
 {
-    return 0;
 }
 
+#ifdef UTEST
+i32 main(void)
+{
+    utest_phys();
+    return 0;
+}
+#endif // UTEST
 #endif // PHYS_UTEST
 #endif // PHYS_H
