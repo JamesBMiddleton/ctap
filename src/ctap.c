@@ -77,14 +77,14 @@ ctap_InitRet ctap_Init(ctap_InitArg arg)
 #ifdef CTAP_UTEST
 
 #pragma GCC diagnostic ignored "-Wunused-function"
-static void utest_ctap(void)
+static void utest_ctap_Main(void)
 {
 }
 
 #ifdef UTEST
 i32 main(void)
 {
-    utest_ctap();
+    utest_ctap_Main();
     return 0;
 }
 #endif // UTEST

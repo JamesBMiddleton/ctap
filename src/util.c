@@ -909,7 +909,7 @@ static void utest_util_Sprintf(void)
 }
 
 #pragma GCC diagnostic ignored "-Wunused-function"
-static void utest_util(void)
+static void utest_util_Main(void)
 {
     assert(util_Init((util_InitArg){0}) == util_InitRet_OK);
     utest_util_Sprintf();
@@ -925,7 +925,7 @@ static void utest_util(void)
 #ifdef UTEST
 i32 main(void)
 {
-    utest_util();
+    utest_util_Main();
     return 0;
 }
 #endif // UTEST

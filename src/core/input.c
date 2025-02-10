@@ -50,14 +50,14 @@ static input_InitRet input_Init(input_InitArg args)
 #ifdef INPUT_UTEST
 
 #pragma GCC diagnostic ignored "-Wunused-function"
-static void utest_input(void)
+static void utest_input_Main(void)
 {
 }
 
 #ifdef UTEST
 i32 main(void)
 {
-    utest_input();
+    utest_input_Main();
     return 0;
 }
 #endif // UTEST
