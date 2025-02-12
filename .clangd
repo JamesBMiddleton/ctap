@@ -1,8 +1,10 @@
 CompileFlags:
-  Add: [-DUTIL_UTEST,
-        -DCORE_UTEST, 
-        -DCTAP_UTEST, 
-        -DAUD_UTEST, 
-        -DGFX_UTEST,
-        -DPHYS_UTEST,
-        -DINPUT_UTEST]
+  Add: [-DUTEST_UTIL,
+        -DUTEST_CTAP, 
+        -DUTEST_CORE, 
+        -DUTEST_AUD, 
+        -DUTEST_GFX,
+        -DUTEST_PHYS,
+        -DUTEST_INPUT,
+        -Wno-unused-macros,
+        -Wno-unused-functions]

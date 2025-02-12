@@ -1,8 +1,6 @@
-#ifndef GFX_H
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-macros"
-#define GFX_H
-#pragma GCC diagnostic pop
+#ifndef GFX_C
+#define GFX_C
+GFX_C
 
 #include "src/util.c"
 
@@ -24,13 +22,11 @@ static gfx_InitRet gfx_Init(gfx_InitArg arg);
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
 
 struct gfx__State {
     u32 placeholder;
     // pool_t
-} static gfx__state = {0}; // NOLINT
+} static gfx__state = {0};
 
 /*
  * Initialise the audio module. 
@@ -43,23 +39,29 @@ static gfx_InitRet gfx_Init(gfx_InitArg args)
     return (args.placeholder) ? gfx_InitRet_OK : gfx_InitRet_MAP_INVALID;
 }
 
-#pragma GCC diagnostic pop
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// UTEST IMPL /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#ifdef GFX_UTEST
+#ifdef UTEST_GFX
 
-#pragma GCC diagnostic ignored "-Wunused-function"
-static void utest_gfx_Main(void)
+static void utest_gfx_Untested(void)
 {
+    gfx_Init((gfx_InitArg){0});
 }
 
 #ifdef UTEST
+static void utest_gfx_Main(void)
+{
+    util_SetLogCallback(utest_util_PrintfLoggerCallback);
+    util_SetPanicCallback(utest_util_DoNothing);
+    utest_gfx_Untested();
+}
+
 i32 main(void)
 {
     utest_gfx_Main();
     return 0;
 }
 #endif // UTEST
-#endif // GFX_UTEST
-#endif // GFX_H
+#endif // UTEST_GFX
+#endif // GFX_C

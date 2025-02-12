@@ -63,10 +63,10 @@ $(BUILD_DIR)/$(TEST_DIR)/%: $(TEST_DIR)/%.c $(BUILD_DIR)/$(LIB_NAME).a
 	mkdir -p $(dir $@)
 	$(CC) $< -o $@ $(CFLAGS)
 
-# Build utest binaries, defining MODULE_UTEST for each.
+# Build utest binaries, defining UTEST_MODULE for each.
 $(BUILD_DIR)/$(SRC_DIR)/%_utest: $(SRC_DIR)/%.c
 	mkdir -p $(dir $@)
-	$(CC) $< -o $@ $(CFLAGS) -DUTEST -D$(shell echo $(notdir $@) | tr '[:lower:]' '[:upper:]')
+	$(CC) $< -o $@ $(CFLAGS) -DUTEST -DUTEST_$(shell echo $(notdir $<) | sed -E 's/(.*)\.c/\U\1/')
 
 analyze: CFLAGS = $(DEBUG_CFLAGS)
 analyze:

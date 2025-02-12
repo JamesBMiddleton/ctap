@@ -1,8 +1,6 @@
-#ifndef CORE_H
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-macros"
-#define CORE_H
-#pragma GCC diagnostic pop
+#ifndef CORE_C
+#define CORE_C
+CORE_C
 
 #include "src/util.c"
 
@@ -56,13 +54,11 @@ static core__SpaghettifyValueRet core__SpaghettifyValue(u32* value)
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
 
 struct core__State {
     u32 placeholder;
     // pool_t
-} static core__state = {0}; // NOLINT
+} static core__state = {0};
 
 /*
  * Initialise the core module. 
@@ -86,24 +82,29 @@ static core_InitRet core_Init(core_InitArg args)
     return core_InitRet_OK;
 }
 
-#pragma GCC diagnostic pop
-
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// UTEST IMPL /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#ifdef CORE_UTEST
+#ifdef UTEST_CORE
 
-#pragma GCC diagnostic ignored "-Wunused-function"
-static void utest_core_Main(void)
+static void utest_core_Untested(void)
 {
+    core_Init((core_InitArg){0});
 }
 
 #ifdef UTEST
+static void utest_core_Main(void)
+{
+    util_SetLogCallback(utest_util_PrintfLoggerCallback);
+    util_SetPanicCallback(utest_util_DoNothing);
+    utest_core_Untested();
+}
+
 i32 main(void)
 {
     utest_core_Main();
     return 0;
 }
 #endif // UTEST
-#endif // CORE_UTEST
-#endif // CORE_H
+#endif // UTEST_CORE
+#endif // CORE_C

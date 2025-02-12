@@ -1,8 +1,6 @@
-#ifndef PHYS_H
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-macros"
-#define PHYS_H
-#pragma GCC diagnostic pop
+#ifndef PHYS_C
+#define PHYS_C
+PHYS_C
 
 #include "src/util.c"
 
@@ -24,13 +22,11 @@ static phys_InitRet phys_Init(phys_InitArg arg);
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
 
 struct phys__State {
     u32 placeholder;
     // pool_t
-} static phys__state = {0}; // NOLINT
+} static phys__state = {0};
 
 /*
  * Initialise the audio module. 
@@ -43,23 +39,29 @@ static phys_InitRet phys_Init(phys_InitArg args)
     return (args.placeholder) ? phys_InitRet_OK : phys_InitRet_MAP_INVALID;
 }
 
-#pragma GCC diagnostic pop
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// UTEST IMPL /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#ifdef PHYS_UTEST
+#ifdef UTEST_PHYS
 
-#pragma GCC diagnostic ignored "-Wunused-function"
-static void utest_phys_Main(void)
+static void utest_phys_Untested(void)
 {
+    phys_Init((phys_InitArg){0});
 }
 
 #ifdef UTEST
+static void utest_phys_Main(void)
+{
+    util_SetLogCallback(utest_util_PrintfLoggerCallback);
+    util_SetPanicCallback(utest_util_DoNothing);
+    utest_phys_Untested();
+}
+
 i32 main(void)
 {
     utest_phys_Main();
     return 0;
 }
 #endif // UTEST
-#endif // PHYS_UTEST
-#endif // PHYS_H
+#endif // UTEST_PHYS
+#endif // PHYS_C

@@ -1,8 +1,7 @@
-#ifndef UTIL_H
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-macros"
-#define UTIL_H
-#pragma GCC diagnostic pop
+#ifndef UTIL_C
+#define UTIL_C
+#include <sys/cdefs.h>
+UTIL_C
 
 // --------------------------- PRIMITIVES --------------------------------------
 
@@ -71,19 +70,6 @@ typedef struct {
     char message[util_MAX_LOG_SZ];
 } util_Log;
 
-typedef struct {
-    void (*log_update_callback)(void);
-    void (*panic_callback)(void);
-} util_InitArg;
-typedef enum {
-    util_InitRet_OK,
-    util_InitRet_NULL_CALLBACK,
-    util_InitRet_NULL_LOG
-} util_InitRet;
-static util_InitRet util_Init(util_InitArg args);
-
-static util_Log util_GetLog(void);
-
 static const char* util_Sprintf(char* buf, usize bufsz, const char* format,
                                 util_Fmts vals);
 
@@ -104,6 +90,9 @@ static inline bool util_Isinf(f32 val);
 static char* util_U32tostr(u32 val, char* buf);
 static char* util_I32tostr(i32 val, char* buf);
 static char* util_F32tostr(f32 val, char* buf, u8 decimals);
+
+static void util_SetLogCallback(void (*callback)(const util_Log));
+static void util_SetPanicCallback(void (*callback)(void));
 
 /* MACROS
  *
@@ -129,6 +118,7 @@ static char* util_F32tostr(f32 val, char* buf, u8 decimals);
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+__attribute__((used))
 static util_Log util__NewLog(const util_LogLvl lvl, const char* const func_name,
                              const u32 line_num, const char* const format,
                              const util_Fmts values)
@@ -138,31 +128,28 @@ static util_Log util__NewLog(const util_LogLvl lvl, const char* const func_name,
     return log;
 }
 
-static void util__DoNothing(void)
-{
-}
-
 /* Intentionally trigger a 'divide by zero' trap */
-static void util__DivZero(void)
+static void util__DefaultPanicCallback(void)
 {
     u32 zero = 0;
-    (void)(1 / zero);
+    u32 error = (1 / zero);
+    zero = error;
+}
+
+static void util__DefaultLogCallback(const util_Log log)
+{
+    (void)log;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-macros"
-#pragma GCC diagnostic ignored "-Wunused-function"
-
+///
 struct util__State {
     void (*panic_callback)(void);
-    void (*log_update_callback)(void);
-
-    util_Log log;
-    // Pool
-} static util__state = {0}; // NOLINT
+    void (*log_callback)(const util_Log);
+} static util__state = {.panic_callback = util__DefaultPanicCallback,
+                        .log_callback = util__DefaultLogCallback};
 
 #define util__NULL_TERMINATOR_SZ 1
 #define util__U32_MAX_CHARS (10) // '4294967295'
@@ -171,22 +158,13 @@ struct util__State {
 #define util__NUMERIC_MAX_CHARS \
     (1 + util__U32_MAX_CHARS + 1 + util__F32_DECIMAL_CHARS) // '-2147483648.123'
 
-/*
- * @return the last logged message.
- */
-static util_Log util_GetLog(void)
-{
-    return util__state.log;
-}
-
-#define util_LOG(log_lvl, msg)                              \
-    do                                                      \
-    {                                                       \
-        util__state.log = (util_Log){.lvl = (log_lvl),      \
-                                     .line_num = __LINE__,  \
-                                     .func_name = __func__, \
-                                     .message = #msg};      \
-        util__state.log_update_callback();                  \
+#define util_LOG(log_lvl, msg)                                     \
+    do                                                             \
+    {                                                              \
+        util__state.log_callback((util_Log){.lvl = (log_lvl),      \
+                                            .line_num = __LINE__,  \
+                                            .func_name = __func__, \
+                                            .message = #msg});     \
     } while (0)
 
 #ifdef DEBUG
@@ -199,10 +177,9 @@ static util_Log util_GetLog(void)
 #define util_LOGF_DEBUG(format, ...)                                    \
     do                                                                  \
     {                                                                   \
-        util__state.log =                                               \
+        util__state.log_callback(                                       \
             util__NewLog(util_LogLvl_DEBUG, __func__, __LINE__, format, \
-                         (util_Fmts){.arr = {__VA_ARGS__}});            \
-        util__state.log_update_callback();                              \
+                         (util_Fmts){.arr = {__VA_ARGS__}}));           \
     } while (0)
 #else
 #define util_LOG_DEBUG(...)
@@ -212,16 +189,15 @@ static util_Log util_GetLog(void)
 #define util_LOG_WARN(msg)               \
     do                                   \
     {                                    \
-        util_LOG(util_logLvl_WARN, msg); \
+        util_LOG(util_LogLvl_WARN, msg); \
     } while (0)
 
 #define util_LOGF_WARN(format, ...)                                    \
     do                                                                 \
     {                                                                  \
-        util__state.log =                                              \
+        util__state.log_callback(                                      \
             util__NewLog(util_LogLvl_WARN, __func__, __LINE__, format, \
-                         (util_Fmts){.arr = {__VA_ARGS__}});           \
-        util__state.log_update_callback();                             \
+                         (util_Fmts){.arr = {__VA_ARGS__}}));          \
     } while (0)
 
 #define util_LOG_ERROR(msg)               \
@@ -233,10 +209,9 @@ static util_Log util_GetLog(void)
 #define util_LOGF_ERROR(format, ...)                                    \
     do                                                                  \
     {                                                                   \
-        util__state.log =                                               \
+        util__state.log_callback(                                       \
             util__NewLog(util_LogLvl_ERROR, __func__, __LINE__, format, \
-                         (util_Fmts){.arr = {__VA_ARGS__}});            \
-        util__state.log_update_callback();                              \
+                         (util_Fmts){.arr = {__VA_ARGS__}}));           \
     } while (0)
 
 #define util_PANIC()                            \
@@ -247,28 +222,27 @@ static util_Log util_GetLog(void)
     } while (0)
 
 #ifdef DEBUG
-#define util_ASSERT(cond)                                          \
-    do                                                             \
-    {                                                              \
-        if (!(cond))                                               \
-        {                                                          \
-            util__state.log = (util_Log){.lvl = util_LogLvl_ERROR, \
-                                         .line_num = __LINE__,     \
-                                         .func_name = __func__,    \
-                                         .message = #cond};        \
-            util__state.log_update_callback();                     \
-            util__state.panic_callback();                          \
-        }                                                          \
+#define util_ASSERT(cond)                                                 \
+    do                                                                    \
+    {                                                                     \
+        if (!(cond))                                                      \
+        {                                                                 \
+            util__state.log_callback((util_Log){.lvl = util_LogLvl_ERROR, \
+                                                .line_num = __LINE__,     \
+                                                .func_name = __func__,    \
+                                                .message = #cond});       \
+            util__state.panic_callback();                                 \
+        }                                                                 \
     } while (0)
 #else
 #define util_ASSERT(...)
 #endif
 
-#define util_ASSIGN_IF_ZERO(var, value)         \
-    do                                          \
-    {                                           \
-        (var) = ((var) == 0) ? (value) : (var); \
-    } while (0)
+// #define util_ASSIGN_IF_ZERO(var, value)         \
+//     do                                          \
+//     {                                           \
+//         (var) = ((var) == 0) ? (value) : (var); \
+//     } while (0)
 
 #define util_STATIC_ASSERT(cond, msg) \
     typedef char static_assert_##msg[(cond) ? 1 : -1]
@@ -630,37 +604,64 @@ static const char* util_Sprintf(char* buf, const usize bufsz,
     return first;
 }
 
-/*
- * Initialise the utilities module.
- *
- * @param args initialisation arguments.
- */
-static util_InitRet util_Init(util_InitArg args)
+static void util_SetLogCallback(void (*callback)(const util_Log))
 {
-    util__state.log_update_callback = args.log_update_callback;
-    util__state.panic_callback = args.panic_callback;
-    util_ASSIGN_IF_ZERO(util__state.log_update_callback, util__DoNothing);
-    util_ASSIGN_IF_ZERO(util__state.panic_callback, util__DivZero);
-
-    util__state.log =
-        (util_Log){.func_name = __func__, .line_num = __LINE__, .message = ""};
-
-    util_LOGF_DEBUG("Initialisation complete.", 0);
-    return util_InitRet_OK;
+    if (callback == NULL)
+        util__state.panic_callback();
+    util__state.log_callback = callback;
 }
 
-#pragma GCC diagnostic pop
+static void util_SetPanicCallback(void (*callback)(void))
+{
+    if (callback == NULL)
+        util__state.panic_callback();
+    util__state.panic_callback = callback;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// UTEST IMPL /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#ifdef UTIL_UTEST
+#ifdef UTEST
+#include <stdio.h>
+
+static void utest_util_PrintfLoggerCallback(const util_Log log)
+{
+    const char* lvl = "UNKNOWN";
+    switch (log.lvl)
+    {
+        case util_LogLvl_DEBUG:
+            lvl = "DEBUG";
+            break;
+        case util_LogLvl_WARN:
+            lvl = "WARN";
+            break;
+        case util_LogLvl_ERROR:
+            lvl = "ERROR";
+            break;
+        case util_LogLvl_PANIC:
+            lvl = "PANIC";
+            break;
+        case util_LogLvl_ASSERT:
+            lvl = "ASSERT";
+            break;
+    }
+    printf("%s | %s::%d | %s\n", lvl, log.func_name, log.line_num, log.message);
+    (void)fflush(stdout);
+}
+
+static void utest_util_DoNothing(void)
+{
+}
+
+
+#endif // UTEST
+#ifdef UTEST_UTIL
 
 #include <assert.h>
 #include <float.h>
 #include <limits.h>
 #include <string.h>
 
-// NOLINTBEGIN(readability-magic-numbers)
 static void utest_util_Powi(void)
 {
     assert(util_Powi(0, 0) == 1);
@@ -759,7 +760,6 @@ static void utest_util_Isinf(void)
     assert(util_Isinf(FLT_MIN) == false);
     assert(util_Isinf(-1.0F / 0.0F) == true);
 }
-// NOLINTEND(readability-magic-numbers)
 
 static void utest_util_Sprintf(void)
 {
@@ -908,10 +908,39 @@ static void utest_util_Sprintf(void)
     assert(strcmp(arr, "aa") == 0);
 }
 
-#pragma GCC diagnostic ignored "-Wunused-function"
+static void utest_util_MAX(void)
+{
+    const u32 zero = 0;
+    assert(util_MAX(1, 2) == 2);
+    assert(util_MAX(2, 1) == 2);
+    assert(util_MAX(-1, 0) == 0);
+    assert(util_MAX(zero, 0) == 0);
+}
+
+static void utest_util_MIN(void)
+{
+    const u32 zero = 0;
+    assert(util_MIN(1, 2) == 1);
+    assert(util_MIN(2, 1) == 1);
+    assert(util_MIN(-1, 0) == -1);
+    assert(util_MIN(zero, 0) == 0);
+}
+
+static void utest_util_Untested(void)
+{
+    util_LOG_WARN("Hello World");
+    util_LOGF_WARN("Hello World", {0});
+    util_LOGF_ERROR("Hello World", {0});
+    util_LOGF_DEBUG("Hello World", {0});
+    util_LOG_DEBUG("Hello World");
+    util_PANIC();
+}
+
+#ifdef UTEST
 static void utest_util_Main(void)
 {
-    assert(util_Init((util_InitArg){0}) == util_InitRet_OK);
+    util_SetLogCallback(utest_util_PrintfLoggerCallback);
+    util_SetPanicCallback(utest_util_DoNothing);
     utest_util_Sprintf();
     utest_util_Powi();
     utest_util_Powu();
@@ -920,9 +949,11 @@ static void utest_util_Main(void)
     utest_util_Fabs();
     utest_util_Isnan();
     utest_util_Isinf();
+    utest_util_MAX();
+    utest_util_MIN();
+    utest_util_Untested();
 }
 
-#ifdef UTEST
 i32 main(void)
 {
     utest_util_Main();
@@ -930,4 +961,4 @@ i32 main(void)
 }
 #endif // UTEST
 #endif // UTIL_UTEST
-#endif // UTIL_H
+#endif // UTIL_C

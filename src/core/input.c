@@ -1,8 +1,6 @@
-#ifndef INPUT_H
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-macros"
-#define INPUT_H
-#pragma GCC diagnostic pop
+#ifndef INPUT_C
+#define INPUT_C
+INPUT_C
 
 #include "src/util.c"
 
@@ -24,13 +22,11 @@ static input_InitRet input_Init(input_InitArg arg);
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
 
 struct input__State {
     u32 placeholder;
     // pool_t
-} static input__state = {0}; // NOLINT
+} static input__state = {0};
 
 /*
  * Initialise the audio module. 
@@ -43,23 +39,29 @@ static input_InitRet input_Init(input_InitArg args)
     return (args.placeholder) ? input_InitRet_OK : input_InitRet_MAP_INVALID;
 }
 
-#pragma GCC diagnostic pop
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// UTEST IMPL /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#ifdef INPUT_UTEST
+#ifdef UTEST_INPUT
 
-#pragma GCC diagnostic ignored "-Wunused-function"
-static void utest_input_Main(void)
+static void utest_input_Untested(void)
 {
+    input_Init((input_InitArg){0});
 }
 
 #ifdef UTEST
+static void utest_input_Main(void)
+{
+    util_SetLogCallback(utest_util_PrintfLoggerCallback);
+    util_SetPanicCallback(utest_util_DoNothing);
+    utest_input_Untested();
+}
+
 i32 main(void)
 {
     utest_input_Main();
     return 0;
 }
 #endif // UTEST
-#endif // INPUT_UTEST
-#endif // INPUT_H
+#endif // UTEST_INPUT
+#endif // INPUT_C

@@ -1,7 +1,7 @@
 #ifndef CTAP_H
 #define CTAP_H
 
-#define MAX_LOG_SZ 256
+#define ctap_MAX_LOG_SZ 256
 
 typedef enum {
     ctap_LogLvl_ASSERT,
@@ -15,13 +15,13 @@ typedef struct {
     ctap_LogLvl lvl;
     unsigned int line_num;
     const char* func_name;
-    char message[MAX_LOG_SZ];
+    char message[ctap_MAX_LOG_SZ];
 } ctap_Log;
 
 typedef struct {
     // map..
     // input_cb..
-    void (*log_update_callback)(void); // Optional.
+    void (*log_callback)(const ctap_Log); // Optional.
     void (*panic_callback)(void); // Optional.
 } ctap_InitArg;
 typedef enum { ctap_InitRet_OK, ctap_InitRet_NULL_CALLBACK } ctap_InitRet;

@@ -1,8 +1,6 @@
-#ifndef AUD_H
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-macros"
-#define AUD_H
-#pragma GCC diagnostic pop
+#ifndef AUD_C
+#define AUD_C
+AUD_C
 
 #include "src/util.c"
 
@@ -24,13 +22,11 @@ static aud_InitRet aud_Init(aud_InitArg arg);
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-function"
 
 struct aud__State {
     u32 placeholder;
     // pool_t
-} static aud__state = {0}; // NOLINT
+} static aud__state = {0};
 
 /*
  * Initialise the audio module. 
@@ -43,23 +39,30 @@ static aud_InitRet aud_Init(aud_InitArg args)
     return (args.placeholder) ? aud_InitRet_OK : aud_InitRet_MAP_INVALID;
 }
 
-#pragma GCC diagnostic pop
 ////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////// UTEST IMPL /////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-#ifdef AUD_UTEST
+#ifdef UTEST_AUD
 
-#pragma GCC diagnostic ignored "-Wunused-function"
-static void utest_aud_Main(void)
+static void utest_aud_Untested(void)
 {
+    aud_Init((aud_InitArg){0});
 }
 
 #ifdef UTEST
+static void utest_aud_Main(void)
+{
+    // setup logger
+    util_SetLogCallback(utest_util_PrintfLoggerCallback);
+    util_SetPanicCallback(utest_util_DoNothing);
+    utest_aud_Untested();
+}
+
 i32 main(void)
 {
     utest_aud_Main();
     return 0;
 }
 #endif // UTEST
-#endif // AUD_UTEST
-#endif // AUD_H
+#endif // UTEST_AUD
+#endif // AUD_C
