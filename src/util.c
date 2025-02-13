@@ -1,6 +1,5 @@
 #ifndef UTIL_C
 #define UTIL_C
-#include <sys/cdefs.h>
 UTIL_C
 
 // --------------------------- PRIMITIVES --------------------------------------
@@ -67,7 +66,7 @@ typedef struct {
     util_LogLvl lvl;
     u32 line_num;
     const char* func_name;
-    char message[util_MAX_LOG_SZ];
+    const char* message;
 } util_Log;
 
 static const char* util_Sprintf(char* buf, usize bufsz, const char* format,
@@ -91,8 +90,8 @@ static char* util_U32tostr(u32 val, char* buf);
 static char* util_I32tostr(i32 val, char* buf);
 static char* util_F32tostr(f32 val, char* buf, u8 decimals);
 
-static void util_SetLogCallback(void (*callback)(const util_Log));
-static void util_SetPanicCallback(void (*callback)(void));
+static void util_RegisterEventHandlerLog(void (*callback)(const util_Log));
+static void util_RegisterEventHandlerPanic(void (*callback)(void));
 
 /* MACROS
  *
@@ -118,38 +117,35 @@ static void util_SetPanicCallback(void (*callback)(void));
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-__attribute__((used))
-static util_Log util__NewLog(const util_LogLvl lvl, const char* const func_name,
-                             const u32 line_num, const char* const format,
-                             const util_Fmts values)
-{
-    util_Log log = {.lvl = lvl, .line_num = line_num, .func_name = func_name};
-    util_Sprintf(log.message, sizeof(log.message), format, values);
-    return log;
-}
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////// EVENT IMPL //////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 /* Intentionally trigger a 'divide by zero' trap */
-static void util__DefaultPanicCallback(void)
+static void util__EventTriggerPanicDefault(void)
 {
     u32 zero = 0;
     u32 error = (1 / zero);
     zero = error;
 }
 
-static void util__DefaultLogCallback(const util_Log log)
+static void util__EventTriggerLogDefault(const util_Log log)
 {
     (void)log;
 }
 
+struct util__EventHandlers {
+    void (*panic)(void);
+    void (*log)(const util_Log);
+} static util__event_handlers = {.panic = util__EventTriggerPanicDefault,
+                                 .log = util__EventTriggerLogDefault};
+
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-///
 struct util__State {
-    void (*panic_callback)(void);
-    void (*log_callback)(const util_Log);
-} static util__state = {.panic_callback = util__DefaultPanicCallback,
-                        .log_callback = util__DefaultLogCallback};
+    char log_data[util_MAX_LOG_SZ];
+} static util__state = {0};
 
 #define util__NULL_TERMINATOR_SZ 1
 #define util__U32_MAX_CHARS (10) // '4294967295'
@@ -161,7 +157,7 @@ struct util__State {
 #define util_LOG(log_lvl, msg)                                     \
     do                                                             \
     {                                                              \
-        util__state.log_callback((util_Log){.lvl = (log_lvl),      \
+        util__event_handlers.log((util_Log){.lvl = (log_lvl),      \
                                             .line_num = __LINE__,  \
                                             .func_name = __func__, \
                                             .message = #msg});     \
@@ -174,12 +170,16 @@ struct util__State {
         util_LOG(util_LogLvl_DEBUG, msg); \
     } while (0)
 
-#define util_LOGF_DEBUG(format, ...)                                    \
-    do                                                                  \
-    {                                                                   \
-        util__state.log_callback(                                       \
-            util__NewLog(util_LogLvl_DEBUG, __func__, __LINE__, format, \
-                         (util_Fmts){.arr = {__VA_ARGS__}}));           \
+#define util_LOGF_DEBUG(format, ...)                                      \
+    do                                                                    \
+    {                                                                     \
+        util__event_handlers.log((util_Log){                              \
+            .lvl = util_LogLvl_DEBUG,                                     \
+            .line_num = __LINE__,                                         \
+            .func_name = __func__,                                        \
+            .message = util_Sprintf(util__state.log_data,                 \
+                                    sizeof(util__state.log_data), format, \
+                                    (util_Fmts){.arr = {__VA_ARGS__}})}); \
     } while (0)
 #else
 #define util_LOG_DEBUG(...)
@@ -192,12 +192,16 @@ struct util__State {
         util_LOG(util_LogLvl_WARN, msg); \
     } while (0)
 
-#define util_LOGF_WARN(format, ...)                                    \
-    do                                                                 \
-    {                                                                  \
-        util__state.log_callback(                                      \
-            util__NewLog(util_LogLvl_WARN, __func__, __LINE__, format, \
-                         (util_Fmts){.arr = {__VA_ARGS__}}));          \
+#define util_LOGF_WARN(format, ...)                                       \
+    do                                                                    \
+    {                                                                     \
+        util__event_handlers.log((util_Log){                              \
+            .lvl = util_LogLvl_WARN,                                      \
+            .line_num = __LINE__,                                         \
+            .func_name = __func__,                                        \
+            .message = util_Sprintf(util__state.log_data,                 \
+                                    sizeof(util__state.log_data), format, \
+                                    (util_Fmts){.arr = {__VA_ARGS__}})}); \
     } while (0)
 
 #define util_LOG_ERROR(msg)               \
@@ -206,19 +210,23 @@ struct util__State {
         util_LOG(util_LogLvl_ERROR, msg); \
     } while (0)
 
-#define util_LOGF_ERROR(format, ...)                                    \
-    do                                                                  \
-    {                                                                   \
-        util__state.log_callback(                                       \
-            util__NewLog(util_LogLvl_ERROR, __func__, __LINE__, format, \
-                         (util_Fmts){.arr = {__VA_ARGS__}}));           \
+#define util_LOGF_ERROR(format, ...)                                      \
+    do                                                                    \
+    {                                                                     \
+        util__event_handlers.log((util_Log){                              \
+            .lvl = util_LogLvl_ERROR,                                     \
+            .line_num = __LINE__,                                         \
+            .func_name = __func__,                                        \
+            .message = util_Sprintf(util__state.log_data,                 \
+                                    sizeof(util__state.log_data), format, \
+                                    (util_Fmts){.arr = {__VA_ARGS__}})}); \
     } while (0)
 
 #define util_PANIC()                            \
     do                                          \
     {                                           \
         util_LOG(util_LogLvl_PANIC, "Wuh Woh"); \
-        util__state.panic_callback();           \
+        util__event_handlers.panic();           \
     } while (0)
 
 #ifdef DEBUG
@@ -227,11 +235,11 @@ struct util__State {
     {                                                                     \
         if (!(cond))                                                      \
         {                                                                 \
-            util__state.log_callback((util_Log){.lvl = util_LogLvl_ERROR, \
+            util__event_handlers.log((util_Log){.lvl = util_LogLvl_ERROR, \
                                                 .line_num = __LINE__,     \
                                                 .func_name = __func__,    \
                                                 .message = #cond});       \
-            util__state.panic_callback();                                 \
+            util__event_handlers.panic();                                 \
         }                                                                 \
     } while (0)
 #else
@@ -604,18 +612,18 @@ static const char* util_Sprintf(char* buf, const usize bufsz,
     return first;
 }
 
-static void util_SetLogCallback(void (*callback)(const util_Log))
+static void util_RegisterEventHandlerLog(void (*callback)(const util_Log))
 {
     if (callback == NULL)
-        util__state.panic_callback();
-    util__state.log_callback = callback;
+        util__event_handlers.panic();
+    util__event_handlers.log = callback;
 }
 
-static void util_SetPanicCallback(void (*callback)(void))
+static void util_RegisterEventHandlerPanic(void (*callback)(void))
 {
     if (callback == NULL)
-        util__state.panic_callback();
-    util__state.panic_callback = callback;
+        util__event_handlers.panic();
+    util__event_handlers.panic = callback;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -624,35 +632,26 @@ static void util_SetPanicCallback(void (*callback)(void))
 #ifdef UTEST
 #include <stdio.h>
 
-static void utest_util_PrintfLoggerCallback(const util_Log log)
+__attribute__((used))
+static void utest_util_EventHandlerLogPrintf(const util_Log log)
 {
     const char* lvl = "UNKNOWN";
     switch (log.lvl)
     {
-        case util_LogLvl_DEBUG:
-            lvl = "DEBUG";
-            break;
-        case util_LogLvl_WARN:
-            lvl = "WARN";
-            break;
-        case util_LogLvl_ERROR:
-            lvl = "ERROR";
-            break;
-        case util_LogLvl_PANIC:
-            lvl = "PANIC";
-            break;
-        case util_LogLvl_ASSERT:
-            lvl = "ASSERT";
-            break;
+        case util_LogLvl_DEBUG: lvl = "DEBUG"; break;
+        case util_LogLvl_WARN: lvl = "WARN"; break;
+        case util_LogLvl_ERROR: lvl = "ERROR"; break;
+        case util_LogLvl_PANIC: lvl = "PANIC"; break;
+        case util_LogLvl_ASSERT: lvl = "ASSERT"; break;
     }
     printf("%s | %s::%d | %s\n", lvl, log.func_name, log.line_num, log.message);
     (void)fflush(stdout);
 }
 
-static void utest_util_DoNothing(void)
+__attribute__((used))
+static void utest_util_EventHandlerPanicDoNothing(void)
 {
 }
-
 
 #endif // UTEST
 #ifdef UTEST_UTIL
@@ -939,8 +938,8 @@ static void utest_util_Untested(void)
 #ifdef UTEST
 static void utest_util_Main(void)
 {
-    util_SetLogCallback(utest_util_PrintfLoggerCallback);
-    util_SetPanicCallback(utest_util_DoNothing);
+    util_RegisterEventHandlerLog(utest_util_EventHandlerLogPrintf);
+    util_RegisterEventHandlerPanic(utest_util_EventHandlerPanicDoNothing);
     utest_util_Sprintf();
     utest_util_Powi();
     utest_util_Powu();
