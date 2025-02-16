@@ -32,7 +32,20 @@ typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
 // #define I32_MAX (2147483647)
 // #define F32_MIN (1.17549435e-38F) //! Assumes IEEE-754 compliance.
 // #define F32_MAX (3.40282347e+38F) //! Assumes IEEE-754 compliance.
-//
+
+typedef struct {
+    const char* const chars;
+    const usize len;
+} str;
+
+#define tostr(cstr) ((str) { .len = (sizeof("" cstr "")-1), .chars = (cstr) })
+
+static inline str substr(str src, const usize start, const usize len)
+{
+    // assert(start < src.len); 
+    // assert((start + len) <= src.len);
+    return (str){.chars = src.chars + start, .len = len};
+}
 // -----------------------------------------------------------------------------
 
 ////////////////////////////////////////////////////////////////////////////////

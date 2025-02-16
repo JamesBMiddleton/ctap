@@ -25,6 +25,4 @@ typedef struct {
 typedef enum { ctap_InitRet_OK, ctap_InitRet_NULL_CALLBACK } ctap_InitRet;
 ctap_InitRet ctap_Init(ctap_InitArg arg);
 
-ctap_Log ctap_GetLog(void);
-
 #endif // CTAP_H
