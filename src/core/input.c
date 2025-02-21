@@ -9,7 +9,7 @@ INPUT_C
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-    u32 placeholder;
+    uint placeholder;
 } input_InitArg;
 typedef enum { input_InitRet_OK, input_InitRet_MAP_INVALID } input_InitRet;
 static input_InitRet input_Init(input_InitArg arg);
@@ -24,7 +24,7 @@ static input_InitRet input_Init(input_InitArg arg);
 ////////////////////////////////////////////////////////////////////////////////
 
 struct input__State {
-    u32 placeholder;
+    uint placeholder;
     // pool_t
 } static input__state = {0};
 
@@ -52,12 +52,12 @@ static void utest_input_Untested(void)
 #ifdef UTEST
 static void utest_input_Main(void)
 {
-    util_SetLogCallback(utest_util_PrintfLoggerCallback);
-    util_SetPanicCallback(utest_util_DoNothing);
+    util_RegisterEventHandlerLog(utest_util_EventHandlerLogPrintf);
+    util_RegisterEventHandlerPanic(utest_util_EventHandlerPanicDoNothing);
     utest_input_Untested();
 }
 
-i32 main(void)
+int main(void)
 {
     utest_input_Main();
     return 0;

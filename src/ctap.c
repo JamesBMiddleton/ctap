@@ -35,7 +35,7 @@ static void ctap__EventTriggerLog(const util_Log log)
 ////////////////////////////////////////////////////////////////////////////////
 
 struct ctap__State {
-    u32 placeholder;
+    uint placeholder;
 } static ctap__state = {0};
 
 /* 
@@ -53,7 +53,7 @@ ctap_InitRet ctap_Init(ctap_InitArg arg)
     if (arg.event_handler_panic)
         util_RegisterEventHandlerPanic(arg.event_handler_panic);
 
-    const u32 placeholder = 42;
+    const uint placeholder = 42;
     switch (core_Init((core_InitArg){.placeholder = placeholder}))
     {
         case core_InitRet_OK:
@@ -81,7 +81,7 @@ static void utest_ctap_Main(void)
 }
 
 #ifdef UTEST
-i32 main(void)
+int main(void)
 {
     utest_ctap_Main();
     return 0;

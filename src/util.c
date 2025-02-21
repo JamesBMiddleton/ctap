@@ -2,51 +2,7 @@
 #define UTIL_C
 UTIL_C
 
-// --------------------------- PRIMITIVES --------------------------------------
-
-#define bool _Bool
-#define true 1
-#define false 0
-#define NULL ((void*)0)
-
-typedef float f32;
-typedef unsigned char u8;
-typedef unsigned short int u16;
-typedef unsigned int u32;
-typedef signed char i8;
-typedef signed short int i16;
-typedef signed int i32;
-typedef __SIZE_TYPE__ usize; //! GCC/Clang compiler dependent.
-
-// #define U8_MIN (0U)
-// #define U8_MAX (255U)
-// #define U16_MIN (0U)
-// #define U16_MAX (65535U)
-// #define U32_MIN (0U)
-// #define U32_MAX (4294967295U)
-// #define I8_MIN (-128)
-// #define I8_MAX (127)
-// #define I16_MIN (-32768)
-// #define I16_MAX (32767)
-// #define I32_MIN (-2147483648)
-// #define I32_MAX (2147483647)
-// #define F32_MIN (1.17549435e-38F) //! Assumes IEEE-754 compliance.
-// #define F32_MAX (3.40282347e+38F) //! Assumes IEEE-754 compliance.
-
-typedef struct {
-    const char* const chars;
-    const usize len;
-} str;
-
-#define tostr(cstr) ((str) { .len = (sizeof("" cstr "")-1), .chars = (cstr) })
-
-static inline str substr(str src, const usize start, const usize len)
-{
-    // assert(start < src.len); 
-    // assert((start + len) <= src.len);
-    return (str){.chars = src.chars + start, .len = len};
-}
-// -----------------------------------------------------------------------------
+#include "primitives.c"
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////// API DECL ////////////////////////////////////////
@@ -58,9 +14,9 @@ static inline str substr(str src, const usize start, const usize len)
 typedef union {
     const char* s;
     char c;
-    i32 d;
-    u32 u;
-    f32 f;
+    int d;
+    uint u;
+    double f;
 } util_Fmt;
 
 typedef struct {
@@ -77,7 +33,7 @@ typedef enum {
 
 typedef struct {
     util_LogLvl lvl;
-    u32 line_num;
+    uint line_num;
     const char* func_name;
     const char* message;
 } util_Log;
@@ -89,19 +45,19 @@ static const void* util_Memcpy(void* dest, const void* src, usize count);
 
 static inline usize util_Strlen(const char* string);
 
-static inline i32 util_Powi(i32 base, u32 exp);
-static inline u32 util_Powu(u32 base, u32 exp);
-static inline f32 util_Powf(f32 base, i32 exp);
+static inline int util_Powi(int base, uint exp);
+static inline uint util_Powu(uint base, uint exp);
+static inline double util_Pow(double base, int exp);
 
-static inline u32 util_Abs(i32 val);
-static inline f32 util_Fabs(f32 val);
+static inline uint util_Abs(int val);
+static inline double util_Fabs(double val);
 
-static inline bool util_Isnan(f32 val);
-static inline bool util_Isinf(f32 val);
+static inline bool util_Isnan(double val);
+static inline bool util_Isinf(double val);
 
-static char* util_U32tostr(u32 val, char* buf);
-static char* util_I32tostr(i32 val, char* buf);
-static char* util_F32tostr(f32 val, char* buf, u8 decimals);
+static char* util_uinttostr(uint val, char* buf);
+static char* util_inttostr(int val, char* buf);
+static char* util_doubletostr(double val, char* buf, uchar decimals);
 
 static void util_RegisterEventHandlerLog(void (*callback)(const util_Log));
 static void util_RegisterEventHandlerPanic(void (*callback)(void));
@@ -119,8 +75,7 @@ static void util_RegisterEventHandlerPanic(void (*callback)(void));
  * util_LOGF_PANIC(format, ...)
  * util_util_ASSIGN_IF_ZERO(lvalue, rvalue)
  * util_ASSERT(cond)
- * util_STATIC_ASSERT(cond, msg)
- * util_FEQUAL(left, right)
+ * util_DBL_EQUAL(left, right)
  * util_MIN(left, right)
  * util_MAX(left, right)
  *
@@ -137,8 +92,8 @@ static void util_RegisterEventHandlerPanic(void (*callback)(void));
 /* Intentionally trigger a 'divide by zero' trap */
 static void util__EventTriggerPanicDefault(void)
 {
-    u32 zero = 0;
-    u32 error = (1 / zero);
+    uint zero = 0;
+    uint error = (1 / zero);
     zero = error;
 }
 
@@ -161,11 +116,11 @@ struct util__State {
 } static util__state = {0};
 
 #define util__NULL_TERMINATOR_SZ 1
-#define util__U32_MAX_CHARS (10) // '4294967295'
-#define util__U32_MAX_CHAR_THRESHOLD 1000000000
-#define util__F32_DECIMAL_CHARS (3)
+#define util__uint_MAX_CHARS (10) // '4294967295'
+#define util__uint_MAX_CHAR_THRESHOLD 1000000000
+#define util__double_DECIMAL_CHARS (3)
 #define util__NUMERIC_MAX_CHARS \
-    (1 + util__U32_MAX_CHARS + 1 + util__F32_DECIMAL_CHARS) // '-2147483648.123'
+    (1 + util__uint_MAX_CHARS + 1 + util__double_DECIMAL_CHARS) // '-2147483648.123'
 
 #define util_LOG(log_lvl, msg)                                     \
     do                                                             \
@@ -265,26 +220,17 @@ struct util__State {
 //         (var) = ((var) == 0) ? (value) : (var); \
 //     } while (0)
 
-#define util_STATIC_ASSERT(cond, msg) \
-    typedef char static_assert_##msg[(cond) ? 1 : -1]
+// #define util_STATIC_ASSERT(cond, msg) \
+//     typedef char static_assert_##msg[(cond) ? 1 : -1]
 
-#define util__FEQUAL_DELTA 1E-6F
-#define util_FEQUAL(left, right)                     \
-    ((((left) - (right)) > -(util__FEQUAL_DELTA)) && \
-     (((left) - (right)) < (util__FEQUAL_DELTA)))
+#define util__DBL_EQUAL_DELTA 1E-6
+#define util_DBL_EQUAL(left, right)                     \
+    ((((left) - (right)) > -(util__DBL_EQUAL_DELTA)) && \
+     (((left) - (right)) < (util__DBL_EQUAL_DELTA)))
 
 #define util_MIN(left, right) (((left) < (right)) ? (left) : (right))
 
 #define util_MAX(left, right) (((left) > (right)) ? (left) : (right))
-
-util_STATIC_ASSERT(sizeof(u8) == 1, util__u8_1_byte);
-util_STATIC_ASSERT(sizeof(u16) == 2, util__u16_2_bytes);
-util_STATIC_ASSERT(sizeof(u32) == 4, util__u32_4_bytes);
-util_STATIC_ASSERT(sizeof(i8) == 1, util__i8_1_byte);
-util_STATIC_ASSERT(sizeof(i16) == 2, util__i16_2_bytes);
-util_STATIC_ASSERT(sizeof(i32) == 4, util__i32_4_bytes);
-util_STATIC_ASSERT(sizeof(f32) == 4, util__f32_4_bytes);
-util_STATIC_ASSERT(sizeof(void*) == sizeof(usize), util__ptr_usize_bytes);
 
 /*
  * If aligned copy 32bit chunks from dest to src, else copy bytes.
@@ -299,18 +245,18 @@ static const void* util_Memcpy(void* dest, const void* src, const usize count)
 {
     util_ASSERT(dest);
     util_ASSERT(src);
-    if (((usize)src | (usize)dest | count) & (sizeof(u32) - 1))
+    if (((usize)src | (usize)dest | count) & (sizeof(uint) - 1))
     {
-        const u8* src_byte = (const u8*)src;
-        u8* dest_byte = (u8*)dest;
+        const uchar* src_byte = (const uchar*)src;
+        uchar* dest_byte = (uchar*)dest;
         for (usize i = 0; i < count; ++i)
             *(dest_byte++) = *(src_byte++);
     }
     else
     {
-        const u32* src_word = (const u32*)src;
-        u32* dest_word = (u32*)dest;
-        for (usize i = 0; i < count; i += sizeof(u32))
+        const uint* src_word = (const uint*)src;
+        uint* dest_word = (uint*)dest;
+        for (usize i = 0; i < count; i += sizeof(uint))
             *(dest_word++) = *(src_word++);
     }
     return dest;
@@ -321,9 +267,9 @@ static const void* util_Memcpy(void* dest, const void* src, const usize count)
  * @param exp - exponent.
  * @return power.
  */
-static inline i32 util_Powi(i32 base, u32 exp)
+static inline int util_Powi(int base, uint exp)
 {
-    i32 result = 1;
+    int result = 1;
     while (true)
     {
         if (exp & 1U)
@@ -341,9 +287,9 @@ static inline i32 util_Powi(i32 base, u32 exp)
  * @param exp - exponent.
  * @return power.
  */
-static inline u32 util_Powu(u32 base, u32 exp)
+static inline uint util_Powu(uint base, uint exp)
 {
-    u32 result = 1;
+    uint result = 1;
     if (exp == 0)
         return result;
     while (true)
@@ -365,12 +311,12 @@ static inline u32 util_Powu(u32 base, u32 exp)
  * @param exp - exponent.
  * @return power.
  */
-static inline f32 util_Powf(f32 base, i32 exp)
+static inline double util_Pow(double base, int exp)
 {
-    f32 result = 1;
+    double result = 1;
     if (exp == 0)
         return result;
-    u32 abs_exp = util_Abs(exp);
+    uint abs_exp = util_Abs(exp);
     while (true)
     {
         if (abs_exp & 1U)
@@ -380,23 +326,23 @@ static inline f32 util_Powf(f32 base, i32 exp)
             break;
         base *= base;
     }
-    return (exp > 0) ? result : 1.0F / result;
+    return (exp > 0) ? result : 1.0 / result;
 }
 
 /*
  * @param val - pos/neg value.
  * @return absolute value.
  */
-static inline u32 util_Abs(const i32 val)
+static inline uint util_Abs(const int val)
 {
-    return (val < 0) ? -(u32)val : (u32)val;
+    return (val < 0) ? -(uint)val : (uint)val;
 }
 
 /*
  * @param val - pos/neg value.
  * @return absolute value.
  */
-static inline f32 util_Fabs(f32 val)
+static inline double util_Fabs(double val)
 {
     return (val < 0) ? -val : val;
 }
@@ -407,7 +353,7 @@ static inline f32 util_Fabs(f32 val)
  * @param val - potentially NaN float value.
  * @return val is NaN.
  */
-static inline bool util_Isnan(const f32 val)
+static inline bool util_Isnan(const double val)
 {
     return val != val;
 }
@@ -418,7 +364,7 @@ static inline bool util_Isnan(const f32 val)
  * @param val - potentially infinite float value.
  * @return val is infinity.
  */
-static inline bool util_Isinf(const f32 val)
+static inline bool util_Isinf(const double val)
 {
     return !util_Isnan(val) && util_Isnan(val - val);
 }
@@ -443,20 +389,20 @@ static inline usize util_Strlen(const char* str)
  * @param buf - destination string buffer
  * @return buf
  */
-static char* util_U32tostr(u32 val, char* buf)
+static char* util_uinttostr(uint val, char* buf)
 {
     util_ASSERT(buf);
-    static const u8 base = 10;
+    static const uchar base = 10;
 
-    if (val >= util__U32_MAX_CHAR_THRESHOLD)
-        buf += util__U32_MAX_CHARS - 1;
+    if (val >= util__uint_MAX_CHAR_THRESHOLD)
+        buf += util__uint_MAX_CHARS - 1;
     else
-        for (u32 digits = base; digits <= val; digits *= base)
+        for (uint digits = base; digits <= val; digits *= base)
             ++buf;
     *++buf = '\0';
     do
     {
-        *--buf = (i8)('0' + (val % base));
+        *--buf = (char)('0' + (val % base));
         val /= base;
     } while (val != 0);
     return buf;
@@ -469,26 +415,26 @@ static char* util_U32tostr(u32 val, char* buf)
  * @param buf - destination string buffer
  * @return buf
  */
-static char* util_I32tostr(i32 val, char* buf)
+static char* util_inttostr(int val, char* buf)
 {
     util_ASSERT(buf);
-    static const u8 base = 10;
+    static const uchar base = 10;
 
-    u32 abs = (u32)val;
+    uint abs = (uint)val;
     if (val < 0)
     {
-        abs = -(u32)val;
+        abs = -(uint)val;
         *buf++ = '-';
     }
-    if (abs >= util__U32_MAX_CHAR_THRESHOLD)
-        buf += util__U32_MAX_CHARS - 1;
+    if (abs >= util__uint_MAX_CHAR_THRESHOLD)
+        buf += util__uint_MAX_CHARS - 1;
     else
-        for (u32 digits = base; digits <= abs; digits *= base)
+        for (uint digits = base; digits <= abs; digits *= base)
             ++buf;
     *++buf = '\0';
     do
     {
-        *--buf = (i8)('0' + (abs % base));
+        *--buf = (char)('0' + (abs % base));
         abs /= base;
     } while (abs != 0);
     return (val < 0) ? --buf : buf;
@@ -504,10 +450,10 @@ static char* util_I32tostr(i32 val, char* buf)
  * @return buf
  */
 __attribute__((no_sanitize("undefined"))) static char*
-util_F32tostr(const f32 val, char* buf, u8 decimals)
+util_doubletostr(const double val, char* buf, uchar decimals)
 {
     util_ASSERT(buf);
-    static const f32 base = 10;
+    static const double base = 10;
 
     if (util_Isnan(val))
     {
@@ -523,9 +469,9 @@ util_F32tostr(const f32 val, char* buf, u8 decimals)
         return buf;
     }
 
-    i32 whole = (i32)val;
-    f32 fraction = util_Fabs((val - (f32)whole));
-    char* start = util_I32tostr(whole, buf);
+    int whole = (int)val;
+    double fraction = util_Fabs((val - (double)whole));
+    char* start = util_inttostr(whole, buf);
 
     buf += util_Strlen(buf);
     *buf++ = '.';
@@ -533,14 +479,14 @@ util_F32tostr(const f32 val, char* buf, u8 decimals)
     if (decimals--)
     {
         fraction *= base;
-        while ((i32)fraction == 0 && decimals--)
+        while ((int)fraction == 0 && decimals--)
         {
             *buf++ = '0';
             fraction *= base;
         }
         while (decimals--)
             fraction *= base;
-        util_U32tostr((u32)fraction, buf);
+        util_uinttostr((uint)fraction, buf);
     }
     else
         *buf = '\0';
@@ -557,6 +503,7 @@ util_F32tostr(const f32 val, char* buf, u8 decimals)
  * @param vals - struct wrapped array of format specifier values
  * @return - the destination string buffer
  */
+__attribute__((used))
 static const char* util_Sprintf(char* buf, const usize bufsz,
                                 const char* format, const util_Fmts vals)
 {
@@ -602,9 +549,9 @@ static const char* util_Sprintf(char* buf, const usize bufsz,
             switch (specifier)
             {
                 case 'c': *buf++ = val.c; continue;
-                case 'd': util_I32tostr(val.d, buf); break;
-                case 'u': util_U32tostr(val.u, buf); break;
-                case 'f': util_F32tostr(val.f, buf, 3); break;
+                case 'd': util_inttostr(val.d, buf); break;
+                case 'u': util_uinttostr(val.u, buf); break;
+                case 'f': util_doubletostr(val.f, buf, 3); break;
                 case 's': {
                     const char* str = val.s;
                     do
@@ -707,30 +654,30 @@ static void utest_util_Powu(void)
     assert(util_Powu(15, 8) == 2562890625);
 }
 
-static void utest_util_Powf(void)
+static void utest_util_Pow(void)
 {
-    assert(util_FEQUAL(util_Powf(0, 0), 1));
-    assert(util_FEQUAL(util_Powf(0, 1), 0));
-    assert(util_FEQUAL(util_Powf(-1, 0), 1));
-    assert(util_Isinf(util_Powf(0, -1)));
+    assert(util_DBL_EQUAL(util_Pow(0, 0), 1));
+    assert(util_DBL_EQUAL(util_Pow(0, 1), 0));
+    assert(util_DBL_EQUAL(util_Pow(-1, 0), 1));
+    assert(util_Isinf(util_Pow(0, -1)));
 
-    assert(util_FEQUAL(util_Powf(42, 0), 1));
-    assert(util_FEQUAL(util_Powf(42, 1), 42));
-    assert(util_FEQUAL(util_Powf(42, 2), 1764));
-    assert(util_FEQUAL(util_Powf(42, 3), 74088));
+    assert(util_DBL_EQUAL(util_Pow(42, 0), 1));
+    assert(util_DBL_EQUAL(util_Pow(42, 1), 42));
+    assert(util_DBL_EQUAL(util_Pow(42, 2), 1764));
+    assert(util_DBL_EQUAL(util_Pow(42, 3), 74088));
 
-    assert(util_FEQUAL(util_Powf(-42, 0), 1));
-    assert(util_FEQUAL(util_Powf(-42, 1), -42));
-    assert(util_FEQUAL(util_Powf(-42, 2), 1764));
-    assert(util_FEQUAL(util_Powf(-42, 3), -74088));
+    assert(util_DBL_EQUAL(util_Pow(-42, 0), 1));
+    assert(util_DBL_EQUAL(util_Pow(-42, 1), -42));
+    assert(util_DBL_EQUAL(util_Pow(-42, 2), 1764));
+    assert(util_DBL_EQUAL(util_Pow(-42, 3), -74088));
 
-    assert(util_FEQUAL(util_Powf(0.1F, -1), 10));
-    assert(util_FEQUAL(util_Powf(1.5F, 42), 24878997.7221F));
-    assert(util_FEQUAL(util_Powf(1.5F, -42), 4.01945452614e-8F));
+    assert(util_DBL_EQUAL(util_Pow(0.1, -1), 10));
+    assert(util_DBL_EQUAL(util_Pow(1.5, 42), 24878997.7221));
+    assert(util_DBL_EQUAL(util_Pow(1.5, -42), 4.01945452614e-8));
 
-    assert(util_FEQUAL(util_Powf(-0.1F, -1), -10));
-    assert(util_FEQUAL(util_Powf(-1.5F, 42), 24878997.7221F));
-    assert(util_FEQUAL(util_Powf(-1.5F, -42), 4.01945452614e-8F));
+    assert(util_DBL_EQUAL(util_Pow(-0.1, -1), -10));
+    assert(util_DBL_EQUAL(util_Pow(-1.5, 42), 24878997.7221));
+    assert(util_DBL_EQUAL(util_Pow(-1.5, -42), 4.01945452614e-8));
 }
 
 static void utest_util_Abs(void)
@@ -745,40 +692,40 @@ static void utest_util_Abs(void)
 
 static void utest_util_Fabs(void)
 {
-    assert(util_FEQUAL(util_Fabs(-0.0F), 0.0F));
-    assert(util_FEQUAL(util_Fabs(-1.0F), 1.0F));
-    assert(util_FEQUAL(util_Fabs(1.0F), 1.0F));
-    assert(util_FEQUAL(util_Fabs(-123.456F), 123.456F));
-    assert(util_FEQUAL(util_Fabs(123.456F), 123.456F));
+    assert(util_DBL_EQUAL(util_Fabs(-0.0), 0.0));
+    assert(util_DBL_EQUAL(util_Fabs(-1.0), 1.0));
+    assert(util_DBL_EQUAL(util_Fabs(1.0), 1.0));
+    assert(util_DBL_EQUAL(util_Fabs(-123.456), 123.456));
+    assert(util_DBL_EQUAL(util_Fabs(123.456), 123.456));
 }
 
 static void utest_util_Isnan(void)
 {
-    assert(util_Isnan(0.0F) == false);
-    assert(util_Isnan(1.0F) == false);
-    assert(util_Isnan(-1.0F) == false);
-    assert(util_Isnan(-1.0F / 0.0F) == false);
-    assert(util_Isnan(FLT_MAX) == false);
-    assert(util_Isnan(FLT_MIN) == false);
-    assert(util_Isnan(-0.0F / 0.0F) == true);
+    assert(util_Isnan(0.0) == false);
+    assert(util_Isnan(1.0) == false);
+    assert(util_Isnan(-1.0) == false);
+    assert(util_Isnan(-1.0 / 0.0) == false);
+    assert(util_Isnan(DBL_MAX) == false);
+    assert(util_Isnan(DBL_MIN) == false);
+    assert(util_Isnan(-0.0 / 0.0) == true);
 }
 static void utest_util_Isinf(void)
 {
-    assert(util_Isinf(0.0F) == false);
-    assert(util_Isinf(1.0F) == false);
-    assert(util_Isinf(-1.0F) == false);
-    assert(util_Isinf(-0.0F / 0.0F) == false);
-    assert(util_Isinf(FLT_MAX) == false);
-    assert(util_Isinf(FLT_MIN) == false);
-    assert(util_Isinf(-1.0F / 0.0F) == true);
+    assert(util_Isinf(0.0) == false);
+    assert(util_Isinf(1.0) == false);
+    assert(util_Isinf(-1.0) == false);
+    assert(util_Isinf(-0.0 / 0.0) == false);
+    assert(util_Isinf(DBL_MAX) == false);
+    assert(util_Isinf(DBL_MIN) == false);
+    assert(util_Isinf(-1.0 / 0.0) == true);
 }
 
 static void utest_util_Sprintf(void)
 {
     char arr[util_MAX_LOG_SZ] = {0};
 
-    const u32 u32_num = 123;
-    const i32 i32_num = 123;
+    const uint uint_num = 123;
+    const int int_num = 123;
 
     const char* overflowcheck1 = "toomanychars";
     const char* overflowcheck2 = "toomanychar%c";
@@ -815,15 +762,15 @@ static void utest_util_Sprintf(void)
     assert(strcmp(arr, "waytoo") == 0);
 
     util_Sprintf(arr, util_Strlen(overflowcheck5) + 1, overflowcheck5,
-                 (util_Fmts){.arr = {{.f = 1.0F}}});
+                 (util_Fmts){.arr = {{.f = 1.0}}});
     assert(strcmp(arr, "floatdon'tfit") == 0);
 
     util_Sprintf(arr, util_Strlen(overflowcheck6) + util__NUMERIC_MAX_CHARS - 2,
                  overflowcheck6, (util_Fmts){.arr = {{.d = 1}}});
     assert(strcmp(arr, "intjustdon'tfit") == 0);
 
-    // Check u32s.
-    util_Sprintf(arr, sizeof(arr), "%u", (util_Fmts){.arr = {{.u = u32_num}}});
+    // Check uints.
+    util_Sprintf(arr, sizeof(arr), "%u", (util_Fmts){.arr = {{.u = uint_num}}});
     assert(strcmp(arr, "123") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%u", (util_Fmts){.arr = {{.u = 0}}});
@@ -836,11 +783,11 @@ static void utest_util_Sprintf(void)
                  (util_Fmts){.arr = {{.u = UINT_MAX}}});
     assert(strcmp(arr, "a4294967295a") == 0);
 
-    // Check i32s.
-    util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = i32_num}}});
+    // Check ints.
+    util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = int_num}}});
     assert(strcmp(arr, "123") == 0);
 
-    util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = -i32_num}}});
+    util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = -int_num}}});
     assert(strcmp(arr, "-123") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%d", (util_Fmts){.arr = {{.d = 0}}});
@@ -856,20 +803,20 @@ static void utest_util_Sprintf(void)
                  (util_Fmts){.arr = {{.d = INT_MIN}}});
     assert(strcmp(arr, "a-2147483648a") == 0);
 
-    // Check f32s.
-    const f32 f32_num = 123.456F;
-    const f32 f32_num_fract_part = .456F;
-    const f32 f32_num_int_part = 123.F;
+    // Check doubles.
+    const double double_num = 123.456;
+    const double double_num_fract_part = .456;
+    const double double_num_int_part = 123.;
 
-    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = f32_num}}});
+    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = double_num}}});
     assert(strcmp(arr, "123.456") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                 (util_Fmts){.arr = {{.f = f32_num_fract_part}}});
+                 (util_Fmts){.arr = {{.f = double_num_fract_part}}});
     assert(strcmp(arr, "0.456") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                 (util_Fmts){.arr = {{.f = f32_num_int_part}}});
+                 (util_Fmts){.arr = {{.f = double_num_int_part}}});
     assert(strcmp(arr, "123.000") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = 0}}});
@@ -878,15 +825,15 @@ static void utest_util_Sprintf(void)
     util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = -0}}});
     assert(strcmp(arr, "0.000") == 0);
 
-    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = -f32_num}}});
+    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = -double_num}}});
     assert(strcmp(arr, "-123.456") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                 (util_Fmts){.arr = {{.f = -0.0F / 0.0F}}});
+                 (util_Fmts){.arr = {{.f = -0.0 / 0.0}}});
     assert(strcmp(arr, "NaN") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                 (util_Fmts){.arr = {{.f = -1.0F / 0.0F}}});
+                 (util_Fmts){.arr = {{.f = -1.0 / 0.0}}});
     assert(strcmp(arr, "Inf") == 0);
 
     // Check strings.
@@ -922,7 +869,7 @@ static void utest_util_Sprintf(void)
 
 static void utest_util_MAX(void)
 {
-    const u32 zero = 0;
+    const uint zero = 0;
     assert(util_MAX(1, 2) == 2);
     assert(util_MAX(2, 1) == 2);
     assert(util_MAX(-1, 0) == 0);
@@ -931,7 +878,7 @@ static void utest_util_MAX(void)
 
 static void utest_util_MIN(void)
 {
-    const u32 zero = 0;
+    const uint zero = 0;
     assert(util_MIN(1, 2) == 1);
     assert(util_MIN(2, 1) == 1);
     assert(util_MIN(-1, 0) == -1);
@@ -956,7 +903,7 @@ static void utest_util_Main(void)
     utest_util_Sprintf();
     utest_util_Powi();
     utest_util_Powu();
-    utest_util_Powf();
+    utest_util_Pow();
     utest_util_Abs();
     utest_util_Fabs();
     utest_util_Isnan();
@@ -966,7 +913,7 @@ static void utest_util_Main(void)
     utest_util_Untested();
 }
 
-i32 main(void)
+int main(void)
 {
     utest_util_Main();
     return 0;

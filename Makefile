@@ -14,6 +14,7 @@ AR := ar
 CFLAGS := -std=c99 -g -I. 
 RELEASE_CFLAGS := -O3 -flto -finline-functions \
 				  -ffunction-sections -fdata-sections \
+				  -ffreestanding -nolibc \
 				  $(CFLAGS)
 DEBUG_CFLAGS := -DDEBUG -O0 -Weverything -Werror -fsanitize=address \
 				-fsanitize=undefined -fno-omit-frame-pointer \
@@ -35,7 +36,7 @@ ITEST_LOGS := $(patsubst %,%.log,$(ITEST_BINS))
 # Ensure output directories exist.
 $(shell mkdir -p $(BUILD_DIR) $(UTEST_DIR))
 
-build: CFLAGS = $(DEBUG_CFLAGS)
+build: CFLAGS = $(RELEASE_CFLAGS)
 build: $(BUILD_DIR)/$(LIB_NAME).a
 
 # Create a static library archive.

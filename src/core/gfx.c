@@ -9,7 +9,7 @@ GFX_C
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-    u32 placeholder;
+    uint placeholder;
 } gfx_InitArg;
 typedef enum { gfx_InitRet_OK, gfx_InitRet_MAP_INVALID } gfx_InitRet;
 static gfx_InitRet gfx_Init(gfx_InitArg arg);
@@ -24,7 +24,7 @@ static gfx_InitRet gfx_Init(gfx_InitArg arg);
 ////////////////////////////////////////////////////////////////////////////////
 
 struct gfx__State {
-    u32 placeholder;
+    uint placeholder;
     // pool_t
 } static gfx__state = {0};
 
@@ -52,12 +52,12 @@ static void utest_gfx_Untested(void)
 #ifdef UTEST
 static void utest_gfx_Main(void)
 {
-    util_SetLogCallback(utest_util_PrintfLoggerCallback);
-    util_SetPanicCallback(utest_util_DoNothing);
+    util_RegisterEventHandlerLog(utest_util_EventHandlerLogPrintf);
+    util_RegisterEventHandlerPanic(utest_util_EventHandlerPanicDoNothing);
     utest_gfx_Untested();
 }
 
-i32 main(void)
+int main(void)
 {
     utest_gfx_Main();
     return 0;

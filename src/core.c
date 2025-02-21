@@ -9,7 +9,7 @@ CORE_C
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-    u32 placeholder;
+    uint placeholder;
 } core_InitArg;
 typedef enum { core_InitRet_OK, core_InitRet_MAP_INVALID } core_InitRet;
 static core_InitRet core_Init(core_InitArg arg);
@@ -19,8 +19,8 @@ static core_InitRet core_Init(core_InitArg arg);
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-    u32 startiness;
-    u32 num_horses;
+    uint startiness;
+    uint num_horses;
 } core__EngineStarter;
 
 typedef enum {
@@ -45,7 +45,7 @@ typedef enum {
     core__SpaghettifyValueRet_OK,
     core__SpaghettifyValueRet_NOTOK
 } core__SpaghettifyValueRet;
-static core__SpaghettifyValueRet core__SpaghettifyValue(u32* value)
+static core__SpaghettifyValueRet core__SpaghettifyValue(uint* value)
 {
     *value = 0;
     return core__SpaghettifyValueRet_OK;
@@ -56,7 +56,7 @@ static core__SpaghettifyValueRet core__SpaghettifyValue(u32* value)
 ////////////////////////////////////////////////////////////////////////////////
 
 struct core__State {
-    u32 placeholder;
+    uint placeholder;
     // pool_t
 } static core__state = {0};
 
@@ -95,12 +95,12 @@ static void utest_core_Untested(void)
 #ifdef UTEST
 static void utest_core_Main(void)
 {
-    util_SetLogCallback(utest_util_PrintfLoggerCallback);
-    util_SetPanicCallback(utest_util_DoNothing);
+    util_RegisterEventHandlerLog(utest_util_EventHandlerLogPrintf);
+    util_RegisterEventHandlerPanic(utest_util_EventHandlerPanicDoNothing);
     utest_core_Untested();
 }
 
-i32 main(void)
+int main(void)
 {
     utest_core_Main();
     return 0;

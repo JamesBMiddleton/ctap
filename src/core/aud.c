@@ -9,7 +9,7 @@ AUD_C
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-    u32 placeholder;
+    uint placeholder;
 } aud_InitArg;
 typedef enum { aud_InitRet_OK, aud_InitRet_MAP_INVALID } aud_InitRet;
 static aud_InitRet aud_Init(aud_InitArg arg);
@@ -24,7 +24,7 @@ static aud_InitRet aud_Init(aud_InitArg arg);
 ////////////////////////////////////////////////////////////////////////////////
 
 struct aud__State {
-    u32 placeholder;
+    uint placeholder;
     // pool_t
 } static aud__state = {0};
 
@@ -53,12 +53,12 @@ static void utest_aud_Untested(void)
 static void utest_aud_Main(void)
 {
     // setup logger
-    util_SetLogCallback(utest_util_PrintfLoggerCallback);
-    util_SetPanicCallback(utest_util_DoNothing);
+    util_RegisterEventHandlerLog(utest_util_EventHandlerLogPrintf);
+    util_RegisterEventHandlerPanic(utest_util_EventHandlerPanicDoNothing);
     utest_aud_Untested();
 }
 
-i32 main(void)
+int main(void)
 {
     utest_aud_Main();
     return 0;

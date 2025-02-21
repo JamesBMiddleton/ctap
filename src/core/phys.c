@@ -9,7 +9,7 @@ PHYS_C
 ////////////////////////////////////////////////////////////////////////////////
 
 typedef struct {
-    u32 placeholder;
+    uint placeholder;
 } phys_InitArg;
 typedef enum { phys_InitRet_OK, phys_InitRet_MAP_INVALID } phys_InitRet;
 static phys_InitRet phys_Init(phys_InitArg arg);
@@ -24,7 +24,7 @@ static phys_InitRet phys_Init(phys_InitArg arg);
 ////////////////////////////////////////////////////////////////////////////////
 
 struct phys__State {
-    u32 placeholder;
+    uint placeholder;
     // pool_t
 } static phys__state = {0};
 
@@ -52,12 +52,12 @@ static void utest_phys_Untested(void)
 #ifdef UTEST
 static void utest_phys_Main(void)
 {
-    util_SetLogCallback(utest_util_PrintfLoggerCallback);
-    util_SetPanicCallback(utest_util_DoNothing);
+    util_RegisterEventHandlerLog(utest_util_EventHandlerLogPrintf);
+    util_RegisterEventHandlerPanic(utest_util_EventHandlerPanicDoNothing);
     utest_phys_Untested();
 }
 
-i32 main(void)
+int main(void)
 {
     utest_phys_Main();
     return 0;
