@@ -16,7 +16,7 @@ typedef union {
     char c;
     int d;
     uint u;
-    double f;
+    float f;
 } util_Fmt;
 
 typedef struct {
@@ -47,17 +47,17 @@ static inline usize util_Strlen(const char* string);
 
 static inline int util_Powi(int base, uint exp);
 static inline uint util_Powu(uint base, uint exp);
-static inline double util_Pow(double base, int exp);
+static inline float util_Powf(float base, int exp);
 
 static inline uint util_Abs(int val);
-static inline double util_Fabs(double val);
+static inline float util_Fabs(float val);
 
-static inline bool util_Isnan(double val);
-static inline bool util_Isinf(double val);
+static inline bool util_Isnan(float val);
+static inline bool util_Isinf(float val);
 
-static char* util_uinttostr(uint val, char* buf);
-static char* util_inttostr(int val, char* buf);
-static char* util_doubletostr(double val, char* buf, uchar decimals);
+static char* util_Uinttostr(uint val, char* buf);
+static char* util_Inttostr(int val, char* buf);
+static char* util_Floattostr(float val, char* buf, uchar decimals);
 
 static void util_RegisterEventHandlerLog(void (*callback)(const util_Log));
 static void util_RegisterEventHandlerPanic(void (*callback)(void));
@@ -75,7 +75,7 @@ static void util_RegisterEventHandlerPanic(void (*callback)(void));
  * util_LOGF_PANIC(format, ...)
  * util_util_ASSIGN_IF_ZERO(lvalue, rvalue)
  * util_ASSERT(cond)
- * util_DBL_EQUAL(left, right)
+ * util_FLT_EQUAL(left, right)
  * util_MIN(left, right)
  * util_MAX(left, right)
  *
@@ -118,9 +118,9 @@ struct util__State {
 #define util__NULL_TERMINATOR_SZ 1
 #define util__uint_MAX_CHARS (10) // '4294967295'
 #define util__uint_MAX_CHAR_THRESHOLD 1000000000
-#define util__double_DECIMAL_CHARS (3)
+#define util__float_DECIMAL_CHARS (3)
 #define util__NUMERIC_MAX_CHARS \
-    (1 + util__uint_MAX_CHARS + 1 + util__double_DECIMAL_CHARS) // '-2147483648.123'
+    (1 + util__uint_MAX_CHARS + 1 + util__float_DECIMAL_CHARS) // '-2147483648.123'
 
 #define util_LOG(log_lvl, msg)                                     \
     do                                                             \
@@ -223,10 +223,10 @@ struct util__State {
 // #define util_STATIC_ASSERT(cond, msg) \
 //     typedef char static_assert_##msg[(cond) ? 1 : -1]
 
-#define util__DBL_EQUAL_DELTA 1E-6
-#define util_DBL_EQUAL(left, right)                     \
-    ((((left) - (right)) > -(util__DBL_EQUAL_DELTA)) && \
-     (((left) - (right)) < (util__DBL_EQUAL_DELTA)))
+#define util__FLT_EQUAL_DELTA 1E-6F
+#define util_FLT_EQUAL(left, right)                     \
+    ((((left) - (right)) > -(util__FLT_EQUAL_DELTA)) && \
+     (((left) - (right)) < (util__FLT_EQUAL_DELTA)))
 
 #define util_MIN(left, right) (((left) < (right)) ? (left) : (right))
 
@@ -311,9 +311,9 @@ static inline uint util_Powu(uint base, uint exp)
  * @param exp - exponent.
  * @return power.
  */
-static inline double util_Pow(double base, int exp)
+static inline float util_Powf(float base, int exp)
 {
-    double result = 1;
+    float result = 1;
     if (exp == 0)
         return result;
     uint abs_exp = util_Abs(exp);
@@ -326,7 +326,7 @@ static inline double util_Pow(double base, int exp)
             break;
         base *= base;
     }
-    return (exp > 0) ? result : 1.0 / result;
+    return (exp > 0) ? result : 1.0F / result;
 }
 
 /*
@@ -342,7 +342,7 @@ static inline uint util_Abs(const int val)
  * @param val - pos/neg value.
  * @return absolute value.
  */
-static inline double util_Fabs(double val)
+static inline float util_Fabs(float val)
 {
     return (val < 0) ? -val : val;
 }
@@ -353,7 +353,7 @@ static inline double util_Fabs(double val)
  * @param val - potentially NaN float value.
  * @return val is NaN.
  */
-static inline bool util_Isnan(const double val)
+static inline bool util_Isnan(const float val)
 {
     return val != val;
 }
@@ -364,7 +364,7 @@ static inline bool util_Isnan(const double val)
  * @param val - potentially infinite float value.
  * @return val is infinity.
  */
-static inline bool util_Isinf(const double val)
+static inline bool util_Isinf(const float val)
 {
     return !util_Isnan(val) && util_Isnan(val - val);
 }
@@ -389,7 +389,7 @@ static inline usize util_Strlen(const char* str)
  * @param buf - destination string buffer
  * @return buf
  */
-static char* util_uinttostr(uint val, char* buf)
+static char* util_Uinttostr(uint val, char* buf)
 {
     util_ASSERT(buf);
     static const uchar base = 10;
@@ -415,7 +415,7 @@ static char* util_uinttostr(uint val, char* buf)
  * @param buf - destination string buffer
  * @return buf
  */
-static char* util_inttostr(int val, char* buf)
+static char* util_Inttostr(int val, char* buf)
 {
     util_ASSERT(buf);
     static const uchar base = 10;
@@ -450,10 +450,10 @@ static char* util_inttostr(int val, char* buf)
  * @return buf
  */
 __attribute__((no_sanitize("undefined"))) static char*
-util_doubletostr(const double val, char* buf, uchar decimals)
+util_Floattostr(const float val, char* buf, uchar decimals)
 {
     util_ASSERT(buf);
-    static const double base = 10;
+    static const float base = 10;
 
     if (util_Isnan(val))
     {
@@ -470,8 +470,8 @@ util_doubletostr(const double val, char* buf, uchar decimals)
     }
 
     int whole = (int)val;
-    double fraction = util_Fabs((val - (double)whole));
-    char* start = util_inttostr(whole, buf);
+    float fraction = util_Fabs((val - (float)whole));
+    char* start = util_Inttostr(whole, buf);
 
     buf += util_Strlen(buf);
     *buf++ = '.';
@@ -486,7 +486,7 @@ util_doubletostr(const double val, char* buf, uchar decimals)
         }
         while (decimals--)
             fraction *= base;
-        util_uinttostr((uint)fraction, buf);
+        util_Uinttostr((uint)fraction, buf);
     }
     else
         *buf = '\0';
@@ -549,9 +549,9 @@ static const char* util_Sprintf(char* buf, const usize bufsz,
             switch (specifier)
             {
                 case 'c': *buf++ = val.c; continue;
-                case 'd': util_inttostr(val.d, buf); break;
-                case 'u': util_uinttostr(val.u, buf); break;
-                case 'f': util_doubletostr(val.f, buf, 3); break;
+                case 'd': util_Inttostr(val.d, buf); break;
+                case 'u': util_Uinttostr(val.u, buf); break;
+                case 'f': util_Floattostr(val.f, buf, 3); break;
                 case 's': {
                     const char* str = val.s;
                     do
@@ -656,28 +656,28 @@ static void utest_util_Powu(void)
 
 static void utest_util_Pow(void)
 {
-    assert(util_DBL_EQUAL(util_Pow(0, 0), 1));
-    assert(util_DBL_EQUAL(util_Pow(0, 1), 0));
-    assert(util_DBL_EQUAL(util_Pow(-1, 0), 1));
-    assert(util_Isinf(util_Pow(0, -1)));
+    assert(util_FLT_EQUAL(util_Powf(0, 0), 1));
+    assert(util_FLT_EQUAL(util_Powf(0, 1), 0));
+    assert(util_FLT_EQUAL(util_Powf(-1, 0), 1));
+    assert(util_Isinf(util_Powf(0, -1)));
 
-    assert(util_DBL_EQUAL(util_Pow(42, 0), 1));
-    assert(util_DBL_EQUAL(util_Pow(42, 1), 42));
-    assert(util_DBL_EQUAL(util_Pow(42, 2), 1764));
-    assert(util_DBL_EQUAL(util_Pow(42, 3), 74088));
+    assert(util_FLT_EQUAL(util_Powf(42, 0), 1));
+    assert(util_FLT_EQUAL(util_Powf(42, 1), 42));
+    assert(util_FLT_EQUAL(util_Powf(42, 2), 1764));
+    assert(util_FLT_EQUAL(util_Powf(42, 3), 74088));
 
-    assert(util_DBL_EQUAL(util_Pow(-42, 0), 1));
-    assert(util_DBL_EQUAL(util_Pow(-42, 1), -42));
-    assert(util_DBL_EQUAL(util_Pow(-42, 2), 1764));
-    assert(util_DBL_EQUAL(util_Pow(-42, 3), -74088));
+    assert(util_FLT_EQUAL(util_Powf(-42, 0), 1));
+    assert(util_FLT_EQUAL(util_Powf(-42, 1), -42));
+    assert(util_FLT_EQUAL(util_Powf(-42, 2), 1764));
+    assert(util_FLT_EQUAL(util_Powf(-42, 3), -74088));
 
-    assert(util_DBL_EQUAL(util_Pow(0.1, -1), 10));
-    assert(util_DBL_EQUAL(util_Pow(1.5, 42), 24878997.7221));
-    assert(util_DBL_EQUAL(util_Pow(1.5, -42), 4.01945452614e-8));
+    assert(util_FLT_EQUAL(util_Powf(0.1F, -1), 10));
+    assert(util_FLT_EQUAL(util_Powf(1.5F, 42), 24878997.7221F));
+    assert(util_FLT_EQUAL(util_Powf(1.5F, -42), 4.01945452614e-8F));
 
-    assert(util_DBL_EQUAL(util_Pow(-0.1, -1), -10));
-    assert(util_DBL_EQUAL(util_Pow(-1.5, 42), 24878997.7221));
-    assert(util_DBL_EQUAL(util_Pow(-1.5, -42), 4.01945452614e-8));
+    assert(util_FLT_EQUAL(util_Powf(-0.1F, -1), -10));
+    assert(util_FLT_EQUAL(util_Powf(-1.5F, 42), 24878997.7221F));
+    assert(util_FLT_EQUAL(util_Powf(-1.5F, -42), 4.01945452614e-8F));
 }
 
 static void utest_util_Abs(void)
@@ -692,11 +692,11 @@ static void utest_util_Abs(void)
 
 static void utest_util_Fabs(void)
 {
-    assert(util_DBL_EQUAL(util_Fabs(-0.0), 0.0));
-    assert(util_DBL_EQUAL(util_Fabs(-1.0), 1.0));
-    assert(util_DBL_EQUAL(util_Fabs(1.0), 1.0));
-    assert(util_DBL_EQUAL(util_Fabs(-123.456), 123.456));
-    assert(util_DBL_EQUAL(util_Fabs(123.456), 123.456));
+    assert(util_FLT_EQUAL(util_Fabs(-0.0F), 0.0F));
+    assert(util_FLT_EQUAL(util_Fabs(-1.0F), 1.0F));
+    assert(util_FLT_EQUAL(util_Fabs(1.0F), 1.0F));
+    assert(util_FLT_EQUAL(util_Fabs(-123.456F), 123.456F));
+    assert(util_FLT_EQUAL(util_Fabs(123.456F), 123.456F));
 }
 
 static void utest_util_Isnan(void)
@@ -705,8 +705,8 @@ static void utest_util_Isnan(void)
     assert(util_Isnan(1.0) == false);
     assert(util_Isnan(-1.0) == false);
     assert(util_Isnan(-1.0 / 0.0) == false);
-    assert(util_Isnan(DBL_MAX) == false);
-    assert(util_Isnan(DBL_MIN) == false);
+    assert(util_Isnan(FLT_MAX) == false);
+    assert(util_Isnan(FLT_MIN) == false);
     assert(util_Isnan(-0.0 / 0.0) == true);
 }
 static void utest_util_Isinf(void)
@@ -715,8 +715,8 @@ static void utest_util_Isinf(void)
     assert(util_Isinf(1.0) == false);
     assert(util_Isinf(-1.0) == false);
     assert(util_Isinf(-0.0 / 0.0) == false);
-    assert(util_Isinf(DBL_MAX) == false);
-    assert(util_Isinf(DBL_MIN) == false);
+    assert(util_Isinf(FLT_MAX) == false);
+    assert(util_Isinf(FLT_MIN) == false);
     assert(util_Isinf(-1.0 / 0.0) == true);
 }
 
@@ -762,7 +762,7 @@ static void utest_util_Sprintf(void)
     assert(strcmp(arr, "waytoo") == 0);
 
     util_Sprintf(arr, util_Strlen(overflowcheck5) + 1, overflowcheck5,
-                 (util_Fmts){.arr = {{.f = 1.0}}});
+                 (util_Fmts){.arr = {{.f = 1.0F}}});
     assert(strcmp(arr, "floatdon'tfit") == 0);
 
     util_Sprintf(arr, util_Strlen(overflowcheck6) + util__NUMERIC_MAX_CHARS - 2,
@@ -803,20 +803,20 @@ static void utest_util_Sprintf(void)
                  (util_Fmts){.arr = {{.d = INT_MIN}}});
     assert(strcmp(arr, "a-2147483648a") == 0);
 
-    // Check doubles.
-    const double double_num = 123.456;
-    const double double_num_fract_part = .456;
-    const double double_num_int_part = 123.;
+    // Check floats.
+    const float float_num = 123.456F;
+    const float float_num_fract_part = .456F;
+    const float float_num_int_part = 123.F;
 
-    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = double_num}}});
+    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = float_num}}});
     assert(strcmp(arr, "123.456") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                 (util_Fmts){.arr = {{.f = double_num_fract_part}}});
+                 (util_Fmts){.arr = {{.f = float_num_fract_part}}});
     assert(strcmp(arr, "0.456") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                 (util_Fmts){.arr = {{.f = double_num_int_part}}});
+                 (util_Fmts){.arr = {{.f = float_num_int_part}}});
     assert(strcmp(arr, "123.000") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = 0}}});
@@ -825,15 +825,15 @@ static void utest_util_Sprintf(void)
     util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = -0}}});
     assert(strcmp(arr, "0.000") == 0);
 
-    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = -double_num}}});
+    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = -float_num}}});
     assert(strcmp(arr, "-123.456") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                 (util_Fmts){.arr = {{.f = -0.0 / 0.0}}});
+                 (util_Fmts){.arr = {{.f = -0.0F / 0.0F}}});
     assert(strcmp(arr, "NaN") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
-                 (util_Fmts){.arr = {{.f = -1.0 / 0.0}}});
+                 (util_Fmts){.arr = {{.f = -1.0F / 0.0F}}});
     assert(strcmp(arr, "Inf") == 0);
 
     // Check strings.
