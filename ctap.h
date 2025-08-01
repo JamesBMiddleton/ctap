@@ -11,18 +11,18 @@ typedef enum {
 
 typedef struct {
     ctap_LogLvl lvl;
-    unsigned int line_num;
-    const char* func_name;
+    unsigned int lineNum;
+    const char* funcName;
     const char* message;
 } ctap_Log;
 
 typedef struct {
     // map..
     // input_cb..
-    void (*event_handler_log)(const ctap_Log); // Optional.
-    void (*event_handler_panic)(void); // Optional.
-} ctap_InitArg;
-typedef enum { ctap_InitRet_OK, ctap_InitRet_NULL_CALLBACK } ctap_InitRet;
-ctap_InitRet ctap_Init(ctap_InitArg arg);
+    void (*eventHandlerLog)(const ctap_Log); // Optional.
+    void (*eventHandlerPanic)(void); // Optional.
+} ctap_InitA;
+typedef enum { ctap_InitR_OK, ctap_InitR_NULL_CALLBACK } ctap_InitR;
+ctap_InitR ctap_Init(ctap_InitA arg);
 
 #endif // CTAP_H

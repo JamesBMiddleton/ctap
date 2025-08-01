@@ -33,8 +33,8 @@ typedef enum {
 
 typedef struct {
     util_LogLvl lvl;
-    uint line_num;
-    const char* func_name;
+    uint lineNum;
+    const char* funcName;
     const char* message;
 } util_Log;
 
@@ -126,8 +126,8 @@ struct util__State {
     do                                                             \
     {                                                              \
         util__event_handlers.log((util_Log){.lvl = (log_lvl),      \
-                                            .line_num = __LINE__,  \
-                                            .func_name = __func__, \
+                                            .lineNum = __LINE__,  \
+                                            .funcName = __func__, \
                                             .message = #msg});     \
     } while (0)
 
@@ -143,8 +143,8 @@ struct util__State {
     {                                                                     \
         util__event_handlers.log((util_Log){                              \
             .lvl = util_LogLvl_DEBUG,                                     \
-            .line_num = __LINE__,                                         \
-            .func_name = __func__,                                        \
+            .lineNum = __LINE__,                                         \
+            .funcName = __func__,                                        \
             .message = util_Sprintf(util__state.log_data,                 \
                                     sizeof(util__state.log_data), format, \
                                     (util_Fmts){.arr = {__VA_ARGS__}})}); \
@@ -165,8 +165,8 @@ struct util__State {
     {                                                                     \
         util__event_handlers.log((util_Log){                              \
             .lvl = util_LogLvl_WARN,                                      \
-            .line_num = __LINE__,                                         \
-            .func_name = __func__,                                        \
+            .lineNum = __LINE__,                                         \
+            .funcName = __func__,                                        \
             .message = util_Sprintf(util__state.log_data,                 \
                                     sizeof(util__state.log_data), format, \
                                     (util_Fmts){.arr = {__VA_ARGS__}})}); \
@@ -183,8 +183,8 @@ struct util__State {
     {                                                                     \
         util__event_handlers.log((util_Log){                              \
             .lvl = util_LogLvl_ERROR,                                     \
-            .line_num = __LINE__,                                         \
-            .func_name = __func__,                                        \
+            .lineNum = __LINE__,                                         \
+            .funcName = __func__,                                        \
             .message = util_Sprintf(util__state.log_data,                 \
                                     sizeof(util__state.log_data), format, \
                                     (util_Fmts){.arr = {__VA_ARGS__}})}); \
@@ -204,8 +204,8 @@ struct util__State {
         if (!(cond))                                                      \
         {                                                                 \
             util__event_handlers.log((util_Log){.lvl = util_LogLvl_ERROR, \
-                                                .line_num = __LINE__,     \
-                                                .func_name = __func__,    \
+                                                .lineNum = __LINE__,     \
+                                                .funcName = __func__,    \
                                                 .message = #cond});       \
             util__event_handlers.panic();                                 \
         }                                                                 \
@@ -604,7 +604,7 @@ static void utest_util_EventHandlerLogPrintf(const util_Log log)
         case util_LogLvl_PANIC: lvl = "PANIC"; break;
         case util_LogLvl_ASSERT: lvl = "ASSERT"; break;
     }
-    printf("%s | %s::%d | %s\n", lvl, log.func_name, log.line_num, log.message);
+    printf("%s | %s::%d | %s\n", lvl, log.funcName, log.lineNum, log.message);
     (void)fflush(stdout);
 }
 

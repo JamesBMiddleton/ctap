@@ -10,9 +10,9 @@ GFX_C
 
 typedef struct {
     uint placeholder;
-} gfx_InitArg;
-typedef enum { gfx_InitRet_OK, gfx_InitRet_MAP_INVALID } gfx_InitRet;
-static gfx_InitRet gfx_Init(gfx_InitArg arg);
+} gfx_InitA;
+typedef enum { gfx_InitR_OK, gfx_InitR_MAP_INVALID } gfx_InitR;
+static gfx_InitR gfx_Init(gfx_InitA arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -33,10 +33,10 @@ struct gfx__State {
  *
  * @param args - initialisation arguments.
 */
-static gfx_InitRet gfx_Init(gfx_InitArg args)
+static gfx_InitR gfx_Init(gfx_InitA args)
 {
     gfx__state.placeholder = 1;
-    return (args.placeholder) ? gfx_InitRet_OK : gfx_InitRet_MAP_INVALID;
+    return (args.placeholder) ? gfx_InitR_OK : gfx_InitR_MAP_INVALID;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@ static gfx_InitRet gfx_Init(gfx_InitArg args)
 
 static void utest_gfx_Untested(void)
 {
-    gfx_Init((gfx_InitArg){0});
+    gfx_Init((gfx_InitA){0});
 }
 
 #ifdef UTEST

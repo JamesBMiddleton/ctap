@@ -9,12 +9,12 @@ SRC_DIR := src
 BUILD_DIR := build
 TEST_DIR := tests
 
-CC := clang-18
+CC := clang-20
 AR := ar
 CFLAGS := -std=c99 -g -I. 
 RELEASE_CFLAGS := -O3 -flto -finline-functions \
 				  -ffunction-sections -fdata-sections \
-				  -ffreestanding -nolibc \
+				  -ffreestanding \
 				  $(CFLAGS)
 DEBUG_CFLAGS := -DDEBUG -O0 -Weverything -Werror -fsanitize=address \
 				-fsanitize=undefined -fno-omit-frame-pointer \

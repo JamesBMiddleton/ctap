@@ -10,9 +10,9 @@ PHYS_C
 
 typedef struct {
     uint placeholder;
-} phys_InitArg;
-typedef enum { phys_InitRet_OK, phys_InitRet_MAP_INVALID } phys_InitRet;
-static phys_InitRet phys_Init(phys_InitArg arg);
+} phys_InitA;
+typedef enum { phys_InitR_OK, phys_InitR_MAP_INVALID } phys_InitR;
+static phys_InitR phys_Init(phys_InitA arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -33,10 +33,10 @@ struct phys__State {
  *
  * @param args - initialisation arguments.
 */
-static phys_InitRet phys_Init(phys_InitArg args)
+static phys_InitR phys_Init(phys_InitA args)
 {
     phys__state.placeholder = 1;
-    return (args.placeholder) ? phys_InitRet_OK : phys_InitRet_MAP_INVALID;
+    return (args.placeholder) ? phys_InitR_OK : phys_InitR_MAP_INVALID;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@ static phys_InitRet phys_Init(phys_InitArg args)
 
 static void utest_phys_Untested(void)
 {
-    phys_Init((phys_InitArg){0});
+    phys_Init((phys_InitA){0});
 }
 
 #ifdef UTEST

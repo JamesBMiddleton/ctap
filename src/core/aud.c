@@ -10,9 +10,9 @@ AUD_C
 
 typedef struct {
     uint placeholder;
-} aud_InitArg;
-typedef enum { aud_InitRet_OK, aud_InitRet_MAP_INVALID } aud_InitRet;
-static aud_InitRet aud_Init(aud_InitArg arg);
+} aud_InitA;
+typedef enum { aud_InitR_OK, aud_InitR_MAP_INVALID } aud_InitR;
+static aud_InitR aud_Init(aud_InitA arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -33,10 +33,10 @@ struct aud__State {
  *
  * @param args - initialisation arguments.
 */
-static aud_InitRet aud_Init(aud_InitArg args)
+static aud_InitR aud_Init(aud_InitA args)
 {
     aud__state.placeholder = 1;
-    return (args.placeholder) ? aud_InitRet_OK : aud_InitRet_MAP_INVALID;
+    return (args.placeholder) ? aud_InitR_OK : aud_InitR_MAP_INVALID;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@ static aud_InitRet aud_Init(aud_InitArg args)
 
 static void utest_aud_Untested(void)
 {
-    aud_Init((aud_InitArg){0});
+    aud_Init((aud_InitA){0});
 }
 
 #ifdef UTEST

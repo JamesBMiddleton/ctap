@@ -14,7 +14,7 @@ ALLOC_C
 
 static void utest_alloc_Untested(void)
 {
-    // alloc_Init((alloc_InitArg){0});
+    // alloc_Init((alloc_InitA){0});
 }
 
 #ifdef UTEST

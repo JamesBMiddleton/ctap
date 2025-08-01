@@ -11,7 +11,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 struct ctap__EventHandlers {
     void (*log)(ctap_Log);
-} static ctap__event_handlers = {0};
+} static ctap__eventHandlers = {0};
 
 static void ctap__EventTriggerLog(const util_Log log)
 {
@@ -24,10 +24,10 @@ static void ctap__EventTriggerLog(const util_Log log)
         case util_LogLvl_PANIC: lvl = ctap_LogLvl_PANIC; break;
         case util_LogLvl_ASSERT: lvl = ctap_LogLvl_ASSERT; break;
     }
-    ctap__event_handlers.log((ctap_Log){.lvl = lvl,
+    ctap__eventHandlers.log((ctap_Log){.lvl = lvl,
                                             .message = log.message,
-                                            .line_num = log.line_num,
-                                            .func_name = log.func_name});
+                                            .lineNum = log.lineNum,
+                                            .funcName = log.funcName});
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -43,28 +43,28 @@ struct ctap__State {
  *
  * @param arg - runtime initialisation arguments
 */
-ctap_InitRet ctap_Init(ctap_InitArg arg)
+ctap_InitR ctap_Init(ctap_InitA arg)
 {
-    if (arg.event_handler_log)
+    if (arg.eventHandlerLog)
     {
         util_RegisterEventHandlerLog(ctap__EventTriggerLog);
-        ctap__event_handlers.log = arg.event_handler_log;
+        ctap__eventHandlers.log = arg.eventHandlerLog;
     }
-    if (arg.event_handler_panic)
-        util_RegisterEventHandlerPanic(arg.event_handler_panic);
+    if (arg.eventHandlerPanic)
+        util_RegisterEventHandlerPanic(arg.eventHandlerPanic);
 
     const uint placeholder = 42;
-    switch (core_Init((core_InitArg){.placeholder = placeholder}))
+    switch (core_Init((core_InitA){.placeholder = placeholder}))
     {
-        case core_InitRet_OK:
+        case core_InitR_OK:
             util_LOG_DEBUG("cor initialisation success.");
             break;
-        case core_InitRet_MAP_INVALID: util_PANIC();
+        case core_InitR_MAP_INVALID: util_PANIC();
     }
 
     ctap__state.placeholder = 1;
 
-    return ctap_InitRet_OK;
+    return ctap_InitR_OK;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -10,9 +10,9 @@ INPUT_C
 
 typedef struct {
     uint placeholder;
-} input_InitArg;
-typedef enum { input_InitRet_OK, input_InitRet_MAP_INVALID } input_InitRet;
-static input_InitRet input_Init(input_InitArg arg);
+} input_InitA;
+typedef enum { input_InitR_OK, input_InitR_MAP_INVALID } input_InitR;
+static input_InitR input_Init(input_InitA arg);
 
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////// INTERNAL IMPL ////////////////////////////////////
@@ -33,10 +33,10 @@ struct input__State {
  *
  * @param args - initialisation arguments.
 */
-static input_InitRet input_Init(input_InitArg args)
+static input_InitR input_Init(input_InitA args)
 {
     input__state.placeholder = 1;
-    return (args.placeholder) ? input_InitRet_OK : input_InitRet_MAP_INVALID;
+    return (args.placeholder) ? input_InitR_OK : input_InitR_MAP_INVALID;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@ static input_InitRet input_Init(input_InitArg args)
 
 static void utest_input_Untested(void)
 {
-    input_Init((input_InitArg){0});
+    input_Init((input_InitA){0});
 }
 
 #ifdef UTEST
