@@ -48,7 +48,7 @@ $(BUILD_DIR)/$(LIB_NAME).o: $(SRCS)
 	mkdir -p $(BUILD_DIR)
 	$(CC) -c $(SRC_DIR)/$(LIB_NAME).c -o $(BUILD_DIR)/$(LIB_NAME).o $(CFLAGS)
 
-check: CFLAGS = $(DEBUG_CFLAGS)
+check: CFLAGS = $(RELEASE_CFLAGS)
 check: $(UTEST_LOGS) $(ITEST_LOGS)
 
 # Run the itest binaries, generating the itest logs.
