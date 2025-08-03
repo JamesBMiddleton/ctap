@@ -5,12 +5,6 @@ CORE_C
 #include "src/util.c"
 
 typedef struct {
-    uint placeholder;
-} core_InitA;
-typedef enum { core_InitR_OK, core_InitR_MAP_INVALID } core_InitR;
-static core_InitR core_Init(core_InitA arg);
-
-typedef struct {
     uint startiness;
     uint numHorses;
 } EngineStarter;
@@ -47,6 +41,12 @@ struct StateCore {
     uint placeholder;
     // pool_t
 } static gStateCore = {0};
+
+
+typedef struct {
+    uint placeholder;
+} core_InitA;
+typedef enum { core_InitR_OK, core_InitR_MAP_INVALID } core_InitR;
 
 /*
  * Initialise the core module. 
