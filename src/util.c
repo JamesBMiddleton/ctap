@@ -4,24 +4,14 @@ UTIL_C
 
 #include "primitives.c"
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////// API DECL ////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-#define util_MAX_FMT_ARGS 5
 #define util_MAX_LOG_SZ 256
-
-typedef union {
-    const char* s;
-    char c;
-    int d;
-    uint u;
-    float f;
-} util_Fmt;
-
-typedef struct {
-    util_Fmt arr[util_MAX_FMT_ARGS];
-} util_Fmts;
+#define util_MAX_FMT_ARGS 5
+#define NULL_TERMINATOR_SZ 1
+#define uint_MAX_CHARS (10) // '4294967295'
+#define uint_MAX_CHAR_THRESHOLD 1000000000
+#define float_DECIMAL_CHARS (3)
+#define NUMERIC_MAX_CHARS \
+    (1 + uint_MAX_CHARS + 1 + float_DECIMAL_CHARS) // '-2147483648.123'
 
 typedef enum {
     util_LogLvl_DEBUG,
@@ -38,97 +28,48 @@ typedef struct {
     const char* message;
 } util_Log;
 
-static const char* util_Sprintf(char* buf, usize bufsz, const char* format,
-                                util_Fmts vals);
-
-static const void* util_Memcpy(void* dest, const void* src, usize count);
-
-static inline usize util_Strlen(const char* string);
-
-static inline int util_Powi(int base, uint exp);
-static inline uint util_Powu(uint base, uint exp);
-static inline float util_Powf(float base, int exp);
-
-static inline uint util_Abs(int val);
-static inline float util_Fabs(float val);
-
-static inline bool util_Isnan(float val);
-static inline bool util_Isinf(float val);
-
-static char* util_Uinttostr(uint val, char* buf);
-static char* util_Inttostr(int val, char* buf);
-static char* util_Floattostr(float val, char* buf, uchar decimals);
-
-static void util_RegisterEventHandlerLog(void (*callback)(const util_Log));
-static void util_RegisterEventHandlerPanic(void (*callback)(void));
-
-/* MACROS
- *
- * util_LOG(logLvl, msg)
- * util_LOG_DEBUG(msg)
- * util_LOG_WARN(msg)
- * util_LOG_ERROR(msg)
- * util_LOG_PANIC(msg)
- * util_LOGF_DEBUG(format, ...)
- * util_LOGF_WARN(format, ...)
- * util_LOGF_ERROR(format, ...)
- * util_LOGF_PANIC(format, ...)
- * util_util_ASSIGN_IF_ZERO(lvalue, rvalue)
- * util_ASSERT(cond)
- * util_FLT_EQUAL(left, right)
- * util_MIN(left, right)
- * util_MAX(left, right)
- *
- */
-
-////////////////////////////////////////////////////////////////////////////////
-///////////////////////////// INTERNAL IMPL ////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////// EVENT IMPL //////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
 /* Intentionally trigger a 'divide by zero' trap */
-static void util__EventTriggerPanicDefault(void)
+static void EventTriggerPanicDefault(void)
 {
     uint zero = 0;
     uint error = (1 / zero);
     zero = error;
 }
 
-static void util__EventTriggerLogDefault(const util_Log log)
+static void EventTriggerLogDefault(const util_Log log)
 {
     (void)log;
 }
 
-struct util__EventHandlers {
+struct EventHandlersUtil {
     void (*panic)(void);
     void (*log)(const util_Log);
-} static util__event_handlers = {.panic = util__EventTriggerPanicDefault,
-                                 .log = util__EventTriggerLogDefault};
+} static gEventHandlersUtil = {.panic = EventTriggerPanicDefault,
+                              .log = EventTriggerLogDefault};
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////// API IMPL ////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-struct util__State {
-    char log_data[util_MAX_LOG_SZ];
-} static util__state = {0};
+struct StateUtil {
+    char logData[util_MAX_LOG_SZ];
+} static gStateUtil = {0};
 
-#define util__NULL_TERMINATOR_SZ 1
-#define util__uint_MAX_CHARS (10) // '4294967295'
-#define util__uint_MAX_CHAR_THRESHOLD 1000000000
-#define util__float_DECIMAL_CHARS (3)
-#define util__NUMERIC_MAX_CHARS \
-    (1 + util__uint_MAX_CHARS + 1 + util__float_DECIMAL_CHARS) // '-2147483648.123'
+typedef union {
+    const char* s;
+    char c;
+    int d;
+    uint u;
+    float f;
+} util_Fmt;
 
-#define util_LOG(log_lvl, msg)                                     \
-    do                                                             \
-    {                                                              \
-        util__event_handlers.log((util_Log){.lvl = (log_lvl),      \
-                                            .lineNum = __LINE__,  \
-                                            .funcName = __func__, \
-                                            .message = #msg});     \
+typedef struct {
+    util_Fmt arr[util_MAX_FMT_ARGS];
+} util_Fmts;
+
+#define util_LOG(log_lvl, msg)                                 \
+    do                                                         \
+    {                                                          \
+        gEventHandlersUtil.log((util_Log){.lvl = (log_lvl),     \
+                                         .lineNum = __LINE__,  \
+                                         .funcName = __func__, \
+                                         .message = #msg});    \
     } while (0)
 
 #ifdef DEBUG
@@ -138,16 +79,16 @@ struct util__State {
         util_LOG(util_LogLvl_DEBUG, msg); \
     } while (0)
 
-#define util_LOGF_DEBUG(format, ...)                                      \
-    do                                                                    \
-    {                                                                     \
-        util__event_handlers.log((util_Log){                              \
-            .lvl = util_LogLvl_DEBUG,                                     \
-            .lineNum = __LINE__,                                         \
-            .funcName = __func__,                                        \
-            .message = util_Sprintf(util__state.log_data,                 \
-                                    sizeof(util__state.log_data), format, \
-                                    (util_Fmts){.arr = {__VA_ARGS__}})}); \
+#define util_LOGF_DEBUG(format, ...)                                       \
+    do                                                                     \
+    {                                                                      \
+        gEventHandlersUtil.log((util_Log){                                  \
+            .lvl = util_LogLvl_DEBUG,                                      \
+            .lineNum = __LINE__,                                           \
+            .funcName = __func__,                                          \
+            .message =                                                     \
+                util_Sprintf(gStateUtil.logData, sizeof(gStateUtil.logData), \
+                             format, (util_Fmts){.arr = {__VA_ARGS__}})}); \
     } while (0)
 #else
 #define util_LOG_DEBUG(...)
@@ -160,16 +101,16 @@ struct util__State {
         util_LOG(util_LogLvl_WARN, msg); \
     } while (0)
 
-#define util_LOGF_WARN(format, ...)                                       \
-    do                                                                    \
-    {                                                                     \
-        util__event_handlers.log((util_Log){                              \
-            .lvl = util_LogLvl_WARN,                                      \
-            .lineNum = __LINE__,                                         \
-            .funcName = __func__,                                        \
-            .message = util_Sprintf(util__state.log_data,                 \
-                                    sizeof(util__state.log_data), format, \
-                                    (util_Fmts){.arr = {__VA_ARGS__}})}); \
+#define util_LOGF_WARN(format, ...)                                        \
+    do                                                                     \
+    {                                                                      \
+        gEventHandlersUtil.log((util_Log){                                  \
+            .lvl = util_LogLvl_WARN,                                       \
+            .lineNum = __LINE__,                                           \
+            .funcName = __func__,                                          \
+            .message =                                                     \
+                util_Sprintf(gStateUtil.logData, sizeof(gStateUtil.logData), \
+                             format, (util_Fmts){.arr = {__VA_ARGS__}})}); \
     } while (0)
 
 #define util_LOG_ERROR(msg)               \
@@ -178,37 +119,37 @@ struct util__State {
         util_LOG(util_LogLvl_ERROR, msg); \
     } while (0)
 
-#define util_LOGF_ERROR(format, ...)                                      \
-    do                                                                    \
-    {                                                                     \
-        util__event_handlers.log((util_Log){                              \
-            .lvl = util_LogLvl_ERROR,                                     \
-            .lineNum = __LINE__,                                         \
-            .funcName = __func__,                                        \
-            .message = util_Sprintf(util__state.log_data,                 \
-                                    sizeof(util__state.log_data), format, \
-                                    (util_Fmts){.arr = {__VA_ARGS__}})}); \
+#define util_LOGF_ERROR(format, ...)                                       \
+    do                                                                     \
+    {                                                                      \
+        gEventHandlersUtil.log((util_Log){                                  \
+            .lvl = util_LogLvl_ERROR,                                      \
+            .lineNum = __LINE__,                                           \
+            .funcName = __func__,                                          \
+            .message =                                                     \
+                util_Sprintf(gStateUtil.logData, sizeof(gStateUtil.logData), \
+                             format, (util_Fmts){.arr = {__VA_ARGS__}})}); \
     } while (0)
 
 #define util_PANIC()                            \
     do                                          \
     {                                           \
         util_LOG(util_LogLvl_PANIC, "Wuh Woh"); \
-        util__event_handlers.panic();           \
+        gEventHandlersUtil.panic();              \
     } while (0)
 
 #ifdef DEBUG
-#define util_ASSERT(cond)                                                 \
-    do                                                                    \
-    {                                                                     \
-        if (!(cond))                                                      \
-        {                                                                 \
-            util__event_handlers.log((util_Log){.lvl = util_LogLvl_ERROR, \
-                                                .lineNum = __LINE__,     \
-                                                .funcName = __func__,    \
-                                                .message = #cond});       \
-            util__event_handlers.panic();                                 \
-        }                                                                 \
+#define util_ASSERT(cond)                                              \
+    do                                                                 \
+    {                                                                  \
+        if (!(cond))                                                   \
+        {                                                              \
+            gEventHandlersUtil.log((util_Log){.lvl = util_LogLvl_ERROR, \
+                                             .lineNum = __LINE__,      \
+                                             .funcName = __func__,     \
+                                             .message = #cond});       \
+            gEventHandlersUtil.panic();                                 \
+        }                                                              \
     } while (0)
 #else
 #define util_ASSERT(...)
@@ -223,10 +164,10 @@ struct util__State {
 // #define util_STATIC_ASSERT(cond, msg) \
 //     typedef char static_assert_##msg[(cond) ? 1 : -1]
 
-#define util__FLT_EQUAL_DELTA 1E-6F
-#define util_FLT_EQUAL(left, right)                     \
-    ((((left) - (right)) > -(util__FLT_EQUAL_DELTA)) && \
-     (((left) - (right)) < (util__FLT_EQUAL_DELTA)))
+#define FLT_EQUAL_DELTA 1E-6F
+#define util_FLT_EQUAL(left, right)               \
+    ((((left) - (right)) > -(FLT_EQUAL_DELTA)) && \
+     (((left) - (right)) < (FLT_EQUAL_DELTA)))
 
 #define util_MIN(left, right) (((left) < (right)) ? (left) : (right))
 
@@ -260,6 +201,15 @@ static const void* util_Memcpy(void* dest, const void* src, const usize count)
             *(dest_word++) = *(src_word++);
     }
     return dest;
+}
+
+/*
+ * @param val - pos/neg value.
+ * @return absolute value.
+ */
+static inline uint util_Abs(const int val)
+{
+    return (val < 0) ? -(uint)val : (uint)val;
 }
 
 /*
@@ -333,15 +283,6 @@ static inline float util_Powf(float base, int exp)
  * @param val - pos/neg value.
  * @return absolute value.
  */
-static inline uint util_Abs(const int val)
-{
-    return (val < 0) ? -(uint)val : (uint)val;
-}
-
-/*
- * @param val - pos/neg value.
- * @return absolute value.
- */
 static inline float util_Fabs(float val)
 {
     return (val < 0) ? -val : val;
@@ -394,8 +335,8 @@ static char* util_Uinttostr(uint val, char* buf)
     util_ASSERT(buf);
     static const uchar base = 10;
 
-    if (val >= util__uint_MAX_CHAR_THRESHOLD)
-        buf += util__uint_MAX_CHARS - 1;
+    if (val >= uint_MAX_CHAR_THRESHOLD)
+        buf += uint_MAX_CHARS - 1;
     else
         for (uint digits = base; digits <= val; digits *= base)
             ++buf;
@@ -426,8 +367,8 @@ static char* util_Inttostr(int val, char* buf)
         abs = -(uint)val;
         *buf++ = '-';
     }
-    if (abs >= util__uint_MAX_CHAR_THRESHOLD)
-        buf += util__uint_MAX_CHARS - 1;
+    if (abs >= uint_MAX_CHAR_THRESHOLD)
+        buf += uint_MAX_CHARS - 1;
     else
         for (uint digits = base; digits <= abs; digits *= base)
             ++buf;
@@ -458,14 +399,14 @@ util_Floattostr(const float val, char* buf, uchar decimals)
     if (util_Isnan(val))
     {
         static const char* nan = "NaN";
-        util_Memcpy(buf, nan, util_Strlen(nan) + util__NULL_TERMINATOR_SZ);
+        util_Memcpy(buf, nan, util_Strlen(nan) + NULL_TERMINATOR_SZ);
         return buf;
     }
 
     if (util_Isinf(val))
     {
         static const char* inf = "Inf";
-        util_Memcpy(buf, inf, util_Strlen(inf) + util__NULL_TERMINATOR_SZ);
+        util_Memcpy(buf, inf, util_Strlen(inf) + NULL_TERMINATOR_SZ);
         return buf;
     }
 
@@ -503,9 +444,10 @@ util_Floattostr(const float val, char* buf, uchar decimals)
  * @param vals - struct wrapped array of format specifier values
  * @return - the destination string buffer
  */
-__attribute__((used))
-static const char* util_Sprintf(char* buf, const usize bufsz,
-                                const char* format, const util_Fmts vals)
+__attribute__((used)) static const char* util_Sprintf(char* buf,
+                                                      const usize bufsz,
+                                                      const char* format,
+                                                      const util_Fmts vals)
 {
     util_ASSERT(buf);
     util_ASSERT(format);
@@ -539,7 +481,7 @@ static const char* util_Sprintf(char* buf, const usize bufsz,
             const util_Fmt val = vals.arr[i_vals++];
 
             if (((specifier == 'd' || specifier == 'u' || specifier == 'f') &&
-                 (buf + util__NUMERIC_MAX_CHARS) > last) ||
+                 (buf + NUMERIC_MAX_CHARS) > last) ||
                 ((specifier == 's') && (buf + util_Strlen(val.s) > last)))
             {
                 util_LOG_ERROR("Destination buffer too small.");
@@ -575,25 +517,22 @@ static const char* util_Sprintf(char* buf, const usize bufsz,
 static void util_RegisterEventHandlerLog(void (*callback)(const util_Log))
 {
     if (callback == NULL)
-        util__event_handlers.panic();
-    util__event_handlers.log = callback;
+        gEventHandlersUtil.panic();
+    gEventHandlersUtil.log = callback;
 }
 
 static void util_RegisterEventHandlerPanic(void (*callback)(void))
 {
     if (callback == NULL)
-        util__event_handlers.panic();
-    util__event_handlers.panic = callback;
+        gEventHandlersUtil.panic();
+    gEventHandlersUtil.panic = callback;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////// UTEST IMPL /////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 #ifdef UTEST
 #include <stdio.h>
 
-__attribute__((used))
-static void utest_util_EventHandlerLogPrintf(const util_Log log)
+__attribute__((used)) static void
+utest_util_EventHandlerLogPrintf(const util_Log log)
 {
     const char* lvl = "UNKNOWN";
     switch (log.lvl)
@@ -608,8 +547,7 @@ static void utest_util_EventHandlerLogPrintf(const util_Log log)
     (void)fflush(stdout);
 }
 
-__attribute__((used))
-static void utest_util_EventHandlerPanicDoNothing(void)
+__attribute__((used)) static void utest_util_EventHandlerPanicDoNothing(void)
 {
 }
 
@@ -765,7 +703,7 @@ static void utest_util_Sprintf(void)
                  (util_Fmts){.arr = {{.f = 1.0F}}});
     assert(strcmp(arr, "floatdon'tfit") == 0);
 
-    util_Sprintf(arr, util_Strlen(overflowcheck6) + util__NUMERIC_MAX_CHARS - 2,
+    util_Sprintf(arr, util_Strlen(overflowcheck6) + NUMERIC_MAX_CHARS - 2,
                  overflowcheck6, (util_Fmts){.arr = {{.d = 1}}});
     assert(strcmp(arr, "intjustdon'tfit") == 0);
 
@@ -808,7 +746,8 @@ static void utest_util_Sprintf(void)
     const float float_num_fract_part = .456F;
     const float float_num_int_part = 123.F;
 
-    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = float_num}}});
+    util_Sprintf(arr, sizeof(arr), "%f",
+                 (util_Fmts){.arr = {{.f = float_num}}});
     assert(strcmp(arr, "123.456") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",
@@ -825,7 +764,8 @@ static void utest_util_Sprintf(void)
     util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = -0}}});
     assert(strcmp(arr, "0.000") == 0);
 
-    util_Sprintf(arr, sizeof(arr), "%f", (util_Fmts){.arr = {{.f = -float_num}}});
+    util_Sprintf(arr, sizeof(arr), "%f",
+                 (util_Fmts){.arr = {{.f = -float_num}}});
     assert(strcmp(arr, "-123.456") == 0);
 
     util_Sprintf(arr, sizeof(arr), "%f",

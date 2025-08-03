@@ -23,10 +23,10 @@ static aud_InitR aud_Init(aud_InitA arg);
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-struct aud__State {
+struct StateAud {
     uint placeholder;
     // pool_t
-} static aud__state = {0};
+} static gStateAud = {0};
 
 /*
  * Initialise the audio module. 
@@ -35,7 +35,7 @@ struct aud__State {
 */
 static aud_InitR aud_Init(aud_InitA args)
 {
-    aud__state.placeholder = 1;
+    gStateAud.placeholder = 1;
     return (args.placeholder) ? aud_InitR_OK : aud_InitR_MAP_INVALID;
 }
 

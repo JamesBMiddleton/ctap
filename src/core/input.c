@@ -23,10 +23,10 @@ static input_InitR input_Init(input_InitA arg);
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-struct input__State {
+struct StateInput {
     uint placeholder;
     // pool_t
-} static input__state = {0};
+} static gStateInput = {0};
 
 /*
  * Initialise the audio module. 
@@ -35,7 +35,7 @@ struct input__State {
 */
 static input_InitR input_Init(input_InitA args)
 {
-    input__state.placeholder = 1;
+    gStateInput.placeholder = 1;
     return (args.placeholder) ? input_InitR_OK : input_InitR_MAP_INVALID;
 }
 

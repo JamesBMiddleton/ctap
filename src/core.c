@@ -4,61 +4,49 @@ CORE_C
 
 #include "src/util.c"
 
-////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////// API DECL //////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
 typedef struct {
     uint placeholder;
 } core_InitA;
 typedef enum { core_InitR_OK, core_InitR_MAP_INVALID } core_InitR;
 static core_InitR core_Init(core_InitA arg);
 
-////////////////////////////////////////////////////////////////////////////////
-///////////////////////////// INTERNAL IMPL ////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
 typedef struct {
     uint startiness;
     uint numHorses;
-} core__EngineStarter;
+} EngineStarter;
 
 typedef enum {
-    core__StartTheEnginesR_OK,
-    core__StartTheEnginesR_MAP_INVALID
-} core__StartTheEnginesR;
+    StartTheEnginesR_OK,
+    StartTheEnginesR_MAP_INVALID
+} StartTheEnginesR;
 /*
  * placeholder.
  *
  * @param starter - placeholder
 */
-static core__StartTheEnginesR core__StartTheEngines(core__EngineStarter starter)
+static StartTheEnginesR StartTheEngines(EngineStarter starter)
 {
     if (starter.startiness != 0)
-        return core__StartTheEnginesR_MAP_INVALID;
+        return StartTheEnginesR_MAP_INVALID;
     util_LOGF_DEBUG("Engines started with %u startiness and %u horses!",
                {.u = starter.startiness}, {.u = starter.num_horses});
-    return core__StartTheEnginesR_OK;
+    return StartTheEnginesR_OK;
 }
 
 typedef enum {
-    core__SpaghettifyValueR_OK,
-    core__SpaghettifyValueR_NOTOK
-} core__SpaghettifyValueR;
-static core__SpaghettifyValueR core__SpaghettifyValue(uint* value)
+    SpaghettifyValueR_OK,
+    SpaghettifyValueR_NOTOK
+} SpaghettifyValueR;
+static SpaghettifyValueR SpaghettifyValue(uint* value)
 {
     *value = 0;
-    return core__SpaghettifyValueR_OK;
+    return SpaghettifyValueR_OK;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////// API IMPL ////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-struct core__State {
+struct StateCore {
     uint placeholder;
     // pool_t
-} static core__state = {0};
+} static gStateCore = {0};
 
 /*
  * Initialise the core module. 
@@ -67,14 +55,14 @@ struct core__State {
 */
 static core_InitR core_Init(core_InitA args)
 {
-    core__state.placeholder = args.placeholder;
+    gStateCore.placeholder = args.placeholder;
 
-    if (core__SpaghettifyValue(&core__state.placeholder) != core__SpaghettifyValueR_OK)
+    if (SpaghettifyValue(&gStateCore.placeholder) != SpaghettifyValueR_OK)
         return core_InitR_MAP_INVALID;
 
-    if (core__StartTheEngines((core__EngineStarter){
-            .numHorses = core__state.placeholder,
-            .startiness = core__state.placeholder}) != core__StartTheEnginesR_OK)
+    if (StartTheEngines((EngineStarter){
+            .numHorses = gStateCore.placeholder,
+            .startiness = gStateCore.placeholder}) != StartTheEnginesR_OK)
         return core_InitR_MAP_INVALID;
 
     util_LOG_DEBUG("Map loaded.");
@@ -82,9 +70,6 @@ static core_InitR core_Init(core_InitA args)
     return core_InitR_OK;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////// UTEST IMPL /////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 #ifdef UTEST_CORE
 
 static void utest_core_Untested(void)

@@ -23,10 +23,10 @@ static gfx_InitR gfx_Init(gfx_InitA arg);
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-struct gfx__State {
+struct StateGfx {
     uint placeholder;
     // pool_t
-} static gfx__state = {0};
+} static gStateGfx = {0};
 
 /*
  * Initialise the audio module. 
@@ -35,7 +35,7 @@ struct gfx__State {
 */
 static gfx_InitR gfx_Init(gfx_InitA args)
 {
-    gfx__state.placeholder = 1;
+    gStateGfx.placeholder = 1;
     return (args.placeholder) ? gfx_InitR_OK : gfx_InitR_MAP_INVALID;
 }
 

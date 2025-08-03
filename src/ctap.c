@@ -2,18 +2,11 @@
 #include "core.c"
 #include "src/util.c"
 
-////////////////////////////////////////////////////////////////////////////////
-///////////////////////////// INTERNAL IMPL ////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////// EVENT IMPL //////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-struct ctap__EventHandlers {
+struct eventHandlersCtap {
     void (*log)(ctap_Log);
-} static ctap__eventHandlers = {0};
+} static gEventHandlersCtap = {0};
 
-static void ctap__EventTriggerLog(const util_Log log)
+static void EventTriggerLog(const util_Log log)
 {
     ctap_LogLvl lvl = ctap_LogLvl_DEBUG;
     switch (log.lvl)
@@ -24,19 +17,15 @@ static void ctap__EventTriggerLog(const util_Log log)
         case util_LogLvl_PANIC: lvl = ctap_LogLvl_PANIC; break;
         case util_LogLvl_ASSERT: lvl = ctap_LogLvl_ASSERT; break;
     }
-    ctap__eventHandlers.log((ctap_Log){.lvl = lvl,
+    gEventHandlersCtap.log((ctap_Log){.lvl = lvl,
                                             .message = log.message,
                                             .lineNum = log.lineNum,
                                             .funcName = log.funcName});
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////////// API IMPL ////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-struct ctap__State {
+struct StateCtap {
     uint placeholder;
-} static ctap__state = {0};
+} static gStateCtap = {0};
 
 /* 
  * Initialise the ctap runtime.
@@ -47,8 +36,8 @@ ctap_InitR ctap_Init(ctap_InitA arg)
 {
     if (arg.eventHandlerLog)
     {
-        util_RegisterEventHandlerLog(ctap__EventTriggerLog);
-        ctap__eventHandlers.log = arg.eventHandlerLog;
+        util_RegisterEventHandlerLog(EventTriggerLog);
+        gEventHandlersCtap.log = arg.eventHandlerLog;
     }
     if (arg.eventHandlerPanic)
         util_RegisterEventHandlerPanic(arg.eventHandlerPanic);
@@ -62,18 +51,11 @@ ctap_InitR ctap_Init(ctap_InitA arg)
         case core_InitR_MAP_INVALID: util_PANIC();
     }
 
-    ctap__state.placeholder = 1;
+    gStateCtap.placeholder = 1;
 
     return ctap_InitR_OK;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-////////////////////////// CALLBACK HANDLERS IMPL //////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////// UTEST IMPL /////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////
 #ifdef UTEST_CTAP
 
 static void utest_ctap_Main(void)

@@ -23,10 +23,10 @@ static phys_InitR phys_Init(phys_InitA arg);
 ////////////////////////////// API IMPL ////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-struct phys__State {
+struct StatePhys {
     uint placeholder;
     // pool_t
-} static phys__state = {0};
+} static gStatePhys = {0};
 
 /*
  * Initialise the audio module. 
@@ -35,7 +35,7 @@ struct phys__State {
 */
 static phys_InitR phys_Init(phys_InitA args)
 {
-    phys__state.placeholder = 1;
+    gStatePhys.placeholder = 1;
     return (args.placeholder) ? phys_InitR_OK : phys_InitR_MAP_INVALID;
 }
 
