@@ -7,7 +7,7 @@ SHELL = /bin/sh
 LIB_NAME := ctap
 SRC_DIR := src
 BUILD_DIR := build
-TEST_DIR := tests
+TEST_DIR := test
 
 CC := clang-20
 AR := ar
