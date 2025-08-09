@@ -7,11 +7,11 @@ UTIL_C
 #define util_MAX_LOG_SZ 256
 #define util_MAX_FMT_ARGS 5
 #define NULL_TERMINATOR_SZ 1
-#define uint_MAX_CHARS (10) // '4294967295'
-#define uint_MAX_CHAR_THRESHOLD 1000000000
+#define UINT_MAX_CHARS (10) // '4294967295'
+#define UINT_MAX_CHAR_THRESHOLD 1000000000
 #define float_DECIMAL_CHARS (3)
 #define NUMERIC_MAX_CHARS \
-    (1 + uint_MAX_CHARS + 1 + float_DECIMAL_CHARS) // '-2147483648.123'
+    (1 + UINT_MAX_CHARS + 1 + float_DECIMAL_CHARS) // '-2147483648.123'
 
 typedef enum {
     util_LogLvl_DEBUG,
@@ -29,14 +29,14 @@ typedef struct {
 } util_Log;
 
 /* Intentionally trigger a 'divide by zero' trap */
-static void EventTriggerPanicDefault(void)
+static void EventHandlerPanicDefault(void)
 {
     uint zero = 0;
     uint error = (1 / zero);
     zero = error;
 }
 
-static void EventTriggerLogDefault(const util_Log log)
+static void EventHandlerLogDefault(const util_Log log)
 {
     (void)log;
 }
@@ -44,8 +44,8 @@ static void EventTriggerLogDefault(const util_Log log)
 struct EventHandlersUtil {
     void (*panic)(void);
     void (*log)(const util_Log);
-} static gEventHandlersUtil = {.panic = EventTriggerPanicDefault,
-                              .log = EventTriggerLogDefault};
+} static gEventHandlersUtil = {.panic = EventHandlerPanicDefault,
+                              .log = EventHandlerLogDefault};
 
 struct StateUtil {
     char logData[util_MAX_LOG_SZ];
@@ -184,8 +184,6 @@ typedef struct {
  */
 static const void* util_Memcpy(void* dest, const void* src, const usize count)
 {
-    util_ASSERT(dest);
-    util_ASSERT(src);
     if (((usize)src | (usize)dest | count) & (sizeof(uint) - 1))
     {
         const uchar* src_byte = (const uchar*)src;
@@ -316,7 +314,6 @@ static inline bool util_Isinf(const float val)
  * */
 static inline usize util_Strlen(const char* str)
 {
-    util_ASSERT(str);
     usize len = 0;
     while (*str++ != '\0')
         ++len;
@@ -332,11 +329,10 @@ static inline usize util_Strlen(const char* str)
  */
 static char* util_Uinttostr(uint val, char* buf)
 {
-    util_ASSERT(buf);
     static const uchar base = 10;
 
-    if (val >= uint_MAX_CHAR_THRESHOLD)
-        buf += uint_MAX_CHARS - 1;
+    if (val >= UINT_MAX_CHAR_THRESHOLD)
+        buf += UINT_MAX_CHARS - 1;
     else
         for (uint digits = base; digits <= val; digits *= base)
             ++buf;
@@ -358,7 +354,6 @@ static char* util_Uinttostr(uint val, char* buf)
  */
 static char* util_Inttostr(int val, char* buf)
 {
-    util_ASSERT(buf);
     static const uchar base = 10;
 
     uint abs = (uint)val;
@@ -367,8 +362,8 @@ static char* util_Inttostr(int val, char* buf)
         abs = -(uint)val;
         *buf++ = '-';
     }
-    if (abs >= uint_MAX_CHAR_THRESHOLD)
-        buf += uint_MAX_CHARS - 1;
+    if (abs >= UINT_MAX_CHAR_THRESHOLD)
+        buf += UINT_MAX_CHARS - 1;
     else
         for (uint digits = base; digits <= abs; digits *= base)
             ++buf;
@@ -393,7 +388,6 @@ static char* util_Inttostr(int val, char* buf)
 __attribute__((no_sanitize("undefined"))) static char*
 util_Floattostr(const float val, char* buf, uchar decimals)
 {
-    util_ASSERT(buf);
     static const float base = 10;
 
     if (util_Isnan(val))
@@ -449,9 +443,6 @@ __attribute__((used)) static const char* util_Sprintf(char* buf,
                                                       const char* format,
                                                       const util_Fmts vals)
 {
-    util_ASSERT(buf);
-    util_ASSERT(format);
-
     const char* first = buf;
     const char* last = buf + bufsz - 1;
     usize i_vals = 0;

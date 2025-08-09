@@ -23,7 +23,7 @@ static StartTheEnginesR StartTheEngines(EngineStarter starter)
     if (starter.startiness != 0)
         return StartTheEnginesR_MAP_INVALID;
     util_LOGF_DEBUG("Engines started with %u startiness and %u horses!",
-               {.u = starter.startiness}, {.u = starter.num_horses});
+                    {.u = starter.startiness}, {.u = starter.num_horses});
     return StartTheEnginesR_OK;
 }
 
@@ -41,7 +41,6 @@ struct StateCore {
     uint placeholder;
     // pool_t
 } static gStateCore = {0};
-
 
 typedef struct {
     uint placeholder;

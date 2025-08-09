@@ -22,7 +22,6 @@ typedef struct {
 //     return (str){.chars = src.chars + start, .len = len};
 // }
 
-
 #ifdef UTEST_PRIMITIVES
 #ifdef UTEST
 int main(void)

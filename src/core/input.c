@@ -4,7 +4,6 @@ INPUT_C
 
 #include "src/util.c"
 
-
 struct StateInput {
     uint placeholder;
     // pool_t

@@ -18,9 +18,9 @@ static void EventTriggerLog(const util_Log log)
         case util_LogLvl_ASSERT: lvl = ctap_LogLvl_ASSERT; break;
     }
     gEventHandlersCtap.log((ctap_Log){.lvl = lvl,
-                                            .message = log.message,
-                                            .lineNum = log.lineNum,
-                                            .funcName = log.funcName});
+                                      .message = log.message,
+                                      .lineNum = log.lineNum,
+                                      .funcName = log.funcName});
 }
 
 struct StateCtap {
