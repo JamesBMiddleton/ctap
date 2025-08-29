@@ -2,93 +2,77 @@
 #define CORE_C
 CORE_C
 
+#include "core/phys.c"
 #include "src/util.c"
+
+typedef enum {
+    core_Error_OK,
+    core_Error_MAP_INVALID,
+    core_Error_MODULE_LOAD_FAILURE
+} core_Error;
 
 typedef struct {
     uint startiness;
     uint numHorses;
 } EngineStarter;
 
-typedef enum {
-    StartTheEnginesR_OK,
-    StartTheEnginesR_MAP_INVALID
-} StartTheEnginesR;
-/*
- * placeholder.
- *
- * @param starter - placeholder
-*/
-static StartTheEnginesR StartTheEngines(EngineStarter starter)
-{
-    if (starter.startiness != 0)
-        return StartTheEnginesR_MAP_INVALID;
-    util_LOGF_DEBUG("Engines started with %u startiness and %u horses!",
-                    {.u = starter.startiness}, {.u = starter.num_horses});
-    return StartTheEnginesR_OK;
-}
+// clang-format off
+typedef struct { uint ok; core_Error err; } core_UintResult;
+typedef struct { int ok; core_Error err; } core_IntResult;
+typedef struct { float ok; core_Error err; } core_FloatResult;
+typedef struct { EngineStarter ok; core_Error err; } EngineStarterResult;
+// clang-format on
 
-typedef enum {
-    SpaghettifyValueR_OK,
-    SpaghettifyValueR_NOTOK
-} SpaghettifyValueR;
-static SpaghettifyValueR SpaghettifyValue(uint* value)
-{
-    *value = 0;
-    return SpaghettifyValueR_OK;
-}
+typedef struct {
+    uint placeholder;
+} core_InitArgs;
+static core_Error core_Init(core_InitArgs args);
+static core_IntResult StartTheEngines(EngineStarter starter);
+static core_Error SpaghettifyValue(uint* value);
 
 struct StateCore {
     uint placeholder;
     // pool_t
 } static gStateCore = {0};
 
-typedef struct {
-    uint placeholder;
-} core_InitA;
-typedef enum { core_InitR_OK, core_InitR_MAP_INVALID } core_InitR;
+// placeholder comment
+static core_IntResult StartTheEngines(EngineStarter starter)
+{
+    if (starter.startiness != 0)
+        return (core_IntResult){.err = core_Error_MAP_INVALID};
+    util_LOGF_DEBUG("Engines started with %u startiness and %u horses!",
+                    {.u = starter.startiness}, {.u = starter.numHorses});
+    return (core_IntResult){.ok = 1};
+}
 
-/*
- * Initialise the core module. 
- *
- * @param args - initialisation arguments.
-*/
-static core_InitR core_Init(core_InitA args)
+// another placeholder comment
+static core_Error SpaghettifyValue(uint* value)
+{
+    *value = 0;
+    return core_Error_MAP_INVALID;
+}
+
+// Initialise the core module.
+static core_Error core_Init(core_InitArgs args)
 {
     gStateCore.placeholder = args.placeholder;
-
-    if (SpaghettifyValue(&gStateCore.placeholder) != SpaghettifyValueR_OK)
-        return core_InitR_MAP_INVALID;
-
-    if (StartTheEngines((EngineStarter){
-            .numHorses = gStateCore.placeholder,
-            .startiness = gStateCore.placeholder}) != StartTheEnginesR_OK)
-        return core_InitR_MAP_INVALID;
-
+    {
+        const core_Error result = SpaghettifyValue(&gStateCore.placeholder);
+        if (result) return result;
+    }
+    {
+        const core_IntResult result = StartTheEngines(
+            (EngineStarter){.numHorses = gStateCore.placeholder});
+        if (result.err) return result.err;
+    }
+    switch (phys_Init((phys_InitArgs){0}))
+    {
+        case phys_Error_OK: util_LOG_DEBUG("Physics Module Initialised.");
+        case phys_Error_MAP_INVALID: return core_Error_MODULE_LOAD_FAILURE;
+    }
     util_LOG_DEBUG("Map loaded.");
 
-    return core_InitR_OK;
+    return core_Error_OK;
 }
 
-#ifdef UTEST_CORE
-
-static void utest_core_Untested(void)
-{
-    core_Init((core_InitA){0});
-}
-
-#ifdef UTEST
-static void utest_core_Main(void)
-{
-    util_RegisterEventHandlerLog(utest_util_EventHandlerLogPrintf);
-    util_RegisterEventHandlerPanic(utest_util_EventHandlerPanicDoNothing);
-    utest_core_Untested();
-}
-
-int main(void)
-{
-    utest_core_Main();
-    return 0;
-}
-#endif // UTEST
-#endif // UTEST_CORE
 #endif // CORE_C

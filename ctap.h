@@ -1,6 +1,8 @@
 #ifndef CTAP_H
 #define CTAP_H
 
+typedef enum { ctap_Error_OK, ctap_Error_NULL_CALLBACK } ctap_Error;
+
 typedef enum {
     ctap_LogLvl_ASSERT,
     ctap_LogLvl_DEBUG,
@@ -21,8 +23,8 @@ typedef struct {
     // input_cb..
     void (*eventHandlerLog)(const ctap_Log); // Optional.
     void (*eventHandlerPanic)(void); // Optional.
-} ctap_InitA;
-typedef enum { ctap_InitR_OK, ctap_InitR_NULL_CALLBACK } ctap_InitR;
-ctap_InitR ctap_Init(ctap_InitA arg);
+} ctap_InitArgs;
+
+ctap_Error ctap_Init(ctap_InitArgs arg);
 
 #endif // CTAP_H

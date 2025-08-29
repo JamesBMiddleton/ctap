@@ -6,6 +6,10 @@ struct eventHandlersCtap {
     void (*log)(ctap_Log);
 } static gEventHandlersCtap = {0};
 
+struct StateCtap {
+    uint placeholder;
+} static gStateCtap = {0};
+
 static void EventTriggerLog(const util_Log log)
 {
     ctap_LogLvl lvl = ctap_LogLvl_DEBUG;
@@ -23,16 +27,8 @@ static void EventTriggerLog(const util_Log log)
                                       .funcName = log.funcName});
 }
 
-struct StateCtap {
-    uint placeholder;
-} static gStateCtap = {0};
-
-/* 
- * Initialise the ctap runtime.
- *
- * @param arg - runtime initialisation arguments
-*/
-ctap_InitR ctap_Init(ctap_InitA arg)
+// Initialise the ctap runtime.
+ctap_Error ctap_Init(ctap_InitArgs arg)
 {
     if (arg.eventHandlerLog)
     {
@@ -43,30 +39,17 @@ ctap_InitR ctap_Init(ctap_InitA arg)
         util_RegisterEventHandlerPanic(arg.eventHandlerPanic);
 
     const uint placeholder = 42;
-    switch (core_Init((core_InitA){.placeholder = placeholder}))
+    switch (core_Init((core_InitArgs){.placeholder = placeholder}))
     {
-        case core_InitR_OK:
+        case core_Error_OK:
             util_LOG_DEBUG("cor initialisation success.");
             break;
-        case core_InitR_MAP_INVALID: util_PANIC();
+        case core_Error_MAP_INVALID: 
+        case core_Error_MODULE_LOAD_FAILURE: 
+            util_PANIC();
     }
 
     gStateCtap.placeholder = 1;
 
-    return ctap_InitR_OK;
+    return ctap_Error_OK;
 }
-
-#ifdef UTEST_CTAP
-
-static void utest_ctap_Main(void)
-{
-}
-
-#ifdef UTEST
-int main(void)
-{
-    utest_ctap_Main();
-    return 0;
-}
-#endif // UTEST
-#endif // UTEST_CTAP

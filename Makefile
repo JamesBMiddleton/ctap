@@ -7,9 +7,10 @@ SHELL = /bin/sh
 LIB_NAME := ctap
 SRC_DIR := src
 BUILD_DIR := build
-TEST_DIR := test
+UTEST_DIR := test/unit
+ITEST_DIR := test/integration
 
-CC := clang-20
+CC := clang-19
 AR := ar
 CFLAGS := -std=c99 -g -I. 
 RELEASE_CFLAGS := -O3 -flto -finline-functions \
@@ -27,14 +28,12 @@ DEBUG_CFLAGS := -DDEBUG -O0 -Weverything -Werror -fsanitize=address \
 				$(CFLAGS)
 
 SRCS := $(shell find $(SRC_DIR) -name '*.c' -type f)
-ITESTS := $(shell find $(TEST_DIR) -name '*.c' -type f)
-UTEST_BINS := $(SRCS:%.c=$(BUILD_DIR)/%_utest)
+ITESTS := $(shell find $(ITEST_DIR) -name '*.c' -type f)
+UTESTS := $(shell find $(UTEST_DIR) -name '*.c' -type f)
+UTEST_BINS := $(UTESTS:%.c=$(BUILD_DIR)/%)
 UTEST_LOGS := $(patsubst %,%.log,$(UTEST_BINS))
 ITEST_BINS := $(ITESTS:%.c=$(BUILD_DIR)/%)
 ITEST_LOGS := $(patsubst %,%.log,$(ITEST_BINS))
-
-# Ensure output directories exist.
-$(shell mkdir -p $(BUILD_DIR) $(UTEST_DIR))
 
 build: CFLAGS = $(RELEASE_CFLAGS)
 build: $(BUILD_DIR)/$(LIB_NAME).a
@@ -51,27 +50,23 @@ $(BUILD_DIR)/$(LIB_NAME).o: $(SRCS)
 check: CFLAGS = $(RELEASE_CFLAGS)
 check: $(UTEST_LOGS) $(ITEST_LOGS)
 
-# Run the itest binaries, generating the itest logs.
+# Run the integration test binaries, generating the test logs.
 $(ITEST_LOGS): $(ITEST_BINS)
 	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
-# Run the utest binaries, generating the utest logs.
+# Run the unit test binaries, generating the test logs.
 $(UTEST_LOGS): $(UTEST_BINS)
 	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
-# Build itest binaries.
-$(BUILD_DIR)/$(TEST_DIR)/%: $(TEST_DIR)/%.c $(BUILD_DIR)/$(LIB_NAME).a
+# Build unit test binaries.
+$(BUILD_DIR)/$(UTEST_DIR)/%: $(UTEST_DIR)/%.c
 	mkdir -p $(dir $@)
 	$(CC) $< -o $@ $(CFLAGS)
 
-# Build utest binaries, defining UTEST_MODULE for each.
-$(BUILD_DIR)/$(SRC_DIR)/%_utest: $(SRC_DIR)/%.c
+# Build intergation test binaries.
+$(BUILD_DIR)/$(ITEST_DIR)/%: $(ITEST_DIR)/%.c $(BUILD_DIR)/$(LIB_NAME).a
 	mkdir -p $(dir $@)
-	$(CC) $< -o $@ $(CFLAGS) -DUTEST -DUTEST_$(shell echo $(notdir $<) | sed -E 's/(.*)\.c/\U\1/')
-
-analyze: CFLAGS = $(DEBUG_CFLAGS)
-analyze:
-	+ scan-build-18 make check
+	$(CC) $^ -o $@ $(CFLAGS)
 
 clean:
 	-rm -r $(BUILD_DIR)

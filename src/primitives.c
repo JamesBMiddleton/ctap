@@ -15,6 +15,9 @@ typedef struct {
     const usize len;
 } str;
 
+// vec2
+// vec3
+
 // #define tostr(cstr) ((str) { .len = (sizeof("" cstr "")-1), .chars = (cstr) })
 //
 // static inline str substr(str src, const usize start, const usize len)
@@ -22,12 +25,4 @@ typedef struct {
 //     return (str){.chars = src.chars + start, .len = len};
 // }
 
-#ifdef UTEST_PRIMITIVES
-#ifdef UTEST
-int main(void)
-{
-    return 0;
-}
-#endif // UTEST
-#endif // UTEST_PRIMITIVES
 #endif // PRIMITIVES_C

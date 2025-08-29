@@ -2,7 +2,8 @@ Checks: '*,-altera-struct-pack-align, -altera-unroll-loops, -google-readability-
 -readability-braces-around-statements, -hicpp-braces-around-statements, -altera-id-dependent-backward-branch, 
 -bugprone-easily-swappable-parameters, -readability-identifier-length, -bugprone-suspicious-include, 
 -llvmlibc-restrict-system-libc-headers, -cppcoreguidelines-avoid-magic-numbers, -readability-magic-numbers,
--cppcoreguidelines-avoid-non-const-global-variables, -cppcoreguidelines-macro-to-enum, misc-static-assert'
+-cppcoreguidelines-avoid-non-const-global-variables, -cppcoreguidelines-macro-to-enum, misc-static-assert,
+-bugprone-assignment-in-if-condition'
 CheckOptions:
   - key: readability-function-cognitive-complexity.IgnoreMacros
     value: True 
