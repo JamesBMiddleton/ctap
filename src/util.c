@@ -4,6 +4,17 @@ UTIL_C
 
 #include "primitives.c"
 
+#define vec_TYPE uchar
+#include "vec.c"
+#define vec_TYPE int
+#include "vec.c"
+#define vec_TYPE uint
+#include "vec.c"
+#define vec_TYPE char
+#include "vec.c"
+#define vec_TYPE float
+#include "vec.c"
+
 #define util_MAX_LOG_SZ 256
 #define util_MAX_FMT_ARGS 5
 #define NULL_TERMINATOR_SZ 1
