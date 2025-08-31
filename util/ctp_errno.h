@@ -4,7 +4,8 @@
 enum ctp_errno {
     CTP_ERRNO_OK,
     CTP_ERRNO_NULL,
-    CTP_ERRNO_NOMEM
+    CTP_ERRNO_NOMEM,
+    CTP_ERRNO_ALARM_ANTENNA_MISSING
 };
 
 inline void ctp_errno_set(enum ctp_errno err);
