@@ -1,17 +1,48 @@
+#include "ctp_guard.h"
+#include "ctp_math.h"
+#include "ctp_str.h"
+
 #define NULL_TERMINATOR_SZ 1
 #define UINT_MAX_CHARS (10) // '4294967295'
 #define UINT_MAX_CHAR_THRESHOLD 1000000000
 #define FLOAT_DECIMAL_CHARS (3)
-#define NUMERIC_MAX_CHARS \
-    (1 + UINT_MAX_CHARS + 1 + FLOAT_DECIMAL_CHARS) // '-2147483648.123'
+#define NUMERIC_MAX_CHARS (1 + UINT_MAX_CHARS + 1 + FLOAT_DECIMAL_CHARS) // '-2147483648.123'
+
+/*
+ * If aligned copy 32bit chunks from dest to src, else copy bytes.
+ * Assumes no overlap.
+ *
+ * @param dest - copy destination
+ * @param src  - copy source
+ * @param count - number of bytes to copy
+ * @return copy destination
+ */
+inline const void* ctp_str_memcpy(void* dest, const void* src, size_t count)
+{
+    if (((size_t)src | (size_t)dest | count) & (sizeof(unsigned) - 1))
+    {
+        const unsigned char* src_byte = (const unsigned char*)src;
+        unsigned char* dest_byte = (unsigned char*)dest;
+        for (size_t i = 0; i < count; ++i)
+            *(dest_byte++) = *(src_byte++);
+    }
+    else
+    {
+        const unsigned* src_word = (const unsigned*)src;
+        unsigned* dest_word = (unsigned*)dest;
+        for (size_t i = 0; i < count; i += sizeof(unsigned))
+            *(dest_word++) = *(src_word++);
+    }
+    return dest;
+}
 
 /*
  * @param str - null terminated string.
  * @return length of str, null terminator not included.
  * */
-static inline usize util_Strlen(const char* str)
+inline size_t ctp_str_len(const char* str)
 {
-    usize len = 0;
+    size_t len = 0;
     while (*str++ != '\0')
         ++len;
     return len;
@@ -24,14 +55,14 @@ static inline usize util_Strlen(const char* str)
  * @param buf - destination string buffer
  * @return buf
  */
-static char* util_Uinttostr(uint val, char* buf)
+char* ctp_str_from_uint(unsigned val, char* buf)
 {
-    static const uchar base = 10;
+    static const unsigned char base = 10;
 
     if (val >= UINT_MAX_CHAR_THRESHOLD)
         buf += UINT_MAX_CHARS - 1;
     else
-        for (uint digits = base; digits <= val; digits *= base)
+        for (unsigned digits = base; digits <= val; digits *= base)
             ++buf;
     *++buf = '\0';
     do
@@ -49,20 +80,20 @@ static char* util_Uinttostr(uint val, char* buf)
  * @param buf - destination string buffer
  * @return buf
  */
-static char* util_Inttostr(int val, char* buf)
+char* ctp_str_from_int(int val, char* buf)
 {
-    static const uchar base = 10;
+    static const unsigned char base = 10;
 
-    uint abs = (uint)val;
+    unsigned abs = (unsigned)val;
     if (val < 0)
     {
-        abs = -(uint)val;
+        abs = -(unsigned)val;
         *buf++ = '-';
     }
     if (abs >= UINT_MAX_CHAR_THRESHOLD)
         buf += UINT_MAX_CHARS - 1;
     else
-        for (uint digits = base; digits <= abs; digits *= base)
+        for (unsigned digits = base; digits <= abs; digits *= base)
             ++buf;
     *++buf = '\0';
     do
@@ -82,30 +113,30 @@ static char* util_Inttostr(int val, char* buf)
  * @param decimals - number of decimal places
  * @return buf
  */
-__attribute__((no_sanitize("undefined"))) static char*
-util_Floattostr(const float val, char* buf, uchar decimals)
+__attribute__((no_sanitize("undefined"))) char* ctp_str_from_float(const float val, char* buf,
+                                                                   unsigned char decimals)
 {
     static const float base = 10;
 
-    if (util_Isnan(val))
+    if (ctp_math_isnan(val))
     {
         static const char* nan = "NaN";
-        util_Memcpy(buf, nan, util_Strlen(nan) + NULL_TERMINATOR_SZ);
+        ctp_str_memcpy(buf, nan, ctp_str_len(nan) + NULL_TERMINATOR_SZ);
         return buf;
     }
 
-    if (util_Isinf(val))
+    if (ctp_math_isinf(val))
     {
         static const char* inf = "Inf";
-        util_Memcpy(buf, inf, util_Strlen(inf) + NULL_TERMINATOR_SZ);
+        ctp_str_memcpy(buf, inf, ctp_str_len(inf) + NULL_TERMINATOR_SZ);
         return buf;
     }
 
     int whole = (int)val;
-    float fraction = util_Fabs((val - (float)whole));
-    char* start = util_Inttostr(whole, buf);
+    float fraction = ctp_math_fabs((val - (float)whole));
+    char* start = ctp_str_from_int(whole, buf);
 
-    buf += util_Strlen(buf);
+    buf += ctp_str_len(buf);
     *buf++ = '.';
 
     if (decimals--)
@@ -118,7 +149,7 @@ util_Floattostr(const float val, char* buf, uchar decimals)
         }
         while (decimals--)
             fraction *= base;
-        util_Uinttostr((uint)fraction, buf);
+        ctp_str_from_uint((unsigned)fraction, buf);
     }
     else
         *buf = '\0';
@@ -135,14 +166,12 @@ util_Floattostr(const float val, char* buf, uchar decimals)
  * @param vals - struct wrapped array of format specifier values
  * @return - the destination string buffer
  */
-__attribute__((used)) static const char* util_Sprintf(char* buf,
-                                                      const usize bufsz,
-                                                      const char* format,
-                                                      const util_Fmts vals)
+const char* ctp_str_printf(char* buf, size_t bufsz,
+                                const char* format, struct ctp_str_printf_va_list va_list)
 {
     const char* first = buf;
     const char* last = buf + bufsz - 1;
-    usize i_vals = 0;
+    size_t i_vals = 0;
 
     while (*format != '\0')
     {

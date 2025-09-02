@@ -8,14 +8,9 @@ enum ctp_errno {
     CTP_ERRNO_ALARM_ANTENNA_MISSING
 };
 
-struct ctp_errno_info {
-    const char *strerror;
-    const char *source;
-};
-
-inline void ctp_errno_set(enum ctp_errno err);
-inline enum ctp_errno ctp_errno_get(void);
-inline void ctp_errno_info_set(struct ctp_errno_info info);
-inline struct ctp_errno_info ctp_errno_info_get(void);
+void ctp_errno_set(enum ctp_errno err);
+enum ctp_errno ctp_errno_get(void);
+void ctp_errno_source_set(const char *source);
+const char *ctp_errno_source_get(void);
 
 #endif // CTP_ERRNO_H
