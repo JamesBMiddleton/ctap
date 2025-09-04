@@ -14,10 +14,4 @@
     return (ctp_result){CTP_RESULT_ERROR}; } while (0)
 #define CTP_GUARD_IF(condition, error) do { if (!(condition)) { CTP_GUARD_BAIL((error)); }} while (0)
 #define CTP_GUARD_PTR(ptr) do { if ((ptr) == NULL) { CTP_GUARD_BAIL(CTP_ERRNO_NULL); }} while (0)
-
-static ctp_result test(void)
-{
-    CTP_GUARD_BAIL(CTP_ERRNO_NULL);
-}
-
 #endif // CTP_GUARD_H

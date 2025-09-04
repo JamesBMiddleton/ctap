@@ -1,5 +1,5 @@
-#ifndef CTP_CONTAINER_OF_H
-#define CTP_CONTAINER_OF_H
+#ifndef CTP_CONTAINEROF_H
+#define CTP_CONTAINEROF_H
 
 #if defined(__clang__) || defined(__GNUC__)
 #define ctp_container_of(ptr, type, member)                                 \
@@ -12,4 +12,4 @@
                    ((size_t) & (((type*)0)->member))))
 #endif
 
-#endif // CTP_CONTAINER_OF_H
+#endif // CTP_CONTAINEROF_H

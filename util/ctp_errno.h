@@ -8,9 +8,12 @@ enum ctp_errno {
     CTP_ERRNO_ALARM_ANTENNA_MISSING
 };
 
-void ctp_errno_set(enum ctp_errno err);
-enum ctp_errno ctp_errno_get(void);
-void ctp_errno_source_set(const char *source);
-const char *ctp_errno_source_get(void);
+extern enum ctp_errno ctp_errno_value;
+extern const char *ctp_errno_source;
+
+static inline void ctp_errno_set(const enum ctp_errno err) { ctp_errno_value = err; }
+static inline enum ctp_errno ctp_errno_get(void) { return ctp_errno_value; }
+static inline void ctp_errno_source_set(const char *source) { ctp_errno_source = source; }
+static inline const char *ctp_errno_source_get(void) { return ctp_errno_source; }
 
 #endif // CTP_ERRNO_H
