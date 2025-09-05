@@ -9,13 +9,13 @@ void ctp_log_set_printf(int (*fn)(const char* format, ...));
 #define CTP_LOG_LINENUM_AS_STRING CTP_LOG_TOSTRING(__LINE__)
 
 #ifdef DEBUG
-#define CTP_LOG_DEBUG(msg)                                      \
+#define CTP_LOG(msg)                                      \
     do { ctp_log_get_printf()("DEBUG | " __FILE__ ":" CTP_LOG_LINENUM_AS_STRING " | " #msg "\n" ); } while (0)
-#define CTP_LOGF_DEBUG(msg, ...)                                      \
+#define CTP_LOGF(msg, ...)                                      \
     do { ctp_log_get_printf()("DEBUG | " __FILE__ ":" CTP_LOG_LINENUM_AS_STRING " | " #msg "\n", __VA_ARGS__); } while (0)
 #else
-#define CTP_LOG_DEBUG(...)
-#define CTP_LOGF_DEBUG(...)
+#define CTP_LOG(...)
+#define CTP_LOGF(...)
 #endif
 
 #ifdef CTP_LOG_DEFINE

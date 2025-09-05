@@ -32,6 +32,6 @@ ctp_result ctp_gfx_init(struct ctp_gfx_init_args args)
     gfx_state.placeholder = args.placeholder;
     CTP_GUARD(gfx_spaghettify_value(&gfx_state.placeholder));
     CTP_GUARD(gfx_start_the_engines((struct gfx_engine_starter){.num_horses = args.placeholder}));
-    CTP_LOG_DEBUG("Map loaded.");
+    CTP_LOG("Map loaded.");
     return (ctp_result){CTP_RESULT_OK};
 }
