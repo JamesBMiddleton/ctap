@@ -16,7 +16,7 @@ struct ctp_str_printf_va_list {
         const char* s;
         char c;
         int d;
-        unsigned u;
+        unsigned int u;
         float f;
     } elems[5];
 };
@@ -32,7 +32,7 @@ struct ctp_str_printf_va_list {
  */
 inline const void* ctp_str_memcpy(void* dest, const void* src, size_t count)
 {
-    if (((size_t)src | (size_t)dest | count) & (sizeof(unsigned) - 1))
+    if (((size_t)src | (size_t)dest | count) & (sizeof(unsigned int) - 1))
     {
         const unsigned char* src_byte = (const unsigned char*)src;
         unsigned char* dest_byte = (unsigned char*)dest;
@@ -41,9 +41,9 @@ inline const void* ctp_str_memcpy(void* dest, const void* src, size_t count)
     }
     else
     {
-        const unsigned* src_word = (const unsigned*)src;
-        unsigned* dest_word = (unsigned*)dest;
-        for (size_t i = 0; i < count; i += sizeof(unsigned))
+        const unsigned int* src_word = (const unsigned int*)src;
+        unsigned int* dest_word = (unsigned int*)dest;
+        for (size_t i = 0; i < count; i += sizeof(unsigned int))
             *(dest_word++) = *(src_word++);
     }
     return dest;
@@ -68,14 +68,14 @@ inline size_t ctp_str_len(const char* str)
  * @param buf - destination string buffer
  * @return buf
  */
-char* ctp_str_from_uint(unsigned val, char* buf)
+char* ctp_str_from_uint(unsigned int val, char* buf)
 {
     static const unsigned char base = 10;
 
     if (val >= CTP_UINT_MAX_CHAR_THRESHOLD)
         buf += CTP_UINT_MAX_CHARS - 1;
     else
-        for (unsigned digits = base; digits <= val; digits *= base)
+        for (unsigned int digits = base; digits <= val; digits *= base)
             ++buf;
     *++buf = '\0';
     do
@@ -97,16 +97,16 @@ char* ctp_str_from_int(int val, char* buf)
 {
     static const unsigned char base = 10;
 
-    unsigned abs = (unsigned)val;
+    unsigned int abs = (unsigned int)val;
     if (val < 0)
     {
-        abs = -(unsigned)val;
+        abs = -(unsigned int)val;
         *buf++ = '-';
     }
     if (abs >= CTP_UINT_MAX_CHAR_THRESHOLD)
         buf += CTP_UINT_MAX_CHARS - 1;
     else
-        for (unsigned digits = base; digits <= abs; digits *= base)
+        for (unsigned int digits = base; digits <= abs; digits *= base)
             ++buf;
     *++buf = '\0';
     do
@@ -162,7 +162,7 @@ __attribute__((no_sanitize("undefined"))) char* ctp_str_from_float(const float v
         }
         while (decimals--)
             fraction *= base;
-        ctp_str_from_uint((unsigned)fraction, buf);
+        ctp_str_from_uint((unsigned int)fraction, buf);
     }
     else
         *buf = '\0';

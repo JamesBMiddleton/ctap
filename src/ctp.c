@@ -1,55 +1,19 @@
-#include "ctap.h"
-#include "core.c"
-#include "src/util.c"
+#define CTP_LOG_DEFINE
+#define CTP_ERRNO_DEFINE
 
-struct eventHandlersCtap {
-    void (*log)(ctap_Log);
-} static gEventHandlersCtap = {0};
+#include "ctp.h"
+#include "ctp_gfx.h"
 
-struct StateCtap {
-    uint placeholder;
-} static gStateCtap = {0};
+#include "util/ctp_errno.h"
+#include "util/ctp_guard.h"
+#include "util/ctp_log.h"
 
-static void EventTriggerLog(const util_Log log)
-{
-    ctap_LogLvl lvl = ctap_LogLvl_DEBUG;
-    switch (log.lvl)
-    {
-        case util_LogLvl_DEBUG: lvl = ctap_LogLvl_DEBUG; break;
-        case util_LogLvl_WARN: lvl = ctap_LogLvl_WARN; break;
-        case util_LogLvl_ERROR: lvl = ctap_LogLvl_ERROR; break;
-        case util_LogLvl_PANIC: lvl = ctap_LogLvl_PANIC; break;
-        case util_LogLvl_ASSERT: lvl = ctap_LogLvl_ASSERT; break;
-    }
-    gEventHandlersCtap.log((ctap_Log){.lvl = lvl,
-                                      .message = log.message,
-                                      .lineNum = log.lineNum,
-                                      .funcName = log.funcName});
-}
 
 // Initialise the ctap runtime.
-ctap_Error ctap_Init(ctap_InitArgs arg)
+ctp_result ctp_init(struct ctp_init_args args)
 {
-    if (arg.eventHandlerLog)
-    {
-        util_RegisterEventHandlerLog(EventTriggerLog);
-        gEventHandlersCtap.log = arg.eventHandlerLog;
-    }
-    if (arg.eventHandlerPanic)
-        util_RegisterEventHandlerPanic(arg.eventHandlerPanic);
-
-    const uint placeholder = 42;
-    switch (core_Init((core_InitArgs){.placeholder = placeholder}))
-    {
-        case core_Error_OK:
-            util_LOG_DEBUG("cor initialisation success.");
-            break;
-        case core_Error_MAP_INVALID: 
-        case core_Error_MODULE_LOAD_FAILURE: 
-            util_PANIC();
-    }
-
-    gStateCtap.placeholder = 1;
-
-    return ctap_Error_OK;
+    ctp_errno_get();
+    CTP_LOG_DEBUG("hello world");
+    CTP_GUARD(ctp_gfx_init((struct ctp_gfx_init_args) { .placeholder = 1 }));
+    return (args.placeholder) ? (ctp_result){CTP_RESULT_OK} : (ctp_result){CTP_RESULT_ERROR};
 }

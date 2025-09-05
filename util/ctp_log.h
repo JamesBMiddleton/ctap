@@ -1,7 +1,8 @@
 #ifndef CTP_LOG_H
 #define CTP_LOG_H
 
-extern int (*ctp_log_printf) (const char* format, ...); 
+int (*ctp_log_get_printf(void)) (const char* format, ...);
+void ctp_log_set_printf(int (*fn)(const char* format, ...));
 
 #define CTP_LOG_TOSTRING_(s) #s
 #define CTP_LOG_TOSTRING(s) CTP_LOG_TOSTRING_(s)
@@ -9,12 +10,18 @@ extern int (*ctp_log_printf) (const char* format, ...);
 
 #ifdef DEBUG
 #define CTP_LOG_DEBUG(msg)                                      \
-    do { ctp_log_printf("DEBUG | " __FILE__ ":" CTP_LOG_LINENUM_AS_STRING " | " #msg "\n" ); } while (0)
+    do { ctp_log_get_printf()("DEBUG | " __FILE__ ":" CTP_LOG_LINENUM_AS_STRING " | " #msg "\n" ); } while (0)
 #define CTP_LOGF_DEBUG(msg, ...)                                      \
-    do { ctp_log_printf("DEBUG | " __FILE__ ":" CTP_LOG_LINENUM_AS_STRING " | " #msg "\n", __VA_ARGS__); } while (0)
+    do { ctp_log_get_printf()("DEBUG | " __FILE__ ":" CTP_LOG_LINENUM_AS_STRING " | " #msg "\n", __VA_ARGS__); } while (0)
 #else
 #define CTP_LOG_DEBUG(...)
 #define CTP_LOGF_DEBUG(...)
 #endif
+
+#ifdef CTP_LOG_DEFINE
+static int (*log_printf) (const char* format, ...);
+int (*ctp_log_get_printf(void)) (const char* format, ...) { return log_printf; }
+void ctp_log_set_printf(int (*fn)(const char* format, ...)) { if (fn) log_printf = fn; }
+#endif // CTP_LOG_DEFINE
 
 #endif // CTP_LOG_H

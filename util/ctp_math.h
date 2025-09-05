@@ -5,7 +5,7 @@
 #define ctp_math_max(left, right) (((left) > (right)) ? (left) : (right))
 
 #define CTP_MATH_FLT_EQUAL_DELTA 1E-6F
-#define ctp_math_flt_equal(left, right)           \
+#define CTP_MATH_FLT_EQUAL(left, right)           \
     ((((left) - (right)) > -(FLT_EQUAL_DELTA)) && \
      (((left) - (right)) < (FLT_EQUAL_DELTA)))
 
@@ -13,9 +13,9 @@
  * @param val - pos/neg value.
  * @return absolute value.
  */
-static inline unsigned ctp_math_abs(const int val)
+static inline unsigned int ctp_math_abs(const int val)
 {
-    return (val < 0) ? -(unsigned)val : (unsigned)val;
+    return (val < 0) ? -(unsigned int)val : (unsigned int)val;
 }
 
 /*
@@ -23,7 +23,7 @@ static inline unsigned ctp_math_abs(const int val)
  * @param exp - exponent.
  * @return power.
  */
-static inline int ctp_math_powi(int base, unsigned exp)
+static inline int ctp_math_powi(int base, unsigned int exp)
 {
     int result = 1;
     while (1)
@@ -43,9 +43,9 @@ static inline int ctp_math_powi(int base, unsigned exp)
  * @param exp - exponent.
  * @return power.
  */
-static inline unsigned ctp_math_powu(unsigned base, unsigned exp)
+static inline unsigned int ctp_math_powu(unsigned int base, unsigned int exp)
 {
-    unsigned result = 1;
+    unsigned int result = 1;
     if (exp == 0)
         return result;
     while (1)
@@ -72,7 +72,7 @@ static inline float ctp_math_powf(float base, int exp)
     float result = 1;
     if (exp == 0)
         return result;
-    unsigned abs_exp = ctp_math_abs(exp);
+    unsigned int abs_exp = ctp_math_abs(exp);
     while (1)
     {
         if (abs_exp & 1U)
