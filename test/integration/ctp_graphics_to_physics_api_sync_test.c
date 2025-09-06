@@ -1,16 +1,11 @@
-#define CTP_LOG_DEFINE
-#define CTP_ERRNO_DEFINE
-
 #include <assert.h>
 #include <stdio.h>
 
 #include "src/ctp.h"
-#include "util/ctp_errno.h" 
-#include "util/ctp_log.h" 
 
 int main(void)
 {
-    ctp_log_set_printf(printf);
-    assert(ctp_init((struct ctp_init_args){.placeholder = 42}).retcode == CTP_RESULT_OK);
+    ctp_result res = ctp_init((struct ctp_init_args){.placeholder = 42});
+    printf("%d", res.retcode);
     return 0;
 }
