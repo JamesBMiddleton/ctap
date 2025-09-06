@@ -63,7 +63,7 @@ $(BUILD_DIR)/$(LIB_NAME).a: $(BUILD_DIR)/$(SRC_DIR) $(OBJS)
 $(BUILD_DIR)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-# Run the util test binaries, generating the test logs.
+# Run the utilities test binaries, generating the test logs.
 $(UTILTEST_LOGS): $(BUILD_DIR)/$(UTILTEST_DIR) $(UTILTEST_BINS) 
 	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
@@ -75,7 +75,7 @@ $(ITEST_LOGS): $(BUILD_DIR)/$(ITEST_DIR) $(ITEST_BINS)
 $(UTEST_LOGS): $(BUILD_DIR)/$(UTEST_DIR) $(UTEST_BINS) 
 	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
-# Build util test binaries
+# Build utilities test binaries.
 $(BUILD_DIR)/$(UTILTEST_DIR)/%: $(UTILTEST_DIR)/%.c
 	$(CC) $< -o $@ $(CFLAGS)
 
