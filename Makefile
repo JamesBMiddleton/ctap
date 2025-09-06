@@ -9,6 +9,7 @@ SRC_DIR := src
 BUILD_DIR := build
 UTEST_DIR := test/unit
 ITEST_DIR := test/integration
+UTILTEST_DIR := test/utilities
 
 CC := clang-19
 AR := ar
@@ -31,17 +32,19 @@ SRCS := $(shell find $(SRC_DIR) -name '*.c' -type f)
 OBJS := $(SRCS:%.c=$(BUILD_DIR)/%.o)
 ITESTS := $(shell find $(ITEST_DIR) -name '*.c' -type f)
 UTESTS := $(shell find $(UTEST_DIR) -name '*.c' -type f)
+UTIL_TESTS := $(shell find $(UTILTEST_DIR) -name '*.c' -type f)
 UTEST_BINS := $(UTESTS:%.c=$(BUILD_DIR)/%)
 UTEST_LOGS := $(patsubst %,%.log,$(UTEST_BINS))
 ITEST_BINS := $(ITESTS:%.c=$(BUILD_DIR)/%)
 ITEST_LOGS := $(patsubst %,%.log,$(ITEST_BINS))
+UTILTEST_BINS := $(UTIL_TESTS:%.c=$(BUILD_DIR)/%)
+UTILTEST_LOGS := $(patsubst %,%.log,$(UTILTEST_BINS))
 
 build: CFLAGS = $(RELEASE_CFLAGS)
 build: $(BUILD_DIR)/$(LIB_NAME).a
 
 check: CFLAGS = $(RELEASE_CFLAGS)
-check: $(ITEST_LOGS)
-# check: $(UTEST_LOGS) $(ITEST_LOGS)
+check: $(UTEST_LOGS) $(ITEST_LOGS) $(UTILTEST_LOGS)
 
 $(BUILD_DIR)/$(SRC_DIR):
 	mkdir -p $(BUILD_DIR)/$(SRC_DIR)
@@ -49,15 +52,20 @@ $(BUILD_DIR)/$(UTEST_DIR):
 	mkdir -p $(BUILD_DIR)/$(UTEST_DIR)
 $(BUILD_DIR)/$(ITEST_DIR):
 	mkdir -p $(BUILD_DIR)/$(ITEST_DIR)
+$(BUILD_DIR)/$(UTILTEST_DIR):
+	mkdir -p $(BUILD_DIR)/$(UTILTEST_DIR)
 
 # Create a static library archive.
 $(BUILD_DIR)/$(LIB_NAME).a: $(BUILD_DIR)/$(SRC_DIR) $(OBJS) 
 	$(AR) rcs $(BUILD_DIR)/$(LIB_NAME).a $(OBJS)
 
-# Build library object.
+# Build object files.
 $(BUILD_DIR)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.c
-	echo $<
 	$(CC) -c $< -o $@ $(CFLAGS)
+
+# Run the util test binaries, generating the test logs.
+$(UTILTEST_LOGS): $(BUILD_DIR)/$(UTILTEST_DIR) $(UTILTEST_BINS) 
+	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
 # Run the integration test binaries, generating the test logs.
 $(ITEST_LOGS): $(BUILD_DIR)/$(ITEST_DIR) $(ITEST_BINS) 
@@ -67,9 +75,13 @@ $(ITEST_LOGS): $(BUILD_DIR)/$(ITEST_DIR) $(ITEST_BINS)
 $(UTEST_LOGS): $(BUILD_DIR)/$(UTEST_DIR) $(UTEST_BINS) 
 	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
-# Build unit test binaries.
-$(BUILD_DIR)/$(UTEST_DIR)/%: $(UTEST_DIR)/%.c
+# Build util test binaries
+$(BUILD_DIR)/$(UTILTEST_DIR)/%: $(UTILTEST_DIR)/%.c
 	$(CC) $< -o $@ $(CFLAGS)
+
+# Build unit test binaries; test/unit/ctp_<module>_test.c + src/ctp_<module>_*.c 
+$(BUILD_DIR)/$(UTEST_DIR)/%: $(UTEST_DIR)/%.c
+	$(CC) $< $(patsubst $(UTEST_DIR)/%_test.c,$(SRC_DIR)/%*.c,$<) -o $@ $(CFLAGS)
 
 # Build integration test binaries.
 $(BUILD_DIR)/$(ITEST_DIR)/%: $(ITEST_DIR)/%.c $(BUILD_DIR)/$(LIB_NAME).a

@@ -1,4 +1,5 @@
 #include "ctp_gfx.h"
+#include "ctp_gfx_reflect.h"
 
 #include "util/ctp_guard.h"
 #include "util/ctp_log.h"
@@ -30,6 +31,7 @@ static ctp_result gfx_spaghettify_value(unsigned* value)
 ctp_result ctp_gfx_init(struct ctp_gfx_init_args args)
 {
     gfx_state.placeholder = args.placeholder;
+    CTP_GUARD(ctp_reflect_init());
     CTP_GUARD(gfx_spaghettify_value(&gfx_state.placeholder));
     CTP_GUARD(gfx_start_the_engines((struct gfx_engine_starter){.num_horses = args.placeholder}));
     CTP_LOG("Map loaded.");

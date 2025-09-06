@@ -67,7 +67,7 @@ static inline unsigned int ctp_math_powu(unsigned int base, unsigned int exp)
  * @param exp - exponent.
  * @return power.
  */
-static inline float ctp_math_powf_test(float base, int exp)
+static inline float ctp_math_powf(float base, int exp)
 {
     float result = 1;
     if (exp == 0)
