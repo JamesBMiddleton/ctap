@@ -6,8 +6,8 @@
 
 #define CTP_MATH_FLT_EQUAL_DELTA 1E-6F
 #define CTP_MATH_FLT_EQUAL(left, right)           \
-    ((((left) - (right)) > -(FLT_EQUAL_DELTA)) && \
-     (((left) - (right)) < (FLT_EQUAL_DELTA)))
+    ((((left) - (right)) > -(CTP_MATH_FLT_EQUAL_DELTA)) && \
+     (((left) - (right)) < (CTP_MATH_FLT_EQUAL_DELTA)))
 
 /*
  * @param val - pos/neg value.

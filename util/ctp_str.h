@@ -30,7 +30,7 @@ struct ctp_str_printf_va_list {
  * @param count - number of bytes to copy
  * @return copy destination
  */
-inline const void* ctp_str_memcpy(void* dest, const void* src, size_t count)
+static inline const void* ctp_str_memcpy(void* dest, const void* src, size_t count)
 {
     if (((size_t)src | (size_t)dest | count) & (sizeof(unsigned int) - 1))
     {
@@ -53,7 +53,7 @@ inline const void* ctp_str_memcpy(void* dest, const void* src, size_t count)
  * @param str - null terminated string.
  * @return length of str, null terminator not included.
  * */
-inline size_t ctp_str_len(const char* str)
+static inline size_t ctp_str_len(const char* str)
 {
     size_t len = 0;
     while (*str++ != '\0')
@@ -207,7 +207,6 @@ int ctp_str_printf(char* buf, size_t bufsz,
                 break;
             }
 
-            ++i_vals;
             ++format;
             const char specifier = *format++;
 
@@ -221,12 +220,12 @@ int ctp_str_printf(char* buf, size_t bufsz,
 
             switch (specifier)
             {
-                case 'c': *buf++ = va_list.elems[i_vals].c; continue;
-                case 'd': ctp_str_from_int(va_list.elems[i_vals].d, buf); break;
-                case 'u': ctp_str_from_uint(va_list.elems[i_vals].u, buf); break;
-                case 'f': ctp_str_from_float(va_list.elems[i_vals].f, buf, 3); break;
+                case 'c': *buf++ = va_list.elems[i_vals++].c; continue;
+                case 'd': ctp_str_from_int(va_list.elems[i_vals++].d, buf); break;
+                case 'u': ctp_str_from_uint(va_list.elems[i_vals++].u, buf); break;
+                case 'f': ctp_str_from_float(va_list.elems[i_vals++].f, buf, 3); break;
                 case 's': {
-                    const char* str = va_list.elems[i_vals].s;
+                    const char* str = va_list.elems[i_vals++].s;
                     do
                     {
                         *buf = *str;

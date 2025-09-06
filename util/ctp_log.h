@@ -10,9 +10,9 @@ void ctp_log_set_printf(int (*fn)(const char* format, ...));
 
 #ifdef DEBUG
 #define CTP_LOG(msg)                                      \
-    do { ctp_log_get_printf()("DEBUG | " __FILE__ ":" CTP_LOG_LINENUM_AS_STRING " | " #msg "\n" ); } while (0)
+    do { ctp_log_get_printf()(__FILE__ ":" CTP_LOG_LINENUM_AS_STRING " | " #msg "\n" ); } while (0)
 #define CTP_LOGF(msg, ...)                                      \
-    do { ctp_log_get_printf()("DEBUG | " __FILE__ ":" CTP_LOG_LINENUM_AS_STRING " | " #msg "\n", __VA_ARGS__); } while (0)
+    do { ctp_log_get_printf()(__FILE__ ":" CTP_LOG_LINENUM_AS_STRING " | " #msg "\n", __VA_ARGS__); } while (0)
 #else
 #define CTP_LOG(...)
 #define CTP_LOGF(...)
