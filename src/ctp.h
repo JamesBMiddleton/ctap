@@ -3,7 +3,7 @@
 
 #include "util/ctp_result.h"
 
-struct ctp_init_args{
+struct ctp_init_args {
     int placeholder;
     // map..
     // input_cb..
