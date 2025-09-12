@@ -1,17 +1,17 @@
-#ifndef CTP_STR_H
-#define CTP_STR_H
+#ifndef TAP_STR_H
+#define TAP_STR_H
 
 #include <stddef.h>
 
-#include "ctp_math.h"
+#include "tap_math.h"
 
-#define CTP_STR_NULL_TERMINATOR_SZ 1
-#define CTP_UINT_MAX_CHARS (10) // '4294967295'
-#define CTP_UINT_MAX_CHAR_THRESHOLD 1000000000
-#define CTP_STR_FLOAT_DECIMAL_CHARS (3)
-#define CTP_STR_NUMERIC_MAX_CHARS (1 + CTP_UINT_MAX_CHARS + 1 + CTP_STR_FLOAT_DECIMAL_CHARS) // '-2147483648.123'
+#define TAP_STR_NULL_TERMINATOR_SZ 1
+#define TAP_UINT_MAX_CHARS (10) // '4294967295'
+#define TAP_UINT_MAX_CHAR_THRESHOLD 1000000000
+#define TAP_STR_FLOAT_DECIMAL_CHARS (3)
+#define TAP_STR_NUMERIC_MAX_CHARS (1 + TAP_UINT_MAX_CHARS + 1 + TAP_STR_FLOAT_DECIMAL_CHARS) // '-2147483648.123'
 
-struct ctp_str_printf_va_list {
+typedef struct {
     union {
         const char* s;
         char c;
@@ -19,7 +19,7 @@ struct ctp_str_printf_va_list {
         unsigned int u;
         float f;
     } elems[5];
-};
+} TapStrPrintfVaList;
 
 /*
  * If aligned copy 32bit chunks from dest to src, else copy bytes.
@@ -30,7 +30,7 @@ struct ctp_str_printf_va_list {
  * @param count - number of bytes to copy
  * @return copy destination
  */
-static inline const void* ctp_str_memcpy(void* dest, const void* src, size_t count)
+static inline const void* tap_str_memcpy(void* dest, const void* src, size_t count)
 {
     if (((size_t)src | (size_t)dest | count) & (sizeof(unsigned int) - 1))
     {
@@ -53,7 +53,7 @@ static inline const void* ctp_str_memcpy(void* dest, const void* src, size_t cou
  * @param str - null terminated string.
  * @return length of str, null terminator not included.
  * */
-static inline size_t ctp_str_len(const char* str)
+static inline size_t tap_str_len(const char* str)
 {
     size_t len = 0;
     while (*str++ != '\0')
@@ -68,12 +68,12 @@ static inline size_t ctp_str_len(const char* str)
  * @param buf - destination string buffer
  * @return buf
  */
-char* ctp_str_from_uint(unsigned int val, char* buf)
+char* tap_str_from_uint(unsigned int val, char* buf)
 {
     static const unsigned char base = 10;
 
-    if (val >= CTP_UINT_MAX_CHAR_THRESHOLD)
-        buf += CTP_UINT_MAX_CHARS - 1;
+    if (val >= TAP_UINT_MAX_CHAR_THRESHOLD)
+        buf += TAP_UINT_MAX_CHARS - 1;
     else
         for (unsigned int digits = base; digits <= val; digits *= base)
             ++buf;
@@ -93,7 +93,7 @@ char* ctp_str_from_uint(unsigned int val, char* buf)
  * @param buf - destination string buffer
  * @return buf
  */
-char* ctp_str_from_int(int val, char* buf)
+char* tap_str_from_int(int val, char* buf)
 {
     static const unsigned char base = 10;
 
@@ -103,8 +103,8 @@ char* ctp_str_from_int(int val, char* buf)
         abs = -(unsigned int)val;
         *buf++ = '-';
     }
-    if (abs >= CTP_UINT_MAX_CHAR_THRESHOLD)
-        buf += CTP_UINT_MAX_CHARS - 1;
+    if (abs >= TAP_UINT_MAX_CHAR_THRESHOLD)
+        buf += TAP_UINT_MAX_CHARS - 1;
     else
         for (unsigned int digits = base; digits <= abs; digits *= base)
             ++buf;
@@ -126,30 +126,30 @@ char* ctp_str_from_int(int val, char* buf)
  * @param decimals - number of decimal places
  * @return buf
  */
-__attribute__((no_sanitize("undefined"))) char* ctp_str_from_float(const float val, char* buf,
+__attribute__((no_sanitize("undefined"))) char* tap_str_from_float(const float val, char* buf,
                                                                    unsigned char decimals)
 {
     static const float base = 10;
 
-    if (ctp_math_isnan(val))
+    if (tap_math_isnan(val))
     {
         static const char* nan = "NaN";
-        ctp_str_memcpy(buf, nan, ctp_str_len(nan) + CTP_STR_NULL_TERMINATOR_SZ);
+        tap_str_memcpy(buf, nan, tap_str_len(nan) + TAP_STR_NULL_TERMINATOR_SZ);
         return buf;
     }
 
-    if (ctp_math_isinf(val))
+    if (tap_math_isinf(val))
     {
         static const char* inf = "Inf";
-        ctp_str_memcpy(buf, inf, ctp_str_len(inf) + CTP_STR_NULL_TERMINATOR_SZ);
+        tap_str_memcpy(buf, inf, tap_str_len(inf) + TAP_STR_NULL_TERMINATOR_SZ);
         return buf;
     }
 
     int whole = (int)val;
-    float fraction = ctp_math_fabs((val - (float)whole));
-    char* start = ctp_str_from_int(whole, buf);
+    float fraction = tap_math_fabs((val - (float)whole));
+    char* start = tap_str_from_int(whole, buf);
 
-    buf += ctp_str_len(buf);
+    buf += tap_str_len(buf);
     *buf++ = '.';
 
     if (decimals--)
@@ -162,7 +162,7 @@ __attribute__((no_sanitize("undefined"))) char* ctp_str_from_float(const float v
         }
         while (decimals--)
             fraction *= base;
-        ctp_str_from_uint((unsigned int)fraction, buf);
+        tap_str_from_uint((unsigned int)fraction, buf);
     }
     else
         *buf = '\0';
@@ -171,7 +171,7 @@ __attribute__((no_sanitize("undefined"))) char* ctp_str_from_float(const float v
 
 /*
  * Takes format specifiers of type %d, %u, %f, %s or %c.
- * e.g. ctp_str_sprintf(buf, bufsz, "%f", (struct ctp_str_printf_va_list){.elems = {{.f = 43.0F}}})
+ * e.g. tap_str_sprintf(buf, bufsz, "%f", (TapStrPrintfVaList){.elems = {{.f = 43.0F}}})
  *
  * @param buf - the destination string buffer
  * @param bufsz - size of destination string buffer
@@ -179,8 +179,8 @@ __attribute__((no_sanitize("undefined"))) char* ctp_str_from_float(const float v
  * @param vals - struct wrapped array of format specifier values
  * @return - number of chars written or -1 on error
  */
-int ctp_str_printf(char* buf, size_t bufsz,
-                                const char* format, struct ctp_str_printf_va_list va_list)
+int tap_str_printf(char* buf, size_t bufsz,
+                                const char* format, TapStrPrintfVaList va_list)
 {
     int ret = 0;
     const char* first = buf;
@@ -211,8 +211,8 @@ int ctp_str_printf(char* buf, size_t bufsz,
             const char specifier = *format++;
 
             if (((specifier == 'd' || specifier == 'u' || specifier == 'f') &&
-                 (buf + CTP_STR_NUMERIC_MAX_CHARS) > last) ||
-                ((specifier == 's') && (buf + ctp_str_len(va_list.elems[i_vals].s) > last)))
+                 (buf + TAP_STR_NUMERIC_MAX_CHARS) > last) ||
+                ((specifier == 's') && (buf + tap_str_len(va_list.elems[i_vals].s) > last)))
             {
                 ret = -1;
                 break; // Destination buffer too small
@@ -221,9 +221,9 @@ int ctp_str_printf(char* buf, size_t bufsz,
             switch (specifier)
             {
                 case 'c': *buf++ = va_list.elems[i_vals++].c; continue;
-                case 'd': ctp_str_from_int(va_list.elems[i_vals++].d, buf); break;
-                case 'u': ctp_str_from_uint(va_list.elems[i_vals++].u, buf); break;
-                case 'f': ctp_str_from_float(va_list.elems[i_vals++].f, buf, 3); break;
+                case 'd': tap_str_from_int(va_list.elems[i_vals++].d, buf); break;
+                case 'u': tap_str_from_uint(va_list.elems[i_vals++].u, buf); break;
+                case 'f': tap_str_from_float(va_list.elems[i_vals++].f, buf, 3); break;
                 case 's': {
                     const char* str = va_list.elems[i_vals++].s;
                     do
@@ -236,11 +236,11 @@ int ctp_str_printf(char* buf, size_t bufsz,
                     *buf = '\0';
                     return -1; // Invalid specifier used.
             }
-            buf += ctp_str_len(buf);
+            buf += tap_str_len(buf);
         }
     }
     *buf = '\0';
     return ret;
 }
 
-#endif // CTP_STR_H
+#endif // TAP_STR_H

@@ -79,7 +79,7 @@ $(UTEST_LOGS): $(BUILD_DIR)/$(UTEST_DIR) $(UTEST_BINS)
 $(BUILD_DIR)/$(UTILTEST_DIR)/%: $(UTILTEST_DIR)/%.c
 	$(CC) $< -o $@ $(CFLAGS)
 
-# Build unit test binaries; test/unit/ctp_<module>_test.c + src/ctp_<module>_*.c 
+# Build unit test binaries; test/unit/tap_<module>_test.c + src/tap_<module>_*.c 
 $(BUILD_DIR)/$(UTEST_DIR)/%: $(UTEST_DIR)/%.c
 	$(CC) $< $(patsubst $(UTEST_DIR)/%_test.c,$(SRC_DIR)/%*.c,$<) -o $@ $(CFLAGS)
 

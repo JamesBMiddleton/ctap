@@ -1,11 +1,11 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "src/ctp.h"
+#include "src/tap.h"
 
 int main(void)
 {
-    ctp_result res = ctp_init((struct ctp_init_args){.placeholder = 42});
+    TapResult res = tap_init((TapInitOpt){.placeholder = 42});
     printf("%d", res.retcode);
     return 0;
 }
