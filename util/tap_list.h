@@ -1,9 +1,9 @@
 #ifndef TAP_LIST_H
 #define TAP_LIST_H
 
-typedef struct TapListHead_ {
-    struct TapListHead_ *next, *prev;
-} TapListHead;
+typedef struct TapList_ {
+    struct TapList_ *next, *prev;
+} TapList;
 
 // tap_list_init()
 // tap_list_move()
