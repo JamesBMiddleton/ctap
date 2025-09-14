@@ -9,4 +9,4 @@ typedef struct {
 
 TapResult tap_reflect_init(void);
 
-#endif // TAP_render_REFLECT_H
+#endif // TAP_RENDER_REFLECT_H

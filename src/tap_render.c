@@ -21,7 +21,7 @@ static TapResult render_start_the_engines(RenderEngineStarter starter)
 }
 
 // another placeholder comment
-static TapResult render_spaghettify_value(unsigned int* value)
+static TapResult render_spaghettify_value(unsigned int *value)
 {
     *value = 1010101;
     return (TapResult){TAP_RESULT_OK};
