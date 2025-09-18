@@ -7,8 +7,8 @@ typedef struct {
     int placeholder;
     // map..
     // input_cb..
-} TapInitOpt;
+} TapApiInitOpt;
 
-TapResult tap_init(TapInitOpt opt);
+TapResult tap_api_init(TapApiInitOpt opt);
 
 #endif // TAP_H
