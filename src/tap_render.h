@@ -4,9 +4,9 @@
 #include "util/tap_result.h"
 
 typedef struct {
-    unsigned placeholder;
+    unsigned int placeholder;
 } TapRenderInitOpt;
 
 TapResult tap_render_init(TapRenderInitOpt opt);
 
-#endif // TAP_RENDER_H
+#endif /* TAP_RENDER_H */

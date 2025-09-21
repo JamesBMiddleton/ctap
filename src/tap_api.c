@@ -9,7 +9,7 @@
 #include "util/tap_log.h"
 
 
-// Initialise the ctap runtime.
+/* Initialise the ctap runtime. */
 TapResult tap_api_init(TapApiInitOpt opt)
 {
     TapResult result = {TAP_RESULT_OK};
@@ -17,6 +17,7 @@ TapResult tap_api_init(TapApiInitOpt opt)
 
     tap_errno_get();
     TAP_LOG("hello world");
+    TAP_LOG1("hello world: ", 42);
 
     render_opts.placeholder = opt.placeholder;
     TAP_GUARD(tap_render_init(render_opts));

@@ -6,10 +6,10 @@
 #include "tap_math.h"
 
 #define TAP_STR_NULL_TERMINATOR_SZ 1
-#define TAP_UINT_MAX_CHARS (10) // '4294967295'
+#define TAP_UINT_MAX_CHARS (10) /* '4294967295' */
 #define TAP_UINT_MAX_CHAR_THRESHOLD 1000000000
 #define TAP_STR_FLOAT_DECIMAL_CHARS (3)
-#define TAP_STR_NUMERIC_MAX_CHARS (1 + TAP_UINT_MAX_CHARS + 1 + TAP_STR_FLOAT_DECIMAL_CHARS) // '-2147483648.123'
+#define TAP_STR_NUMERIC_MAX_CHARS (1 + TAP_UINT_MAX_CHARS + 1 + TAP_STR_FLOAT_DECIMAL_CHARS) /* '-2147483648.123' */
 
 typedef struct {
     union {
@@ -30,20 +30,22 @@ typedef struct {
  * @param count - number of bytes to copy
  * @return copy destination
  */
-static inline const void* tap_str_memcpy(void* dest, const void* src, size_t count)
+static const void* tap_str_memcpy(void* dest, const void* src, size_t count)
 {
+    size_t i;
+
     if (((size_t)src | (size_t)dest | count) & (sizeof(unsigned int) - 1))
     {
         const unsigned char* src_byte = (const unsigned char*)src;
         unsigned char* dest_byte = (unsigned char*)dest;
-        for (size_t i = 0; i < count; ++i)
+        for (i = 0; i < count; ++i)
             *(dest_byte++) = *(src_byte++);
     }
     else
     {
         const unsigned int* src_word = (const unsigned int*)src;
         unsigned int* dest_word = (unsigned int*)dest;
-        for (size_t i = 0; i < count; i += sizeof(unsigned int))
+        for (i = 0; i < count; i += sizeof(unsigned int))
             *(dest_word++) = *(src_word++);
     }
     return dest;
@@ -53,7 +55,7 @@ static inline const void* tap_str_memcpy(void* dest, const void* src, size_t cou
  * @param str - null terminated string.
  * @return length of str, null terminator not included.
  * */
-static inline size_t tap_str_len(const char* str)
+static size_t tap_str_len(const char* str)
 {
     size_t len = 0;
     while (*str++ != '\0')
@@ -68,14 +70,15 @@ static inline size_t tap_str_len(const char* str)
  * @param buf - destination string buffer
  * @return buf
  */
-char* tap_str_from_uint(unsigned int val, char* buf)
+static char* tap_str_from_uint(unsigned int val, char* buf)
 {
     static const unsigned char base = 10;
+    unsigned int digits;
 
     if (val >= TAP_UINT_MAX_CHAR_THRESHOLD)
         buf += TAP_UINT_MAX_CHARS - 1;
     else
-        for (unsigned int digits = base; digits <= val; digits *= base)
+        for (digits = base; digits <= val; digits *= base)
             ++buf;
     *++buf = '\0';
     do
@@ -93,11 +96,12 @@ char* tap_str_from_uint(unsigned int val, char* buf)
  * @param buf - destination string buffer
  * @return buf
  */
-char* tap_str_from_int(int val, char* buf)
+static char* tap_str_from_int(int val, char* buf)
 {
     static const unsigned char base = 10;
-
     unsigned int abs = (unsigned int)val;
+    unsigned int digits;
+
     if (val < 0)
     {
         abs = -(unsigned int)val;
@@ -106,7 +110,7 @@ char* tap_str_from_int(int val, char* buf)
     if (abs >= TAP_UINT_MAX_CHAR_THRESHOLD)
         buf += TAP_UINT_MAX_CHARS - 1;
     else
-        for (unsigned int digits = base; digits <= abs; digits *= base)
+        for (digits = base; digits <= abs; digits *= base)
             ++buf;
     *++buf = '\0';
     do
@@ -126,29 +130,29 @@ char* tap_str_from_int(int val, char* buf)
  * @param decimals - number of decimal places
  * @return buf
  */
-__attribute__((no_sanitize("undefined"))) char* tap_str_from_float(const float val, char* buf,
+__attribute__((no_sanitize("undefined"))) static char* tap_str_from_float(const float val, char* buf,
                                                                    unsigned char decimals)
 {
     static const float base = 10;
+    static const char* nan = "NaN";
+    static const char* inf = "Inf";
+    int whole = (int)val;
+    float fraction = tap_math_fabs((val - (float)whole));
+    char* start;
 
     if (tap_math_isnan(val))
     {
-        static const char* nan = "NaN";
         tap_str_memcpy(buf, nan, tap_str_len(nan) + TAP_STR_NULL_TERMINATOR_SZ);
         return buf;
     }
 
     if (tap_math_isinf(val))
     {
-        static const char* inf = "Inf";
         tap_str_memcpy(buf, inf, tap_str_len(inf) + TAP_STR_NULL_TERMINATOR_SZ);
         return buf;
     }
 
-    int whole = (int)val;
-    float fraction = tap_math_fabs((val - (float)whole));
-    char* start = tap_str_from_int(whole, buf);
-
+    start = tap_str_from_int(whole, buf);
     buf += tap_str_len(buf);
     *buf++ = '.';
 
@@ -176,23 +180,24 @@ __attribute__((no_sanitize("undefined"))) char* tap_str_from_float(const float v
  * @param buf - the destination string buffer
  * @param bufsz - size of destination string buffer
  * @param format - the string format
- * @param vals - struct wrapped array of format specifier values
+ * @param va_list - struct wrapped array of format specifier values
  * @return - number of chars written or -1 on error
  */
-int tap_str_printf(char* buf, size_t bufsz,
+static int tap_str_printf(char* buf, size_t bufsz,
                                 const char* format, TapStrPrintfVaList va_list)
 {
     int ret = 0;
-    const char* first = buf;
-    const char* last = buf + bufsz - 1;
     size_t i_vals = 0;
+    const char* last = buf + bufsz - 1;
+    const char* str;
+    /* char specifier; */
 
     while (*format != '\0')
     {
         if (buf == last)
         {
             ret = -1;
-            break; // We ran out of space in the destination buffer.
+            break; /* We ran out of space in the destination buffer. */
         }
 
         if (*format != '%')
@@ -203,19 +208,19 @@ int tap_str_printf(char* buf, size_t bufsz,
         {
             if (i_vals == (sizeof(va_list.elems) / sizeof(va_list.elems[0])))
             {
-                ret = -1; // Too many specifiers in format string.
+                ret = -1; /* Too many specifiers in format string. */
                 break;
             }
 
             ++format;
-            const char specifier = *format++;
+            char specifier = *format++;
 
             if (((specifier == 'd' || specifier == 'u' || specifier == 'f') &&
                  (buf + TAP_STR_NUMERIC_MAX_CHARS) > last) ||
                 ((specifier == 's') && (buf + tap_str_len(va_list.elems[i_vals].s) > last)))
             {
                 ret = -1;
-                break; // Destination buffer too small
+                break; /* Destination buffer too small */
             }
 
             switch (specifier)
@@ -225,7 +230,7 @@ int tap_str_printf(char* buf, size_t bufsz,
                 case 'u': tap_str_from_uint(va_list.elems[i_vals++].u, buf); break;
                 case 'f': tap_str_from_float(va_list.elems[i_vals++].f, buf, 3); break;
                 case 's': {
-                    const char* str = va_list.elems[i_vals++].s;
+                    str = va_list.elems[i_vals++].s;
                     do
                     {
                         *buf = *str;
@@ -234,7 +239,7 @@ int tap_str_printf(char* buf, size_t bufsz,
                 }
                 default:
                     *buf = '\0';
-                    return -1; // Invalid specifier used.
+                    return -1; /* Invalid specifier used. */
             }
             buf += tap_str_len(buf);
         }
@@ -243,4 +248,4 @@ int tap_str_printf(char* buf, size_t bufsz,
     return ret;
 }
 
-#endif // TAP_STR_H
+#endif /* TAP_STR_H */

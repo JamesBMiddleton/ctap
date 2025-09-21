@@ -20,6 +20,6 @@ void tap_errno_set(const TapErrno err) { tap_errno_value = err; }
 TapErrno tap_errno_get(void) { return tap_errno_value; }
 void tap_errno_source_set(const char *source) { tap_errno_source = source; }
 const char *tap_errno_source_get(void) { return tap_errno_source; }
-#endif // TAP_ERRNO_DEFINE
+#endif /* TAP_ERRNO_DEFINE */
 
-#endif // TAP_ERRNO_H
+#endif /* TAP_ERRNO_H */

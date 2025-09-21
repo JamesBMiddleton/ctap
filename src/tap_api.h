@@ -4,11 +4,9 @@
 #include "util/tap_result.h"
 
 typedef struct {
-    int placeholder;
-    // map..
-    // input_cb..
+    unsigned int placeholder;
 } TapApiInitOpt;
 
 TapResult tap_api_init(TapApiInitOpt opt);
 
-#endif // TAP_H
+#endif /* TAP_H */

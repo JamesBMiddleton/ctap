@@ -13,7 +13,7 @@
  * @param val - pos/neg value.
  * @return absolute value.
  */
-static inline unsigned int tap_math_abs(const int val)
+static unsigned int tap_math_abs(const int val)
 {
     return (val < 0) ? -(unsigned int)val : (unsigned int)val;
 }
@@ -23,7 +23,7 @@ static inline unsigned int tap_math_abs(const int val)
  * @param exp - exponent.
  * @return power.
  */
-static inline int tap_math_powi(int base, unsigned int exp)
+static int tap_math_powi(int base, unsigned int exp)
 {
     int result = 1;
     while (1)
@@ -43,7 +43,7 @@ static inline int tap_math_powi(int base, unsigned int exp)
  * @param exp - exponent.
  * @return power.
  */
-static inline unsigned int tap_math_powu(unsigned int base, unsigned int exp)
+static unsigned int tap_math_powu(unsigned int base, unsigned int exp)
 {
     unsigned int result = 1;
     if (exp == 0)
@@ -67,7 +67,7 @@ static inline unsigned int tap_math_powu(unsigned int base, unsigned int exp)
  * @param exp - exponent.
  * @return power.
  */
-static inline float tap_math_powf(float base, int exp)
+static float tap_math_powf(float base, int exp)
 {
     float result = 1;
     if (exp == 0)
@@ -89,7 +89,7 @@ static inline float tap_math_powf(float base, int exp)
  * @param val - pos/neg value.
  * @return absolute value.
  */
-static inline float tap_math_fabs(float val)
+static float tap_math_fabs(float val)
 {
     return (val < 0) ? -val : val;
 }
@@ -100,7 +100,7 @@ static inline float tap_math_fabs(float val)
  * @param val - potentially NaN float value.
  * @return 1 if NaN, else 0.
  */
-static inline int tap_math_isnan(const float val)
+static int tap_math_isnan(const float val)
 {
     return val != val;
 }
@@ -111,9 +111,9 @@ static inline int tap_math_isnan(const float val)
  * @param val - potentially infinite float value.
  * @return 1 if inifity, else 0.
  */
-static inline int tap_math_isinf(const float val)
+static int tap_math_isinf(const float val)
 {
     return !tap_math_isnan(val) && tap_math_isnan(val - val);
 }
 
-#endif // TAP_MATH_H
+#endif /* TAP_MATH_H */

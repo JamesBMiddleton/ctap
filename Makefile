@@ -14,19 +14,22 @@ UTILTEST_DIR := test/utilities
 
 CC := clang
 AR := ar rcs 
-CFLAGS := -std=c99 -g -I. -MMD
+CFLAGS := -std=c89 -g -I. -MMD
 RELEASE_CFLAGS := -O3 -flto -finline-functions \
 				  -ffunction-sections -fdata-sections \
 				  -ffreestanding \
+				  -ferror-limit=1 \
 				  $(CFLAGS)
 DEBUG_CFLAGS := -DDEBUG -O0 -Weverything -Werror -fsanitize=address \
 				-fsanitize=undefined -fno-omit-frame-pointer \
 				-fstack-protector-strong -fno-inline \
+				-ferror-limit=1 \
 				-Wno-declaration-after-statement \
 				-Wno-padded \
 				-Wno-unsafe-buffer-usage \
 				-Wno-switch-default \
 				-Wno-empty-translation-unit \
+				-Wno-unused-functions \
 				$(CFLAGS)
 
 SRCS := $(wildcard $(SRC_DIR)/*.c)
@@ -45,7 +48,8 @@ UTILTEST_LOGS := $(patsubst %,%.log,$(UTILTEST_BINS))
 # Include header dependency targets if they've been generated with -MMD.
 -include $(DEPS)
 
-build: CFLAGS = $(RELEASE_CFLAGS)
+# build: CFLAGS = $(RELEASE_CFLAGS)
+build: CFLAGS = $(DEBUG_CFLAGS)
 build: dirs $(BUILD_DIR)/$(LIB_NAME).a
 
 check: CFLAGS = $(RELEASE_CFLAGS)

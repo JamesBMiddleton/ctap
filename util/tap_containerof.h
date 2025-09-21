@@ -12,4 +12,4 @@
                    ((size_t) & (((type*)0)->member))))
 #endif
 
-#endif // TAP_CONTAINEROF_H
+#endif /* TAP_CONTAINEROF_H */
