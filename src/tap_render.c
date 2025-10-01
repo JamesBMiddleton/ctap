@@ -13,13 +13,26 @@ struct {
     unsigned int placeholder;
 } static render_state = {0};
 
+/* pure(ish) function, no global state access, output is always valid, pointers assumed valid, enums assumed valid. */
+static int render_infallible_function(int left, const int *right)
+{
+    return left + *right;
+}
+
 /* placeholder comment */
 static TapResult render_start_the_engines(RenderEngineStarter starter)
 {
     TapResult result = {TAP_RESULT_OK};
     if (starter.num_horses < 1)
         TAP_GUARD_BAIL(TAP_ERRNO_NULL);
-    return result; 
+
+    /* if readability significantly increases with a declaration in the code, do this. */
+    {
+        int tmp = 0;
+        render_infallible_function(1, &tmp);
+    }
+
+    return result;
 }
 
 /* another placeholder comment */
@@ -43,5 +56,5 @@ TapResult tap_render_init(TapRenderInitOpt opt)
     TAP_GUARD(render_spaghettify_value(&render_state.placeholder));
     TAP_GUARD(render_start_the_engines(starter));
     TAP_LOG("Map loaded.");
-    return result; 
+    return result;
 }
