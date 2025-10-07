@@ -56,12 +56,15 @@ static void tap_arena_destroy(TapArena *arena)
     if (arena == NULL)
         return;
 
-    do {
+    free(arena->data);
+    arena = arena->overflow;
+    while (arena != NULL)
+    {
         tmp = arena;
         arena = arena->overflow;
         free(tmp->data);
-        free(tmp); /* this is wrong on first loop, still pointing to function param !!! */
-    } while (arena->overflow != NULL);
+        free(tmp);
+    } 
 }
 
 #endif /* TAP_ARENA_H */
