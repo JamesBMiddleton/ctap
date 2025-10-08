@@ -12,12 +12,12 @@ typedef struct TapArena_ {
 } TapArena; 
 
 static TapArena tap_arena_create(size_t initial_capacity);
-static void *tap_arena_alloc_unsafe(TapArena *arena, size_t size, size_t align, size_t count);
+static void *tap_arena_alloc_aligned(TapArena *arena, size_t align, size_t size, size_t count);
 static void tap_arena_destroy(TapArena *arena);
 
-#define tap_arena_alloc(arena, type, count) (type *)tap_arena_alloc_raw(arena, sizeof(type), tap_alignof(type), count)
+#define tap_arena_alloc(arena, type, count) (type *)tap_arena_alloc_aligned(arena, tap_alignof(type), sizeof(type), count)
 
-TapArena arena_create(const size_t initial_capacity)
+TapArena tap_arena_create(const size_t initial_capacity)
 {
     TapArena arena = {0};
     arena.capacity = initial_capacity;
@@ -25,27 +25,37 @@ TapArena arena_create(const size_t initial_capacity)
         arena.data = (unsigned char *)malloc(1);
         arena.head = arena.data; /* ensure overflow on first allocation */
     #else
-        arena.data = (unsigned char *)malloc(initial_capacity);
-        arena.head = arena.data + initial_capacity;
+        arena.data = (unsigned char *)malloc(arena.capacity);
+        arena.head = arena.data + arena.capacity;
     #endif
     return arena;
 }
 
-static void *tap_arena_alloc_unsafe(TapArena *arena, const size_t size, const size_t align, const size_t count)
+static void *tap_arena_alloc_aligned(TapArena *arena, const size_t align, const size_t size, const size_t count)
 {
-    unsigned int offset = (size_t)arena->head % align;
+    unsigned char *new_head;
+    TapArena *overflow;
+    
     if (size == 0 || arena->data == NULL || arena->head == NULL)
         return NULL;
-    if (arena->data >= (arena->head - ((size * count) + offset))) /* this alignment check is wrong */
+
+    new_head = arena->head - (size * count);
+    new_head -= (size_t)new_head % align;
+    if (arena->data > new_head)
     {
-        /* swap to next TapArena, put this one in 'overflow' */
+        overflow = (TapArena *)malloc(sizeof(TapArena));
+        *overflow = *arena;
+        arena->overflow = overflow;
         #ifdef DEBUG
-            /* malloc(size) */
+            arena->capacity = size * count;
         #else
-            /* malloc(next->capacity * 2) */
+            arena->capacity *= 2;
         #endif
+        arena->data = (unsigned char *)malloc(arena->capacity);
+        arena->head = arena->data + arena->capacity;
+        return tap_arena_alloc_aligned(arena, size, align, count);
     }
-    arena->head -= size + offset; /* this alignment addition is wrong */
+    arena->head = new_head;
     return arena->head;
 }
 

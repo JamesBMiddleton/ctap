@@ -14,14 +14,15 @@ UTILTEST_DIR := test/utilities
 
 CC := clang
 AR := ar rcs 
-CFLAGS := -std=c89 -g -I. -MMD
-RELEASE_CFLAGS := -O3 -flto -finline-functions \
+CFLAGS := -std=c89 -I.
+SAN_FLAGS := -fsanitize=address -fsanitize=undefined 
+RELEASE_FLAGS := -O3 -flto -finline-functions \
 				  -ffunction-sections -fdata-sections \
 				  -ffreestanding \
-				  -ferror-limit=1 \
-				  $(CFLAGS)
-DEBUG_CFLAGS := -DDEBUG -O0 -Weverything -Werror -fsanitize=address \
-				-fsanitize=undefined -fno-omit-frame-pointer \
+				  -ferror-limit=1
+DEBUG_FLAGS := -DDEBUG -O0 
+TEST_FLAGS := -g3 -MMD -Weverything -Werror \
+				-fno-omit-frame-pointer \
 				-fstack-protector-strong -fno-inline \
 				-ferror-limit=1 \
 				-Wno-declaration-after-statement \
@@ -29,8 +30,8 @@ DEBUG_CFLAGS := -DDEBUG -O0 -Weverything -Werror -fsanitize=address \
 				-Wno-unsafe-buffer-usage \
 				-Wno-switch-default \
 				-Wno-empty-translation-unit \
-				-Wno-unused-functions \
-				$(CFLAGS)
+				-Wno-unused-function \
+				-Wno-poison-system-directories
 
 SRCS := $(wildcard $(SRC_DIR)/*.c)
 OBJS := $(SRCS:%.c=$(BUILD_DIR)/%.o)
@@ -45,14 +46,12 @@ UTEST_LOGS := $(patsubst %,%.log,$(UTEST_BINS))
 ITEST_LOGS := $(patsubst %,%.log,$(ITEST_BINS))
 UTILTEST_LOGS := $(patsubst %,%.log,$(UTILTEST_BINS))
 
-# Include header dependency targets if they've been generated with -MMD.
--include $(DEPS)
+all: build
 
-# build: CFLAGS = $(RELEASE_CFLAGS)
-build: CFLAGS = $(DEBUG_CFLAGS)
+build: ALL_FLAGS = $(RELEASE_FLAGS) $(CFLAGS)
 build: dirs $(BUILD_DIR)/$(LIB_NAME).a
 
-check: CFLAGS = $(RELEASE_CFLAGS)
+check: ALL_FLAGS = $(TEST_FLAGS) $(RELEASE_FLAGS) $(SAN_FLAGS) $(CFLAGS) 
 check: dirs $(UTEST_LOGS) $(ITEST_LOGS) $(UTILTEST_LOGS)
 
 dirs:
@@ -69,7 +68,7 @@ $(BUILD_DIR)/$(LIB_NAME).a: $(OBJS)
 
 # Build object files.
 $(BUILD_DIR)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) -c $< -o $@ $(CFLAGS)
+	$(CC) -c $< -o $@ $(ALL_FLAGS)
 
 # Run the utilities test binaries, generating the test logs.
 $(UTILTEST_LOGS): $(UTILTEST_BINS) 
@@ -85,15 +84,18 @@ $(UTEST_LOGS): $(UTEST_BINS)
 
 # Build utilities test binaries.
 $(BUILD_DIR)/$(UTILTEST_DIR)/%: $(UTILTEST_DIR)/%.c
-	$(CC) $< -o $@ $(CFLAGS)
+	$(CC) $< -o $@ $(ALL_FLAGS)
 
 # Build integration test binaries.
 $(BUILD_DIR)/$(ITEST_DIR)/%: $(ITEST_DIR)/%.c $(BUILD_DIR)/$(LIB_NAME).a
-	$(CC) $^ -o $@ $(CFLAGS)
+	$(CC) $^ -o $@ $(ALL_FLAGS)
 
 # Build unit test binaries; test/unit/tap_<module>_test.c + src/tap_<module>_*.c 
 $(BUILD_DIR)/$(UTEST_DIR)/%: $(UTEST_DIR)/%.c
-	$(CC) $< $(patsubst $(UTEST_DIR)/%_test.c,$(SRC_DIR)/%*.c,$<) -o $@ $(CFLAGS)
+	$(CC) $< $(patsubst $(UTEST_DIR)/%_test.c,$(SRC_DIR)/%*.c,$<) -o $@ $(ALL_FLAGS)
 
 clean:
 	-test -d $(BUILD_DIR) && rm -r $(BUILD_DIR)
+
+# Include header dependency targets if they've been generated with -MMD.
+-include $(DEPS)

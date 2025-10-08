@@ -14,8 +14,8 @@ void tap_log_set_printf(int (*fn)(const char* format, ...));
 #define TAP_LOG1(msg, one)                                      \
     do { tap_log_get_printf()(__FILE__ ":" TAP_LOG_LINENUM_AS_STRING " | " #msg "\n", one); } while (0)
 #else
-#define TAP_LOG(...)
-#define TAP_LOG1(...)
+#define TAP_LOG(msg)
+#define TAP_LOG1(msg, one)
 #endif
 
 #ifdef TAP_LOG_DEFINE
