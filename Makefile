@@ -52,7 +52,7 @@ all: build
 build: ALL_FLAGS = $(RELEASE_FLAGS) $(CFLAGS)
 build: dirs $(BUILD_DIR)/$(LIB_NAME).a
 
-check: ALL_FLAGS = $(TEST_FLAGS) $(RELEASE_FLAGS) $(SAN_FLAGS) $(CFLAGS) 
+check: ALL_FLAGS = $(TEST_FLAGS) $(RELEASE_FLAGS) $(SAN_FLAGS) $(CFLAGS)
 check: dirs $(UTEST_LOGS) $(ITEST_LOGS) $(UTILTEST_LOGS)
 
 dirs:

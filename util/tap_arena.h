@@ -36,7 +36,7 @@ static void *tap_arena_alloc_aligned(TapArena *arena, const size_t align, const 
     unsigned char *new_head;
     TapArena *overflow;
     
-    if (size == 0 || arena->data == NULL || arena->head == NULL)
+    if (size == 0 || count == 0 || arena == NULL || arena->data == NULL || arena->head == NULL || arena->capacity == 0)
         return NULL;
 
     new_head = arena->head - (size * count);
@@ -61,18 +61,22 @@ static void *tap_arena_alloc_aligned(TapArena *arena, const size_t align, const 
 
 static void tap_arena_destroy(TapArena *arena)
 {
-    TapArena *tmp = {0};
+    TapArena *tmp = arena;
 
     if (arena == NULL)
         return;
 
-    free(arena->data);
     arena = arena->overflow;
+    free(tmp->data);
+    tmp->data = NULL;
+    tmp->overflow = NULL;
     while (arena != NULL)
     {
         tmp = arena;
         arena = arena->overflow;
         free(tmp->data);
+        tmp->data = NULL;
+        tmp->overflow = NULL;
         free(tmp);
     } 
 }
