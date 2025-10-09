@@ -16,7 +16,8 @@
             #if defined(__MSC_VER)
                 #define tap_alignof(type) __alignof(type)
             #else
-                #define tap_alignof(type) sizeof(long) /* fallback to aligning on largest integer type */
+                /* fallback to aligning on the largest primitive type in use */
+                #define tap_alignof(type) sizeof(union { void *p; long l; double d; }) 
             #endif
         #endif
     #endif
