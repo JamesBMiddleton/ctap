@@ -1,9 +1,4 @@
 SHELL = /bin/sh
-
-.SILENT:
-
-.PHONY: dirs build check analyze clean
-
 LIB_NAME := ctap
 SRC_DIR := src
 TEST_DIR := test
@@ -35,16 +30,22 @@ TEST_FLAGS := -g3 -MMD -Weverything -Werror \
 
 SRCS := $(wildcard $(SRC_DIR)/*.c)
 OBJS := $(SRCS:%.c=$(BUILD_DIR)/%.o)
-DEPS = $(OBJS:.o=.d)
-ITESTS := $(wildcard $(ITEST_DIR)/*.c)
-UTESTS := $(wildcard $(UTEST_DIR)/*.c)
-UTILTESTS := $(wildcard $(UTILTEST_DIR)/*.c)
-UTEST_BINS := $(UTESTS:%.c=$(BUILD_DIR)/%)
-ITEST_BINS := $(ITESTS:%.c=$(BUILD_DIR)/%)
-UTILTEST_BINS := $(UTILTESTS:%.c=$(BUILD_DIR)/%)
-UTEST_LOGS := $(patsubst %,%.log,$(UTEST_BINS))
-ITEST_LOGS := $(patsubst %,%.log,$(ITEST_BINS))
-UTILTEST_LOGS := $(patsubst %,%.log,$(UTILTEST_BINS))
+
+UTEST_SRCS := $(wildcard $(UTEST_DIR)/*.c)
+UTEST_BINS := $(UTEST_SRCS:%.c=$(BUILD_DIR)/%)
+UTEST_LOGS := $(UTEST_BINS:%=%.log)
+
+ITEST_SRCS := $(wildcard $(ITEST_DIR)/*.c)
+ITEST_BINS := $(ITEST_SRCS:%.c=$(BUILD_DIR)/%)
+ITEST_LOGS := $(ITEST_BINS:%=%.log)
+
+UTILTEST_SRCS := $(wildcard $(UTILTEST_DIR)/*.c)
+UTILTEST_BINS := $(UTILTEST_SRCS:%.c=$(BUILD_DIR)/%)
+UTILTEST_LOGS := $(UTILTEST_BINS:%=%.log)
+
+.SILENT:
+.PHONY: dirs build check clean
+.PRECIOUS: $(UTEST_BINS) $(UTILTEST_BINS) $(ITEST_BINS)
 
 all: build
 
@@ -71,16 +72,16 @@ $(BUILD_DIR)/$(SRC_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) -c $< -o $@ $(ALL_FLAGS)
 
 # Run the utilities test binaries, generating the test logs.
-$(UTILTEST_LOGS): $(UTILTEST_BINS) 
-	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
+$(BUILD_DIR)/$(UTILTEST_DIR)/%.log: $(BUILD_DIR)/$(UTILTEST_DIR)/% 
+	{ $< > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
 # Run the integration test binaries, generating the test logs.
-$(ITEST_LOGS): $(ITEST_BINS) 
-	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
+$(BUILD_DIR)/$(ITEST_DIR)/%.log: $(BUILD_DIR)/$(ITEST_DIR)/%
+	{ $< > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
 # Run the unit test binaries, generating the test logs.
-$(UTEST_LOGS): $(UTEST_BINS) 
-	{ $(patsubst %.log,%,$@) > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
+$(BUILD_DIR)/$(UTEST_DIR)/%.log: $(BUILD_DIR)/$(UTEST_DIR)/% 
+	{ $< > $@ 2>&1 && echo "PASS: $@"; } || echo "FAIL: $@"
 
 # Build utilities test binaries.
 $(BUILD_DIR)/$(UTILTEST_DIR)/%: $(UTILTEST_DIR)/%.c
@@ -98,4 +99,7 @@ clean:
 	-test -d $(BUILD_DIR) && rm -r $(BUILD_DIR)
 
 # Include header dependency targets if they've been generated with -MMD.
--include $(DEPS)
+-include $(OBJS:.o=.d)
+-include $(UTEST_BINS:%=%.d)
+-include $(ITEST_BINS:%=%.d)
+-include $(UTILTEST_BINS:%=%.d)
