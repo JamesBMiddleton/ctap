@@ -58,6 +58,18 @@ static void tap_arena_alloc_aligned_test(void)
     assert(arena.overflow == NULL);
     tap_arena_destroy(&arena);
 
+    /* Overflow capacities increase predictably. */
+    arena = tap_arena_create(sizeof(int));
+    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 1);
+    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 2);
+    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 4);
+    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 8);
+    assert(arena.overflow != NULL);
+    assert(arena.overflow->overflow != NULL);
+    assert(arena.overflow->overflow->overflow != NULL);
+    assert(arena.overflow->overflow->overflow->overflow == NULL);
+    tap_arena_destroy(&arena);
+
 }
 
 static void tap_arena_alloc_test(void)

@@ -33,15 +33,15 @@ TapArena tap_arena_create(const size_t initial_capacity)
 
 static void *tap_arena_alloc_aligned(TapArena *arena, const size_t align, const size_t size, const size_t count)
 {
-    unsigned char *new_head;
-    TapArena *overflow;
+    unsigned char *new_head = NULL;
+    TapArena *overflow = NULL;
     
     if (size == 0 || count == 0 || arena == NULL || arena->data == NULL || arena->head == NULL || arena->capacity == 0)
         return NULL;
 
     new_head = arena->head - (size * count);
     new_head -= (size_t)new_head % align;
-    if (arena->data > new_head)
+    while (arena->data > new_head)
     {
         overflow = (TapArena *)malloc(sizeof(TapArena));
         *overflow = *arena;
@@ -53,7 +53,8 @@ static void *tap_arena_alloc_aligned(TapArena *arena, const size_t align, const 
         #endif
         arena->data = (unsigned char *)malloc(arena->capacity);
         arena->head = arena->data + arena->capacity;
-        return tap_arena_alloc_aligned(arena, size, align, count);
+        new_head = arena->head - (size * count);
+        new_head -= (size_t)new_head % align;
     }
     arena->head = new_head;
     return arena->head;
