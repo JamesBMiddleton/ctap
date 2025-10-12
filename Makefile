@@ -25,8 +25,11 @@ TEST_FLAGS := -g3 -MMD -Weverything -Werror \
 				-Wno-unsafe-buffer-usage \
 				-Wno-switch-default \
 				-Wno-empty-translation-unit \
+				-Wno-poison-system-directories \
+				-Wno-pre-c23-compat \
+				-Wno-pre-c11-compat \
 				-Wno-unused-function \
-				-Wno-poison-system-directories
+				-Wno-unused-local-typedef
 
 SRCS := $(wildcard $(SRC_DIR)/*.c)
 OBJS := $(SRCS:%.c=$(BUILD_DIR)/%.o)

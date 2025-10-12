@@ -36,7 +36,7 @@ ContinuationIndentWidth: 4
 DerivePointerAlignment: false
 IndentCaseLabels: true
 IndentGotoLabels: false
-IndentPPDirectives: None
+IndentPPDirectives: BeforeHash
 IndentWidth: 4
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: false

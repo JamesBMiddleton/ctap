@@ -6,7 +6,7 @@ typedef struct {
     short j;
     long k;
     char c;
-} ArenaStructTest;
+} Foo;
 
 static void tap_arena_alloc_create_test(void)
 {
@@ -33,55 +33,56 @@ static void tap_arena_alloc_aligned_test(void)
 
     /* Standard allocation. */
     arena = tap_arena_create(4096);
-    assert(tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 42) != NULL);
+    assert(tap_arena_alloc_aligned(&arena, tap_def_alignof(int), sizeof(int), 42) != NULL);
     tap_arena_destroy(&arena);
 
     /* No overflow if capacity if sufficient for allocation. */
     arena = tap_arena_create(sizeof(int));
-    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 1);
+    tap_arena_alloc_aligned(&arena, tap_def_alignof(int), sizeof(int), 1);
     assert(arena.overflow == NULL);
     tap_arena_destroy(&arena);
 
     /* We overflow correctly to maintain correct alignment of allocated types. */
     arena = tap_arena_create(sizeof(int) + sizeof(char) + sizeof(int));
-    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 1);
-    tap_arena_alloc_aligned(&arena, tap_alignof(char), sizeof(char), 1);
-    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 1);
+    tap_arena_alloc_aligned(&arena, tap_def_alignof(int), sizeof(int), 1);
+    tap_arena_alloc_aligned(&arena, tap_def_alignof(char), sizeof(char), 1);
+    tap_arena_alloc_aligned(&arena, tap_def_alignof(int), sizeof(int), 1);
     assert(arena.overflow != NULL);
     tap_arena_destroy(&arena);
 
     /* No overflow if initial capacity accounts for alignment requirements. */
-    arena = tap_arena_create(sizeof(int) + sizeof(char) + (tap_alignof(int) - sizeof(char)) + sizeof(int));
-    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 1);
-    tap_arena_alloc_aligned(&arena, tap_alignof(char), sizeof(char), 1);
-    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 1);
+    arena = tap_arena_create(sizeof(int) + sizeof(char) + (tap_def_alignof(int) - sizeof(char)) + sizeof(int));
+    tap_arena_alloc_aligned(&arena, tap_def_alignof(int), sizeof(int), 1);
+    tap_arena_alloc_aligned(&arena, tap_def_alignof(char), sizeof(char), 1);
+    tap_arena_alloc_aligned(&arena, tap_def_alignof(int), sizeof(int), 1);
     assert(arena.overflow == NULL);
+    tap_arena_alloc_aligned(&arena, 1, 1, 1); /* A single byte should now cause an overflow. */
+    assert(arena.overflow != NULL);
     tap_arena_destroy(&arena);
 
     /* Overflow capacities increase predictably. */
     arena = tap_arena_create(sizeof(int));
-    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 1);
-    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 2);
-    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 4);
-    tap_arena_alloc_aligned(&arena, tap_alignof(int), sizeof(int), 8);
+    tap_arena_alloc_aligned(&arena, tap_def_alignof(int), sizeof(int), 1);
+    tap_arena_alloc_aligned(&arena, tap_def_alignof(int), sizeof(int), 2);
+    tap_arena_alloc_aligned(&arena, tap_def_alignof(int), sizeof(int), 4);
+    tap_arena_alloc_aligned(&arena, tap_def_alignof(int), sizeof(int), 8);
     assert(arena.overflow != NULL);
     assert(arena.overflow->overflow != NULL);
     assert(arena.overflow->overflow->overflow != NULL);
     assert(arena.overflow->overflow->overflow->overflow == NULL);
     tap_arena_destroy(&arena);
-
 }
 
 static void tap_arena_alloc_test(void)
 {
     int *integer = NULL;
-    ArenaStructTest *structure = NULL;
+    Foo *structure = NULL;
     char *array = NULL;
     TapArena arena = tap_arena_create(4096);
 
     integer = tap_arena_alloc(&arena, int, 1);
     assert(integer != NULL);
-    structure = tap_arena_alloc(&arena, ArenaStructTest, 1);
+    structure = tap_arena_alloc(&arena, Foo, 1);
     assert(structure != NULL);
     array = tap_arena_alloc(&arena, char, 10);
     assert(array != NULL);
@@ -104,9 +105,9 @@ static void tap_arena_alloc_destroy_test(void)
 int main(void)
 {
     tap_arena_alloc_create_test();
-    #ifndef DEBUG /* Debug mode changes arena allocation behaviour for sanitizer support, invaliding this test. */
+#ifndef DEBUG /* Debug mode changes arena allocation behaviour for sanitizer support, invaliding this test. */
     tap_arena_alloc_aligned_test();
-    #endif
+#endif
     tap_arena_alloc_test();
     tap_arena_alloc_destroy_test();
     return 0;

@@ -1,8 +1,9 @@
 #ifndef TAP_ARENA_H
 #define TAP_ARENA_H
 
-#include "tap_alignof.h"
-#include <stdlib.h>
+#include "tap_def.h"
+#include "tap_malloc.h"
+#include <stddef.h>
 
 typedef struct TapArena_ {
     size_t capacity;
@@ -14,18 +15,17 @@ typedef struct TapArena_ {
 static TapArena tap_arena_create(size_t initial_capacity);
 static void *tap_arena_alloc_aligned(TapArena *arena, size_t align, size_t size, size_t count);
 static void tap_arena_destroy(TapArena *arena);
-
-#define tap_arena_alloc(arena, type, count) (type *)tap_arena_alloc_aligned(arena, tap_alignof(type), sizeof(type), count)
+#define tap_arena_alloc(arena, type, count) (type *)tap_arena_alloc_aligned(arena, tap_def_alignof(type), sizeof(type), count)
 
 TapArena tap_arena_create(const size_t initial_capacity)
 {
     TapArena arena = {0};
     arena.capacity = initial_capacity;
     #ifdef DEBUG
-        arena.data = (unsigned char *)malloc(1);
+        arena.data = (unsigned char *)TAP_MALLOC(1);
         arena.head = arena.data; /* ensure overflow on first allocation */
     #else
-        arena.data = (unsigned char *)malloc(arena.capacity);
+        arena.data = (unsigned char *)TAP_MALLOC(arena.capacity);
         arena.head = arena.data + arena.capacity;
     #endif
     return arena;
@@ -43,7 +43,9 @@ static void *tap_arena_alloc_aligned(TapArena *arena, const size_t align, const 
     new_head -= (size_t)new_head % align;
     while (arena->data > new_head)
     {
-        overflow = (TapArena *)malloc(sizeof(TapArena));
+        overflow = (TapArena *)TAP_MALLOC(sizeof(TapArena));
+        if (overflow == NULL)
+            return NULL;
         *overflow = *arena;
         arena->overflow = overflow;
         #ifdef DEBUG
@@ -51,7 +53,9 @@ static void *tap_arena_alloc_aligned(TapArena *arena, const size_t align, const 
         #else
             arena->capacity *= 2;
         #endif
-        arena->data = (unsigned char *)malloc(arena->capacity);
+        arena->data = (unsigned char *)TAP_MALLOC(arena->capacity);
+        if (arena->data == NULL)
+            return NULL;
         arena->head = arena->data + arena->capacity;
         new_head = arena->head - (size * count);
         new_head -= (size_t)new_head % align;
