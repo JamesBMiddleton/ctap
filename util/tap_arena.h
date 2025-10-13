@@ -3,7 +3,6 @@
 
 #include "tap_def.h"
 #include "tap_malloc.h"
-#include <stddef.h>
 
 typedef struct TapArena_ {
     size_t capacity;

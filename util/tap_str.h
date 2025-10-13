@@ -1,8 +1,7 @@
 #ifndef TAP_STR_H
 #define TAP_STR_H
 
-#include <stddef.h>
-
+#include "tap_def.h"
 #include "tap_math.h"
 
 #define TAP_STR_NULL_TERMINATOR_SZ 1

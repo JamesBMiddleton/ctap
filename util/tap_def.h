@@ -64,4 +64,9 @@
     #define tap_def_static_assert(cond, msg) typedef char tap_def_static_assert_##msg[(cond) ? 1 : -1]
 #endif
 
+#ifndef tap_def_assert
+    #include <assert.h>
+    #define tap_def_assert(cond) assert(cond)
+#endif
+
 #endif /* TAP_DEF_H */

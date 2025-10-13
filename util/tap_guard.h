@@ -1,8 +1,7 @@
 #ifndef TAP_GUARD_H
 #define TAP_GUARD_H
 
-#include <stddef.h>
-
+#include "tap_def.h"
 #include "tap_errno.h"
 #include "tap_result.h"
 

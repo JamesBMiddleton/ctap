@@ -1,6 +1,8 @@
 #ifndef TAP_LIST_H
 #define TAP_LIST_H
 
+#include "tap_def.h"
+
 typedef struct TapList_ {
     struct TapList_ *prev, *next;
 } TapList;
@@ -15,11 +17,17 @@ static void tap_list_clear(TapList *anchor);
 
 void tap_list_init(TapList *node) 
 { 
+    /* Ensure the node isn't already part of a list */
+    tap_def_assert(node->prev == NULL || node->prev == node);
+    tap_def_assert(node->next == NULL || node->next == node);
     node->prev = node; node->next = node; 
 }
 
 void tap_list_insert(TapList *node, TapList *new)
 {	
+    /* Ensure the new node isn't already part of a list */
+    tap_def_assert(new->prev == NULL || new->prev == new);
+    tap_def_assert(new->next == NULL || new->next == new);
 	new->next = node->next;
 	new->prev = node;
     node->next->prev = new;
@@ -30,8 +38,8 @@ void tap_list_remove(TapList *node)
 {
     node->prev->next = node->next;
     node->next->prev = node->prev;
-    node->prev = (void *)0x00100100; /* page-fault poison */
-    node->prev = (void *)0x00200200; /* page-fault poison */
+    node->prev = NULL;
+    node->next = NULL;
 }
 
 void tap_list_clear(TapList *anchor)

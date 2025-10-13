@@ -6,4 +6,4 @@
     #define TAP_MALLOC(bytes) malloc(bytes)
 #endif
 
-#endif /* TAP_ARENA_H */
+#endif /* TAP_MALLOC_H */

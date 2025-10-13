@@ -51,7 +51,8 @@ static void tap_arena_alloc_aligned_test(void)
     tap_arena_destroy(&arena);
 
     /* No overflow if initial capacity accounts for alignment requirements. */
-    arena = tap_arena_create(sizeof(int) + sizeof(char) + (tap_def_alignof(int) - sizeof(char)) + sizeof(int));
+    arena = tap_arena_create(sizeof(int) + ((tap_def_alignof(char) - sizeof(int)) % tap_def_alignof(char)) + sizeof(char) +
+                             ((tap_def_alignof(int) - sizeof(char)) % tap_def_alignof(int)) + sizeof(int));
     tap_arena_alloc_aligned(&arena, tap_def_alignof(int), sizeof(int), 1);
     tap_arena_alloc_aligned(&arena, tap_def_alignof(char), sizeof(char), 1);
     tap_arena_alloc_aligned(&arena, tap_def_alignof(int), sizeof(int), 1);
