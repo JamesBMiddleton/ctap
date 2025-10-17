@@ -1,7 +1,8 @@
 #ifndef TAP_LIST_H
 #define TAP_LIST_H
 
-#include "tap_def.h"
+#include "tap_assert.h"
+#include <stddef.h>
 
 typedef struct TapList_ {
     struct TapList_ *prev, *next;
@@ -15,23 +16,24 @@ static void tap_list_clear(TapList *anchor);
 #define tap_list_for_each_safe(anchor, iter, itertmp) \
     for ((iter) = (anchor)->next, (itertmp) = (iter)->next; (iter) != (anchor); (iter) = (itertmp), (itertmp) = (iter)->next)
 
-void tap_list_init(TapList *node) 
-{ 
+void tap_list_init(TapList *node)
+{
     /* Ensure the node isn't already part of a list */
-    tap_def_assert(node->prev == NULL || node->prev == node);
-    tap_def_assert(node->next == NULL || node->next == node);
-    node->prev = node; node->next = node; 
+    TAP_ASSERT(node->prev == NULL || node->prev == node);
+    TAP_ASSERT(node->next == NULL || node->next == node);
+    node->prev = node;
+    node->next = node;
 }
 
 void tap_list_insert(TapList *node, TapList *new)
-{	
+{
     /* Ensure the new node isn't already part of a list */
-    tap_def_assert(new->prev == NULL || new->prev == new);
-    tap_def_assert(new->next == NULL || new->next == new);
-	new->next = node->next;
-	new->prev = node;
+    TAP_ASSERT(new->prev == NULL || new->prev == new);
+    TAP_ASSERT(new->next == NULL || new->next == new);
+    new->next = node->next;
+    new->prev = node;
     node->next->prev = new;
-	node->next = new;
+    node->next = new;
 }
 
 void tap_list_remove(TapList *node)

@@ -106,7 +106,7 @@ static void tap_arena_alloc_destroy_test(void)
 int main(void)
 {
     tap_arena_alloc_create_test();
-#ifndef DEBUG /* Debug mode changes arena allocation behaviour for sanitizer support, invaliding this test. */
+#ifndef TAP_DEBUG /* Debug mode changes arena allocation behaviour for sanitizer support, invaliding this test. */
     tap_arena_alloc_aligned_test();
 #endif
     tap_arena_alloc_test();

@@ -1,8 +1,9 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "util/tap_log.h"
 #include "src/tap_api.h"
+#include "util/tap_assert.h"
+#include "util/tap_log.h"
 
 int main(void)
 {
@@ -15,5 +16,7 @@ int main(void)
     result = tap_api_init(opts);
 
     printf("%d", result.retcode);
+
+    TAP_ASSERT(1 == 1);
     return 0;
 }

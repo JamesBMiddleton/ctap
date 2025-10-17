@@ -13,10 +13,9 @@ CFLAGS := -std=c89 -I.
 SAN_FLAGS := -fsanitize=address -fsanitize=undefined 
 RELEASE_FLAGS := -O3 -flto -finline-functions \
 				  -ffunction-sections -fdata-sections \
-				  -ffreestanding \
-				  -ferror-limit=1
-DEBUG_FLAGS := -DDEBUG -O0 
-TEST_FLAGS := -g3 -MMD -Weverything -Werror \
+				  -ffreestanding
+DEBUG_FLAGS :=  -DTAP_DEBUG -O0 
+TEST_FLAGS := 	-g3 -MMD -Weverything -Werror \
 				-fno-omit-frame-pointer \
 				-fstack-protector-strong -fno-inline \
 				-ferror-limit=1 \
@@ -55,7 +54,7 @@ all: build
 build: ALL_FLAGS = $(RELEASE_FLAGS) $(CFLAGS)
 build: dirs $(BUILD_DIR)/$(LIB_NAME).a
 
-check: ALL_FLAGS = $(TEST_FLAGS) $(RELEASE_FLAGS) $(SAN_FLAGS) $(CFLAGS)
+check: ALL_FLAGS = $(RELEASE_FLAGS) $(TEST_FLAGS) $(SAN_FLAGS) $(CFLAGS)
 check: dirs $(UTEST_LOGS) $(ITEST_LOGS) $(UTILTEST_LOGS)
 
 dirs:

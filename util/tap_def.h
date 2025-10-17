@@ -58,15 +58,7 @@
 #ifndef tap_def_containerof
     #define tap_def_containerof(ptr, type, member)                                        \
         ((type *)(void *)((unsigned char *)(ptr) - offsetof(type, member))); /* NOLINT */ \
-        tap_def_static_assert(tap_def_sametype(((type *)0)->member, *(ptr)), ptr_member_type_mismatch)
-#endif
-#ifndef tap_def_static_assert
-    #define tap_def_static_assert(cond, msg) typedef char tap_def_static_assert_##msg[(cond) ? 1 : -1]
-#endif
-
-#ifndef tap_def_assert
-    #include <assert.h>
-    #define tap_def_assert(cond) assert(cond)
+        typedef char tap_def_containerof_ptr_member_type_mismatch[(tap_def_sametype(((type *)0)->member, *(ptr))) ? 1 : -1]
 #endif
 
 #endif /* TAP_DEF_H */

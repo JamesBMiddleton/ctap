@@ -20,7 +20,7 @@ TapArena tap_arena_create(const size_t initial_capacity)
 {
     TapArena arena = {0};
     arena.capacity = initial_capacity;
-    #ifdef DEBUG
+    #ifdef TAP_DEBUG
         arena.data = (unsigned char *)TAP_MALLOC(1);
         arena.head = arena.data; /* ensure overflow on first allocation */
     #else
@@ -47,7 +47,7 @@ static void *tap_arena_alloc_aligned(TapArena *arena, const size_t align, const 
             return NULL;
         *overflow = *arena;
         arena->overflow = overflow;
-        #ifdef DEBUG
+        #ifdef TAP_DEBUG
             arena->capacity = size * count;
         #else
             arena->capacity *= 2;

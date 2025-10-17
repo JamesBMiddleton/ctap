@@ -1,5 +1,7 @@
-#include "util/tap_list.h"
+#define TAP_LOG_DEFINE
+
 #include "util/tap_def.h"
+#include "util/tap_list.h"
 #include <assert.h>
 #include <stdio.h>
 
@@ -46,7 +48,7 @@ static void tap_list_test(void)
         assert(pile_of_wheels[4].wheels_node.next != NULL);
         assert(pile_of_wheels[4].wheels_node.prev != NULL);
     }
-    
+
     {
         tap_list_remove(car.wheels_anchor.next);
         Wheel *wheel = tap_def_containerof(car.wheels_anchor.next, Wheel, wheels_node);
@@ -62,6 +64,7 @@ static void tap_list_test(void)
 
 int main(void)
 {
+    tap_log_set_printf(printf);
     tap_list_test();
     return 0;
 }
