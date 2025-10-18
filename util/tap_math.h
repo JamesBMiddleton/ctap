@@ -1,13 +1,23 @@
 #ifndef TAP_MATH_H
 #define TAP_MATH_H
 
-#define tap_math_min(left, right) (((left) < (right)) ? (left) : (right))
-#define tap_math_max(left, right) (((left) > (right)) ? (left) : (right))
+#include <math.h> /* Temporary! */
 
-#define TAP_MATH_FLT_EQUAL_DELTA 1E-6F
-#define TAP_MATH_FLT_EQUAL(left, right)           \
-    ((((left) - (right)) > -(TAP_MATH_FLT_EQUAL_DELTA)) && \
-     (((left) - (right)) < (TAP_MATH_FLT_EQUAL_DELTA)))
+static unsigned int tap_math_abs(int val);
+static int tap_math_powi(int base, unsigned int exp);
+static unsigned int tap_math_powu(unsigned int base, unsigned int exp);
+static float tap_math_powf(float base, int exp);
+static float tap_math_fabs(float val);
+static int tap_math_isnan(float val);
+static int tap_math_isinf(float val);
+static float tap_math_cos(float angle);
+
+#ifndef TAP_MATH_EQUAL_FLOAT_DELTA
+    #define TAP_MATH_EQUAL_FLOAT_DELTA 1E-6F
+#endif
+#define TAP_MATH_MIN(left, right) (((left) < (right)) ? (left) : (right))
+#define TAP_MATH_MAX(left, right) (((left) > (right)) ? (left) : (right))
+#define TAP_MATH_EQUAL_FLOAT(left, right) ((((left) - (right)) > -(TAP_MATH_EQUAL_FLOAT_DELTA)) && (((left) - (right)) < (TAP_MATH_EQUAL_FLOAT_DELTA)))
 
 /*
  * @param val - pos/neg value.
@@ -114,6 +124,11 @@ static int tap_math_isnan(const float val)
 static int tap_math_isinf(const float val)
 {
     return !tap_math_isnan(val) && tap_math_isnan(val - val);
+}
+
+static float tap_math_cos(float angle)
+{
+    return cosf(angle);
 }
 
 #endif /* TAP_MATH_H */

@@ -91,7 +91,7 @@ $(BUILD_DIR)/$(UTILTEST_DIR)/%: $(UTILTEST_DIR)/%.c
 
 # Build integration test binaries.
 $(BUILD_DIR)/$(ITEST_DIR)/%: $(ITEST_DIR)/%.c $(BUILD_DIR)/$(LIB_NAME).a
-	$(CC) $^ -o $@ $(ALL_FLAGS)
+	$(CC) $< $(BUILD_DIR)/$(LIB_NAME).a -o $@ $(ALL_FLAGS)
 
 # Build unit test binaries; test/unit/tap_<module>_test.c + src/tap_<module>_*.c 
 $(BUILD_DIR)/$(UTEST_DIR)/%: $(UTEST_DIR)/%.c

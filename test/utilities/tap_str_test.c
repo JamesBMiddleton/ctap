@@ -63,7 +63,7 @@ static void tap_str_printf_test(void)
 
     valist = valist_zero;
     valist.elems[0].d = 1;
-    tap_str_printf(arr, tap_str_len(overflowcheck6) + TAP_STR_NUMERIC_MAX_CHARS - 2, overflowcheck6, valist);
+    tap_str_printf(arr, tap_str_len(overflowcheck6) + STR_NUMERIC_MAX_CHARS - 2, overflowcheck6, valist);
     assert(strcmp(arr, "intjustdon'tfit") == 0);
 
     /* Check uints */
