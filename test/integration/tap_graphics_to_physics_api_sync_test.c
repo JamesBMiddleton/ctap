@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "src/tap_api.h"
 #include "util/tap_assert.h"
@@ -8,10 +9,11 @@
 int main(void)
 {
     TapResult result = {0};
-    TapApiInitOpt opts;
+    TapApiInitOpt opts = {0};
 
-    tap_log_set_printf(printf);
-
+    opts.allocator.malloc = malloc;
+    opts.allocator.free = free;
+    opts.logger.printf = printf;
     opts.placeholder = 42;
     result = tap_api_init(opts);
 

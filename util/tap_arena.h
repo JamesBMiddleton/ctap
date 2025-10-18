@@ -2,7 +2,7 @@
 #define TAP_ARENA_H
 
 #include "tap_def.h"
-#include "tap_malloc.h"
+#include "tap_alloc.h"
 
 typedef struct TapArena_ {
     size_t capacity;
@@ -24,7 +24,7 @@ TapArena tap_arena_create(const size_t initial_capacity)
         arena.data = (unsigned char *)TAP_MALLOC(1);
         arena.head = arena.data; /* ensure overflow on first allocation */
     #else
-        arena.data = (unsigned char *)TAP_MALLOC(arena.capacity);
+        arena.data = (unsigned char *)tap_alloc_malloc(arena.capacity);
         arena.head = arena.data + arena.capacity;
     #endif
     return arena;
@@ -42,7 +42,7 @@ static void *tap_arena_alloc_aligned(TapArena *arena, const size_t align, const 
     new_head -= (size_t)new_head % align;
     while (arena->data > new_head)
     {
-        overflow = (TapArena *)TAP_MALLOC(sizeof(TapArena));
+        overflow = (TapArena *)tap_alloc_malloc(sizeof(TapArena));
         if (overflow == NULL)
             return NULL;
         *overflow = *arena;
@@ -52,7 +52,7 @@ static void *tap_arena_alloc_aligned(TapArena *arena, const size_t align, const 
         #else
             arena->capacity *= 2;
         #endif
-        arena->data = (unsigned char *)TAP_MALLOC(arena->capacity);
+        arena->data = (unsigned char *)tap_alloc_malloc(arena->capacity);
         if (arena->data == NULL)
             return NULL;
         arena->head = arena->data + arena->capacity;
@@ -71,17 +71,17 @@ static void tap_arena_destroy(TapArena *arena)
         return;
 
     arena = arena->overflow;
-    free(tmp->data);
+    tap_alloc_free(tmp->data);
     tmp->data = NULL;
     tmp->overflow = NULL;
     while (arena != NULL)
     {
         tmp = arena;
         arena = arena->overflow;
-        free(tmp->data);
+        tap_alloc_free(tmp->data);
         tmp->data = NULL;
         tmp->overflow = NULL;
-        free(tmp);
+        tap_alloc_free(tmp);
     } 
 }
 

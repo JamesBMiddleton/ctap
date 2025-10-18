@@ -1,5 +1,12 @@
+#define TAP_ALLOC_IMPLEMENTATION
+#define TAP_LOG_IMPLEMENTATION
+
+#include "util/tap_alloc.h"
 #include "util/tap_arena.h"
+#include "util/tap_log.h"
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 typedef struct {
     int i;
@@ -105,6 +112,16 @@ static void tap_arena_alloc_destroy_test(void)
 
 int main(void)
 {
+    {
+        TapLogLogger logger = {0};
+        TapAllocAllocator allocator = {0};
+        allocator.malloc = malloc;
+        allocator.free = free;
+        tap_alloc_set_allocator(allocator);
+        logger.printf = printf;
+        tap_log_set_logger(logger);
+    }
+
     tap_arena_alloc_create_test();
 #ifndef TAP_DEBUG /* Debug mode changes arena allocation behaviour for sanitizer support, invaliding this test. */
     tap_arena_alloc_aligned_test();

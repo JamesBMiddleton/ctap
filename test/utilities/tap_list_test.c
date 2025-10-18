@@ -1,9 +1,13 @@
-#define TAP_LOG_DEFINE
+#define TAP_LOG_IMPLEMENTATION
+#define TAP_ALLOC_IMPLEMENTATION
 
+#include "util/tap_alloc.h"
 #include "util/tap_def.h"
 #include "util/tap_list.h"
+#include "util/tap_log.h"
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 typedef struct {
     int top_speed;
@@ -64,7 +68,16 @@ static void tap_list_test(void)
 
 int main(void)
 {
-    tap_log_set_printf(printf);
+    {
+        TapLogLogger logger = {0};
+        TapAllocAllocator allocator = {0};
+        allocator.malloc = malloc;
+        allocator.free = free;
+        tap_alloc_set_allocator(allocator);
+        logger.printf = printf;
+        tap_log_set_logger(logger);
+    }
+
     tap_list_test();
     return 0;
 }

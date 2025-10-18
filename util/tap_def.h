@@ -61,4 +61,7 @@
         typedef char tap_def_containerof_ptr_member_type_mismatch[(tap_def_sametype(((type *)0)->member, *(ptr))) ? 1 : -1]
 #endif
 
+#define TAP_DEF_TOSTRING_(s) #s
+#define TAP_DEF_TOSTRING(s) TAP_DEF_TOSTRING_(s)
+
 #endif /* TAP_DEF_H */
