@@ -1,15 +1,15 @@
 #ifndef TAP_ARENA_H
 #define TAP_ARENA_H
 
-#include "tap_def.h"
 #include "tap_alloc.h"
+#include "tap_def.h"
 
 typedef struct TapArena_ {
     size_t capacity;
     unsigned char *data;
     unsigned char *head;
     struct TapArena_ *overflow;
-} TapArena; 
+} TapArena;
 
 static TapArena tap_arena_create(size_t initial_capacity);
 static void *tap_arena_alloc_aligned(TapArena *arena, size_t align, size_t size, size_t count);
@@ -20,13 +20,13 @@ TapArena tap_arena_create(const size_t initial_capacity)
 {
     TapArena arena = {0};
     arena.capacity = initial_capacity;
-    #ifdef TAP_DEBUG
-        arena.data = (unsigned char *)TAP_MALLOC(1);
-        arena.head = arena.data; /* ensure overflow on first allocation */
-    #else
-        arena.data = (unsigned char *)tap_alloc_malloc(arena.capacity);
-        arena.head = arena.data + arena.capacity;
-    #endif
+#ifdef TAP_DEBUG
+    arena.data = (unsigned char *)TAP_MALLOC(1);
+    arena.head = arena.data; /* ensure overflow on first allocation */
+#else
+    arena.data = (unsigned char *)tap_alloc_malloc(arena.capacity);
+    arena.head = arena.data + arena.capacity;
+#endif
     return arena;
 }
 
@@ -34,7 +34,7 @@ static void *tap_arena_alloc_aligned(TapArena *arena, const size_t align, const 
 {
     unsigned char *new_head = NULL;
     TapArena *overflow = NULL;
-    
+
     if (size == 0 || count == 0 || arena == NULL || arena->data == NULL || arena->head == NULL || arena->capacity == 0)
         return NULL;
 
@@ -47,11 +47,11 @@ static void *tap_arena_alloc_aligned(TapArena *arena, const size_t align, const 
             return NULL;
         *overflow = *arena;
         arena->overflow = overflow;
-        #ifdef TAP_DEBUG
-            arena->capacity = size * count;
-        #else
-            arena->capacity *= 2;
-        #endif
+#ifdef TAP_DEBUG
+        arena->capacity = size * count;
+#else
+        arena->capacity *= 2;
+#endif
         arena->data = (unsigned char *)tap_alloc_malloc(arena->capacity);
         if (arena->data == NULL)
             return NULL;
@@ -82,7 +82,7 @@ static void tap_arena_destroy(TapArena *arena)
         tmp->data = NULL;
         tmp->overflow = NULL;
         tap_alloc_free(tmp);
-    } 
+    }
 }
 
 #endif /* TAP_ARENA_H */

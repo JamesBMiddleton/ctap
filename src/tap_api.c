@@ -9,7 +9,6 @@
 #include "util/tap_guard.h"
 #include "util/tap_log.h"
 
-
 /* Initialise the ctap runtime. */
 TapResult tap_api_init(TapApiInitOpt opt)
 {
@@ -18,7 +17,6 @@ TapResult tap_api_init(TapApiInitOpt opt)
     if (opt.allocator.free == NULL || opt.allocator.malloc == NULL)
         TAP_GUARD_BAIL(TAP_ERRNO_INVALID_ALLOCATOR);
     tap_alloc_set_allocator(opt.allocator);
-
 
     tap_errno_get();
     TAP_LOG("hello world");

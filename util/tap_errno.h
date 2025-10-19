@@ -17,10 +17,22 @@ const char *tap_errno_source_get(void);
 #ifdef TAP_ERRNO_IMPLEMENTATION
 static TapErrno errno_value;
 static const char *errno_source;
-void tap_errno_set(const TapErrno err) { errno_value = err; }
-TapErrno tap_errno_get(void) { return errno_value; }
-void tap_errno_source_set(const char *source) { errno_source = source; }
-const char *tap_errno_source_get(void) { return errno_source; }
+void tap_errno_set(const TapErrno err)
+{
+    errno_value = err;
+}
+TapErrno tap_errno_get(void)
+{
+    return errno_value;
+}
+void tap_errno_source_set(const char *source)
+{
+    errno_source = source;
+}
+const char *tap_errno_source_get(void)
+{
+    return errno_source;
+}
 #endif /* TAP_ERRNO_IMPLEMENTATION */
 
 #endif /* TAP_ERRNO_H */

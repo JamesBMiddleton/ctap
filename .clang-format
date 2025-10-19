@@ -16,6 +16,7 @@ AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 BinPackArguments: true
 BinPackParameters: true
+BreakBeforeBraces: Custom
 BraceWrapping:
   AfterControlStatement: true
   AfterFunction: true
@@ -28,10 +29,9 @@ BraceWrapping:
   SplitEmptyFunction: true
   SplitEmptyRecord: true
 BreakBeforeBinaryOperators: None
-BreakBeforeBraces: Custom
 BreakBeforeTernaryOperators: false
 BreakStringLiterals: false
-ColumnLimit: 140
+ColumnLimit: 160                                                                    
 ContinuationIndentWidth: 4
 DerivePointerAlignment: false
 IndentCaseLabels: true

@@ -4,7 +4,15 @@
 #include "tap_log.h"
 
 #ifdef TAP_DEBUG
-    #define TAP_ASSERT(cond) do { if (!(cond)) { TAP_LOG1("Assertion failed: %s", #cond); *(volatile int *)0 = 0; }} while (0)
+    #define TAP_ASSERT(cond)                             \
+        do                                               \
+        {                                                \
+            if (!(cond))                                 \
+            {                                            \
+                TAP_LOG1("Assertion failed: %s", #cond); \
+                *(volatile int *)0 = 0;                  \
+            }                                            \
+        } while (0)
 #else
     #define TAP_ASSERT(cond)
 #endif

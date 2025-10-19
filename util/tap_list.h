@@ -46,7 +46,7 @@ void tap_list_remove(TapList *node)
 
 void tap_list_clear(TapList *anchor)
 {
-    TapList *iter, *itertmp;
+    TapList *iter, *itertmp = NULL;
     tap_list_for_each_safe(anchor, iter, itertmp)
     {
         tap_list_remove(iter);
