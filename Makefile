@@ -11,7 +11,7 @@ CC := clang
 CFLAGS := -I. -g3 -std=c99 -ferror-limit=1 -MMD -Weverything -Werror \
 		  -Wno-poison-system-directories -Wno-unused-function -Wno-padded -Wno-bad-function-cast -Wno-unused-macros -Wno-declaration-after-statement \
 		  -Wno-unused-local-typedef \
-		  # -O3
+		  -O3
 		  # -DDEBUG -DTAP_DEBUG
 
 OBJCFLAGS := -I.

@@ -13,8 +13,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define VIEWPORT_WIDTH 800UL
-#define VIEWPORT_HEIGHT 800UL
+#define VIEWPORT_WIDTH 400UL
+#define VIEWPORT_HEIGHT 400UL
 
 static sg_image vram_framebuffer = {0}; //NOLINT
 static sg_view vram_framebuffer_view = {0}; //NOLINT

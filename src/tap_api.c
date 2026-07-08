@@ -44,7 +44,7 @@ TapResult tap_api_cycle(const TapApiInputEvents *in_events, const TapApiFramebuf
     TAP_GUARD(tap_chunk_get_meshes((TapVec3){-20, -10, 30}, &meshes, &num_chunks));
 
     // this won't be as redundant when per-frame inputs include updates to viewport size etc... 
-    const TapInputEvents events = {.mouse_dx = in_events->mouse_dx, .mouse_dy = in_events->mouse_dy};
+    const TapInputEvents events = {.mouse_dx = in_events->mouse_dx, .mouse_dy = in_events->mouse_dy, .keypress_charcode = in_events->keypress_charcode};
     TapInputIntent intent = {0};
     TAP_GUARD(tap_input_cycle(&events, &intent));
 
@@ -56,8 +56,8 @@ TapResult tap_api_cycle(const TapApiInputEvents *in_events, const TapApiFramebuf
 
     const TapVec3 up = {0, 1, 0};
     const TapVec3 eye = pose.position;
-    const TapVec3 look = {.x = cosf(pose.pitch) * sinf(pose.yaw), .y = sinf(pose.pitch), .z = cosf(pose.pitch) * cosf(pose.yaw)};
-    const TapVec3 center = {.x = eye.x + look.x, .y = eye.y + look.y, .z = eye.z + look.z};
+    const TapVec3 look = {cosf(pose.pitch) * sinf(pose.yaw), sinf(pose.pitch), cosf(pose.pitch) * cosf(pose.yaw)};
+    const TapVec3 center = {eye.x + look.x, eye.y + look.y, eye.z + look.z};
     TAP_GUARD(tap_render_frame_setup(eye, center, up));
     for (size_t i = 0; i < num_chunks; ++i)
     {
@@ -72,10 +72,10 @@ TapResult tap_api_cycle(const TapApiInputEvents *in_events, const TapApiFramebuf
     const clock_t end = clock();
     TAP_LOG("fps: %f", 1 / ((double)(end - start) / CLOCKS_PER_SEC));
 
-    TAP_LOG("dx: %f, dy: %f\n", (double)in_events->mouse_dx, (double)in_events->mouse_dy);
-    TAP_LOG("keypress: %c\n", in_events->keypress_charcode);
-    TAP_LOG("player position x: %f, y:%f, z:%f \n", (double)pose.position.x, (double)pose.position.y, (double)pose.position.z);
-    TAP_LOG("player pitch: %f, yaw: %f\n", (double)pose.pitch, (double)pose.yaw);
+    // TAP_LOG("dx: %f, dy: %f\n", (double)in_events->mouse_dx, (double)in_events->mouse_dy);
+    // TAP_LOG("keypress: %c\n", in_events->keypress_charcode);
+    // TAP_LOG("player position x: %f, y:%f, z:%f \n", (double)pose.position.x, (double)pose.position.y, (double)pose.position.z);
+    // TAP_LOG("player pitch: %f, yaw: %f\n", (double)pose.pitch, (double)pose.yaw);
 
     return (TapResult){0};
 }

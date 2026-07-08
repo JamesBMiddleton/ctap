@@ -54,42 +54,6 @@ TapResult tap_render_init(TapRenderInitOpts opts)
     return (TapResult){0};
 }
 
-// Perspective projection matrix. 
-// Right-handed (+z points towards camera), -1,1 NDC range. 
-// Maps to openGL's gluPerspective(), GLM's perspectiveRH_NO(). 
-static TapMat4 projection_matrix_get(const float rad_fovy, const float aspect, const float z_near, const float z_far)
-{
-    assert(rad_fovy > 0 && rad_fovy < TAP_MATH_PI * 2);
-    assert(!TAP_MATH_EQUAL_FLOAT(aspect, 0));
-    assert(z_near > 0.01F);
-    assert(z_far > z_near);
-    {
-        const float a = tanf(rad_fovy / 2);
-        const float b = 1 / (aspect / a);
-        const float c = 1 / a;
-        const float d = -(z_far + z_near) / (z_far - z_near);
-        const float e = -(2 * z_far * z_near) / (z_far - z_near);
-        const TapMat4 out = {
-            b, 0, 0, 0, 0, c, 0, 0, 0, 0, d, e, 0, 0, -1, 1,
-        };
-        return out;
-    }
-}
-
-// Affine transformation which converts our vertex from 'world frame' to 'camera frame'. 
-// Camera looks down the negative z axis. 
-// Maps to GLM's LookAtRH(), OpenGL's gluLookAt(). 
-static TapMat4 view_matrix_get(const TapVec3 eye, const TapVec3 center, const TapVec3 up)
-{
-    const TapVec3 f = tap_vec3_normalize(tap_vec3_sub(center, eye));
-    const TapVec3 s = tap_vec3_normalize(tap_vec3_cross(f, up));
-    const TapVec3 u = tap_vec3_cross(s, f);
-    const TapMat4 M = {
-        s.x, s.y, s.z, -tap_vec3_dot(s, eye), u.x, u.y, u.z, -tap_vec3_dot(u, eye), -f.x, -f.y, -f.z, tap_vec3_dot(f, eye), 0, 0, 0, 1,
-    };
-    return M;
-}
-
 static void rasterize(const TapVec4 a_clip, const TapVec4 b_clip, const TapVec4 c_clip, const unsigned int viewport_width, const unsigned int viewport_height,
                       const unsigned int color, unsigned int *framebuffer, float *zbuffer)
 {
@@ -206,7 +170,7 @@ static void frustum_create(Frustum *frustum, const float rad_fovy, const float r
 
     // convert to world frame 
     {
-        const TapMat4 world_mat = tap_mat4_invert(view_matrix_get(eye, center, up));
+        const TapMat4 world_mat = tap_mat4_invert(tap_math_view_matrix_get(eye, center, up));
         size_t i;
         for (i = 0; i < TAP_ARRAY_SIZE(frustum->normals); ++i)
         {
@@ -274,8 +238,8 @@ TapResult tap_render_frame_setup(TapVec3 eye, TapVec3 center, TapVec3 up)
 TapResult tap_render_frame_draw(const TapFace *faces, size_t num_faces)
 {
     const float ratio = (float)state.metadata.viewport_width / (float)state.metadata.viewport_height;
-    const TapMat4 projection_mat = projection_matrix_get(state.metadata.rad_fovy, ratio, state.metadata.z_near, state.metadata.z_far);
-    const TapMat4 eye_view_mat = view_matrix_get(state.metadata.eye, state.metadata.center, state.metadata.up);
+    const TapMat4 projection_mat = tap_math_projection_matrix_get(state.metadata.rad_fovy, ratio, state.metadata.z_near, state.metadata.z_far);
+    const TapMat4 eye_view_mat = tap_math_view_matrix_get(state.metadata.eye, state.metadata.center, state.metadata.up);
 
     if (!faces)
         TAP_GUARD_BAIL(TAP_ERRNO_NULLPTR);

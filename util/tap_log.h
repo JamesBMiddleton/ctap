@@ -2,6 +2,7 @@
 #define TAP_LOG_H
 
 #include <stdio.h>
+#include "tap_def.h" 
 
 #define TAP_LOG(msg, ...)                                                            \
     do                                                                               \
