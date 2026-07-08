@@ -43,12 +43,12 @@ TapResult tap_api_cycle(const TapApiInputEvents *in_events, const TapApiFramebuf
     size_t num_chunks = 0;
     TAP_GUARD(tap_chunk_get_meshes((TapVec3){-20, -10, 30}, &meshes, &num_chunks));
 
-    /* this won't be as redundant when per-frame inputs include updates to viewport size etc... */
+    // this won't be as redundant when per-frame inputs include updates to viewport size etc... 
     const TapInputEvents events = {.mouse_dx = in_events->mouse_dx, .mouse_dy = in_events->mouse_dy};
     TapInputIntent intent = {0};
     TAP_GUARD(tap_input_cycle(&events, &intent));
 
-    /* this won't be as redundant when 'intent' includes stuff going all over the place, like pressing esc to exit, equip slot1 etc. */
+    // this won't be as redundant when 'intent' includes stuff going all over the place, like pressing esc to exit, equip slot1 etc. 
     const TapPhysPlayerMoveDeltas move_deltas = {
         .yaw = intent.yaw_delta, .pitch = intent.pitch_delta, .forward = intent.forward_delta, .side = intent.side_delta, .up = intent.up_delta};
     TapPhysPlayerPose pose;
@@ -61,9 +61,9 @@ TapResult tap_api_cycle(const TapApiInputEvents *in_events, const TapApiFramebuf
     TAP_GUARD(tap_render_frame_setup(eye, center, up));
     for (size_t i = 0; i < num_chunks; ++i)
     {
-        /* const TapVec3 chunk_size = {CHUNK_SZ, CHUNK_SZ, CHUNK_SZ}; */
+        // const TapVec3 chunk_size = {CHUNK_SZ, CHUNK_SZ, CHUNK_SZ}; 
         bool outside_frustum = false;
-        /* TAP_GUARD(tap_render_frustum_check_aabb(&outside_frustum, meshes[i].world_coords, tap_vec3_add(meshes[i].world_coords, chunk_size))); */
+        // TAP_GUARD(tap_render_frustum_check_aabb(&outside_frustum, meshes[i].world_coords, tap_vec3_add(meshes[i].world_coords, chunk_size))); 
         if (outside_frustum == false)
             TAP_GUARD(tap_render_frame_draw(meshes[i].faces, meshes[i].num_faces));
     }

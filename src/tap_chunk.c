@@ -81,35 +81,35 @@ static void chunk_load(Chunk *chunk, const char *mapfile)
     for (size_t i_x = 0; i_x < CHUNK_SZ; ++i_x)
         for (size_t i_y = 0; i_y < CHUNK_SZ; ++i_y)
             for (size_t i_z = 0; i_z < CHUNK_SZ; ++i_z)
-                /* chunk->blocks[i_x][i_y][i_z].type = (unsigned int)rand() % BLOCKTYPE_SIZE; */
-                /* chunk->blocks[i_x][i_y][i_z].type = (((unsigned int)rand() % 2) == 0) ? BLOCKTYPE_AIR : BLOCKTYPE_BLUE; */
+                // chunk->blocks[i_x][i_y][i_z].type = (unsigned int)rand() % BLOCKTYPE_SIZE; 
+                // chunk->blocks[i_x][i_y][i_z].type = (((unsigned int)rand() % 2) == 0) ? BLOCKTYPE_AIR : BLOCKTYPE_BLUE; 
                 chunk->blocks[i_x][i_y][i_z].type = BLOCKTYPE_RED; 
 
-    (void)mapfile; /* for now, we're just randomly generating chunks, we would be using chunk->coords to load the chunk from disk. */
+    (void)mapfile; // for now, we're just randomly generating chunks, we would be using chunk->coords to load the chunk from disk. 
 }
 
 static void chunk_mesh_update(const Chunk *chunk, TapChunkMesh *mesh)
 {
     const TapColor blocktype_colors[] = {TAP_COLOR_WHITE, TAP_COLOR_RED, TAP_COLOR_BLUE};
     const TapVec3 unit_voxel_vertices[8] = {
-        {0, 0, 0}, /* */
-        {1, 0, 0}, /* +x */
-        {0, 1, 0}, /* +y */
-        {0, 0, 1}, /* +z */
-        {1, 1, 0}, /* +x, +y */
-        {1, 0, 1}, /* +x, +z */
-        {0, 1, 1}, /* +y, +z */
-        {1, 1, 1}, /* +x, +y, +z */
+        {0, 0, 0}, // 
+        {1, 0, 0}, // +x 
+        {0, 1, 0}, // +y 
+        {0, 0, 1}, // +z 
+        {1, 1, 0}, // +x, +y 
+        {1, 0, 1}, // +x, +z 
+        {0, 1, 1}, // +y, +z 
+        {1, 1, 1}, // +x, +y, +z 
     };
 
-    /* x,y,z faces wound clockwise, x+1,y+1,z+1 faces wound anticlockwise (backfacing) */
+    // x,y,z faces wound clockwise, x+1,y+1,z+1 faces wound anticlockwise (backfacing) 
     const size_t face_indexes[12][3] = {
-        {0, 3, 6}, {6, 2, 0}, /* x face */
-        {0, 1, 5}, {5, 3, 0}, /* y face */
-        {0, 2, 4}, {4, 1, 0}, /* z face */
-        {7, 5, 1}, {1, 4, 7}, /* x+1 face */
-        {7, 4, 2}, {2, 6, 7}, /* y+1 face */
-        {7, 6, 3}, {3, 5, 7}, /* z+1 face */
+        {0, 3, 6}, {6, 2, 0}, // x face 
+        {0, 1, 5}, {5, 3, 0}, // y face 
+        {0, 2, 4}, {4, 1, 0}, // z face 
+        {7, 5, 1}, {1, 4, 7}, // x+1 face 
+        {7, 4, 2}, {2, 6, 7}, // y+1 face 
+        {7, 6, 3}, {3, 5, 7}, // z+1 face 
     };
 
     mesh->num_faces = 0;
@@ -194,7 +194,7 @@ static void chunkpool_init(TapArena *arena, ChunkPool *pool)
     {
         tap_list_init(&pool->chunks[i].free_node);
 
-        /* Handle edgecase of first chunkpool_update() call. */
+        // Handle edgecase of first chunkpool_update() call. 
         pool->chunks[i].coords.x = INT_MAX-(R_DISTANCE*2); 
         pool->chunks[i].coords.y = INT_MAX-(R_DISTANCE*2);
         pool->chunks[i].coords.z = INT_MAX-(R_DISTANCE*2);
@@ -205,10 +205,10 @@ static void chunkpool_init(TapArena *arena, ChunkPool *pool)
 
 static void chunkpool_update(ChunkPool* pool, TapVec3I player_chunk_coords, const char *mapfile)
 {
-    const TapVec3I index_offset = {R_DISTANCE/2, R_DISTANCE/2, R_DISTANCE/2}; /* +/- 5 chunk render distance so {0,0,0} offset from player is loaded_chunks[4][4][4] */
+    const TapVec3I index_offset = {R_DISTANCE/2, R_DISTANCE/2, R_DISTANCE/2}; // +/- 5 chunk render distance so {0,0,0} offset from player is loaded_chunks[4][4][4] 
     Chunk *loaded_chunks[R_DISTANCE][R_DISTANCE][R_DISTANCE] = {0};
 
-    /* Check if any chunks in the pool are within the render distance. */
+    // Check if any chunks in the pool are within the render distance. 
     for (size_t i = 0; i < pool->size; ++i)
     {
         Chunk *chunk = &(pool->chunks[i]);
@@ -219,7 +219,7 @@ static void chunkpool_update(ChunkPool* pool, TapVec3I player_chunk_coords, cons
             loaded_chunks[relative.x][relative.y][relative.z] = chunk;
     }
 
-    /* Load any remaining chunks within the render distance but not already in the pool. */
+    // Load any remaining chunks within the render distance but not already in the pool. 
     for (int i_x = 0; i_x < R_DISTANCE; ++i_x)
         for (int i_y = 0; i_y < R_DISTANCE; ++i_y)
             for (int i_z = 0; i_z < R_DISTANCE; ++i_z)

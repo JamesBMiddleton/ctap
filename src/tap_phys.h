@@ -22,4 +22,4 @@ TapResult tap_phys_init(void);
 TapResult tap_phys_cycle(const TapPhysPlayerMoveDeltas *in_movedeltas, TapPhysPlayerPose *out_pose);
 TapResult tap_phys_deinit(void);
 
-#endif /* TAP_PHYS_H */
+#endif // TAP_PHYS_H 

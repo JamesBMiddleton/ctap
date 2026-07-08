@@ -17,4 +17,4 @@ TapResult tap_chunk_init(void);
 TapResult tap_chunk_get_meshes(TapVec3 player_coords, const TapChunkMesh **meshes, size_t *num_meshes);
 TapResult tap_chunk_deinit(void);
 
-#endif /* TAP_CHUNK_H */
+#endif // TAP_CHUNK_H 

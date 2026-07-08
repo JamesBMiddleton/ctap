@@ -21,4 +21,4 @@ TapResult tap_render_frame_get(const unsigned int **framebuffer);
 TapResult tap_render_frustum_check_aabb(bool *is_outside, TapVec3 bbox_min, TapVec3 bbox_max);
 TapResult tap_render_deinit(void);
 
-#endif /* TAP_RENDER_H */
+#endif // TAP_RENDER_H 

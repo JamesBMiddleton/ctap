@@ -21,4 +21,4 @@ TapResult tap_api_init(TapApiInitOpt opt);
 TapResult tap_api_cycle(const TapApiInputEvents *in_events, const TapApiFramebuffer **out_framebuffer);
 TapResult tap_api_deinit(void);
 
-#endif /* TAP_API_H */
+#endif // TAP_API_H 

@@ -17,11 +17,11 @@ typedef struct {
     float side_delta;
     float up_delta;
     bool action1placeholder;
-    bool push2talkplaceholder; /* aallll the intent */
+    bool push2talkplaceholder; // aallll the intent 
 } TapInputIntent;
 
 TapResult tap_input_init(void);
 TapResult tap_input_cycle(const TapInputEvents *in_events, TapInputIntent *out_intent);
 TapResult tap_input_deinit(void);
 
-#endif /* TAP_INPUT_H */
+#endif // TAP_INPUT_H 

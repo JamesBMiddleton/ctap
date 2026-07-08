@@ -54,9 +54,9 @@ TapResult tap_render_init(TapRenderInitOpts opts)
     return (TapResult){0};
 }
 
-/* Perspective projection matrix. */
-/* Right-handed (+z points towards camera), -1,1 NDC range. */
-/* Maps to openGL's gluPerspective(), GLM's perspectiveRH_NO(). */
+// Perspective projection matrix. 
+// Right-handed (+z points towards camera), -1,1 NDC range. 
+// Maps to openGL's gluPerspective(), GLM's perspectiveRH_NO(). 
 static TapMat4 projection_matrix_get(const float rad_fovy, const float aspect, const float z_near, const float z_far)
 {
     assert(rad_fovy > 0 && rad_fovy < TAP_MATH_PI * 2);
@@ -76,9 +76,9 @@ static TapMat4 projection_matrix_get(const float rad_fovy, const float aspect, c
     }
 }
 
-/* Affine transformation which converts our vertex from 'world frame' to 'camera frame'. */
-/* Camera looks down the negative z axis. */
-/* Maps to GLM's LookAtRH(), OpenGL's gluLookAt(). */
+// Affine transformation which converts our vertex from 'world frame' to 'camera frame'. 
+// Camera looks down the negative z axis. 
+// Maps to GLM's LookAtRH(), OpenGL's gluLookAt(). 
 static TapMat4 view_matrix_get(const TapVec3 eye, const TapVec3 center, const TapVec3 up)
 {
     const TapVec3 f = tap_vec3_normalize(tap_vec3_sub(center, eye));
@@ -96,7 +96,7 @@ static void rasterize(const TapVec4 a_clip, const TapVec4 b_clip, const TapVec4 
     assert(framebuffer);
     assert(zbuffer);
 
-    /* Perspective divide */
+    // Perspective divide 
     const TapVec3 a_ndc = tap_vec4_dehomogenize(a_clip);
     const TapVec3 b_ndc = tap_vec4_dehomogenize(b_clip);
     const TapVec3 c_ndc = tap_vec4_dehomogenize(c_clip);
@@ -109,17 +109,17 @@ static void rasterize(const TapVec4 a_clip, const TapVec4 b_clip, const TapVec4 
     const TapVec3 b_screen = {(b_ndc.x * x_scale) + x_translate, (b_ndc.y * y_scale) + y_translate, b_ndc.z};
     const TapVec3 c_screen = {(c_ndc.x * x_scale) + x_translate, (c_ndc.y * y_scale) + y_translate, c_ndc.z};
 
-    /* The matrix we'll use for barycentric calcs. */
+    // The matrix we'll use for barycentric calcs. 
     const TapMat3 ABC = {
         a_screen.x, a_screen.y, 1, b_screen.x, b_screen.y, 1, c_screen.x, c_screen.y, 1,
     };
 
-    /* backface culling; determinate gives us the area of the triangle made by points a,b,c. if the area is negative, triangle is back facing. */
-    /* less than 1 pixel culling; not worth drawing. */
+    // backface culling; determinate gives us the area of the triangle made by points a,b,c. if the area is negative, triangle is back facing. 
+    // less than 1 pixel culling; not worth drawing. 
     if (tap_mat3_det(ABC) < 1)
         return;
 
-    /* Triangle rasterization using zbuffered bounding box method. */
+    // Triangle rasterization using zbuffered bounding box method. 
     {
         const int bbox_max_x = (int)roundf(TAP_MATH_MAX(a_screen.x, TAP_MATH_MAX(b_screen.x, c_screen.x)));
         const int bbox_max_y = (int)roundf(TAP_MATH_MAX(a_screen.y, TAP_MATH_MAX(b_screen.y, c_screen.y)));
@@ -130,15 +130,15 @@ static void rasterize(const TapVec4 a_clip, const TapVec4 b_clip, const TapVec4 
         {
             for (int y = bbox_min_y; y < bbox_max_y; ++y)
             {
-                const TapVec3 P = {(float)x, (float)y, 1.0F}; /* Our pixel coords. */
-                const TapVec3 bary = tap_mat3_mulv(tap_mat3_transpose(tap_mat3_invert(ABC)), P); /* x=alpha, y=beta, z=gamma */
+                const TapVec3 P = {(float)x, (float)y, 1.0F}; // Our pixel coords. 
+                const TapVec3 bary = tap_mat3_mulv(tap_mat3_transpose(tap_mat3_invert(ABC)), P); // x=alpha, y=beta, z=gamma 
 
-                /* Check if we're in the triangle. */
+                // Check if we're in the triangle. 
                 if (bary.x < 0 || bary.y < 0 || bary.z < 0)
                     continue;
 
-                /* Check whether the pixel is obscured by another we've already drawn with a lower z value. -1 = z_near, +1 = z_far */
-                const float z_bias = 0.003F; /* Prevent Z-fighting. */
+                // Check whether the pixel is obscured by another we've already drawn with a lower z value. -1 = z_near, +1 = z_far 
+                const float z_bias = 0.003F; // Prevent Z-fighting. 
                 const float z = (a_screen.z * bary.x) + (b_screen.z * bary.y) + (c_screen.z * bary.z);
                 const unsigned int buf_index = (unsigned int)x + ((unsigned int)y * viewport_width);
                 if (zbuffer[buf_index] < (z - z_bias))
@@ -155,7 +155,7 @@ static void rasterize(const TapVec4 a_clip, const TapVec4 b_clip, const TapVec4 
     }
 }
 
-/* math from Lighthouse 3D frustum culling tutorial */
+// math from Lighthouse 3D frustum culling tutorial 
 static void frustum_create(Frustum *frustum, const float rad_fovy, const float ratio, const float z_near, const float z_far, const TapVec3 eye,
                            const TapVec3 center, const TapVec3 up)
 {
@@ -204,7 +204,7 @@ static void frustum_create(Frustum *frustum, const float rad_fovy, const float r
     frustum->normals[RIGHT] = normal;
     frustum->points[RIGHT] = tap_vec3_add(nc, tap_vec3_scale(X, nw));
 
-    /* convert to world frame */
+    // convert to world frame 
     {
         const TapMat4 world_mat = tap_mat4_invert(view_matrix_get(eye, center, up));
         size_t i;
@@ -253,10 +253,10 @@ TapResult tap_render_frame_setup(TapVec3 eye, TapVec3 center, TapVec3 up)
     if (!state.initialized)
         TAP_GUARD_BAIL(TAP_ERRNO_MODULE_UNINITIALIZED);
 
-    /* Initialize all pixels in the frame to black. */
+    // Initialize all pixels in the frame to black. 
     memset(state.framebuffer, 0x00, (size_t)state.metadata.viewport_width * (size_t)state.metadata.viewport_height * sizeof(unsigned int));
 
-    /* z_far=1 in NDC, so we need to start our z buffer beyond that. */
+    // z_far=1 in NDC, so we need to start our z buffer beyond that. 
     for (unsigned int i = 0; i < (state.metadata.viewport_width * state.metadata.viewport_height); ++i)
         state.zbuffer[i] = 2;
 
@@ -296,7 +296,7 @@ TapResult tap_render_frame_draw(const TapFace *faces, size_t num_faces)
         const TapVec4 b_clip = tap_mat4_mulv(projection_mat, b_eye);
         const TapVec4 c_clip = tap_mat4_mulv(projection_mat, c_eye);
 
-        /* Currently just rejecting anything partially outside clip space, need to clip them (create new faces) */
+        // Currently just rejecting anything partially outside clip space, need to clip them (create new faces) 
         if (-a_clip.w <= a_clip.x && a_clip.x <= a_clip.w && -a_clip.w <= a_clip.y && a_clip.y <= a_clip.w && -a_clip.w <= a_clip.z && a_clip.z <= a_clip.w &&
             -b_clip.w <= b_clip.x && b_clip.x <= b_clip.w && -b_clip.w <= b_clip.y && b_clip.y <= b_clip.w && -b_clip.w <= b_clip.z && b_clip.z <= b_clip.w &&
             -c_clip.w <= c_clip.x && c_clip.x <= c_clip.w && -c_clip.w <= c_clip.y && c_clip.y <= c_clip.w && -c_clip.w <= c_clip.z && c_clip.z <= c_clip.w)
