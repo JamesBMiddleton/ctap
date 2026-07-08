@@ -5,7 +5,9 @@
 #include "tap_phys.h"
 
 #include "util/tap_guard.h"
+#include "util/tap_math.h"
 #include <time.h>
+#include <stdbool.h>
 
 static struct {
     int initialized;
@@ -18,12 +20,6 @@ TapResult tap_api_init(const TapApiInitOpt opt)
 
     if (state.initialized)
         return result;
-    if (!opt.allocator.free || !opt.allocator.malloc)
-        TAP_GUARD_BAIL(TAP_ERRNO_INVALID_ALLOCATOR);
-    if (!opt.logger.printf)
-        TAP_GUARD_BAIL(TAP_ERRNO_INVALID_LOGGER);
-    tap_alloc_set_allocator(opt.allocator);
-    tap_log_set_logger(opt.logger);
 
     TAP_GUARD(tap_chunk_init());
 
@@ -78,9 +74,9 @@ TapResult tap_api_cycle(const TapApiInputEvents *in_events, const TapApiFramebuf
     const TapVec3 eye = pose.position;
     TapVec3 look;
     TapVec3 center; 
-    look.x = tap_math_cos(pose.pitch) * tap_math_sin(pose.yaw);
-    look.y = tap_math_sin(pose.pitch);
-    look.z = tap_math_cos(pose.pitch) * tap_math_cos(pose.yaw);
+    look.x = cosf(pose.pitch) * sinf(pose.yaw);
+    look.y = sinf(pose.pitch);
+    look.z = cosf(pose.pitch) * cosf(pose.yaw);
     center.x = eye.x + look.x;
     center.y = eye.y + look.y;
     center.z = eye.z + look.z;
@@ -88,20 +84,20 @@ TapResult tap_api_cycle(const TapApiInputEvents *in_events, const TapApiFramebuf
     for (size_t i = 0; i < num_chunks; ++i)
     {
         /* const TapVec3 chunk_size = {CHUNK_SZ, CHUNK_SZ, CHUNK_SZ}; */
-        TapBool outside_frustum = TAP_FALSE;
+        bool outside_frustum = false;
         /* TAP_GUARD(tap_render_frustum_check_aabb(&outside_frustum, meshes[i].world_coords, tap_vec3_add(meshes[i].world_coords, chunk_size))); */
-        if (outside_frustum == TAP_FALSE)
+        if (outside_frustum == false)
             TAP_GUARD(tap_render_frame_draw(meshes[i].faces, meshes[i].num_faces));
     }
     TAP_GUARD(tap_render_frame_get(out_framebuffer));
 
     end = clock();
-    TAP_LOG1("fps: %f", 1 / ((double)(end-start) / CLOCKS_PER_SEC));
+    TAP_LOG("fps: %f", 1 / ((double)(end-start) / CLOCKS_PER_SEC));
 
-    TAP_LOG2("dx: %f, dy: %f\n", (double)in_events->mouse_dx, (double)in_events->mouse_dy);
-    TAP_LOG1("keypress: %c\n", in_events->keypress_charcode);
-    TAP_LOG3("player position x: %f, y:%f, z:%f \n", (double)pose.position.x, (double)pose.position.y, (double)pose.position.z);
-    TAP_LOG2("player pitch: %f, yaw: %f\n", (double)pose.pitch, (double)pose.yaw);
+    TAP_LOG("dx: %f, dy: %f\n", (double)in_events->mouse_dx, (double)in_events->mouse_dy);
+    TAP_LOG("keypress: %c\n", in_events->keypress_charcode);
+    TAP_LOG("player position x: %f, y:%f, z:%f \n", (double)pose.position.x, (double)pose.position.y, (double)pose.position.z);
+    TAP_LOG("player pitch: %f, yaw: %f\n", (double)pose.pitch, (double)pose.yaw);
 
     return result;
 }

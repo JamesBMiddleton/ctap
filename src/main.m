@@ -2,8 +2,6 @@
 #define SOKOL_METAL
 
 #define TAP_ERRNO_IMPLEMENTATION
-#define TAP_ALLOC_IMPLEMENTATION
-#define TAP_LOG_IMPLEMENTATION
 
 #include "dep/sokol_app.h"
 #include "dep/sokol_gfx.h"
@@ -49,8 +47,7 @@ static void init(void)
     // Default texture sampler - e.g. whether to repeat texture, mipmap levels
     smp = sg_make_sampler(&(sg_sampler_desc){0});
 
-    if (tap_api_init((TapApiInitOpt){ .viewport_width = VIEWPORT_WIDTH, .viewport_height = VIEWPORT_HEIGHT,
-                .allocator.malloc = malloc, .allocator.free = free, .logger.printf = printf}).retcode != TAP_RESULT_OK)
+    if (tap_api_init((TapApiInitOpt){ .viewport_width = VIEWPORT_WIDTH, .viewport_height = VIEWPORT_HEIGHT}).retcode != TAP_RESULT_OK)
     {
         printf("Failed with TAP_ERRNO: %u, source: %s\n", tap_errno_get(), tap_errno_source_get());
         exit(1);

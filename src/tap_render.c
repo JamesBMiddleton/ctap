@@ -1,10 +1,11 @@
+#include <assert.h>
+#include <string.h>
+
 #include "tap_render.h"
 
-#include "util/tap_assert.h"
 #include "util/tap_guard.h"
 #include "util/tap_mat.h"
 #include "util/tap_math.h"
-#include "util/tap_str.h"
 #include "util/tap_vec.h"
 #include "util/tap_arena.h"
 
@@ -59,12 +60,12 @@ TapResult tap_render_init(TapRenderInitOpts opts)
 /* Maps to openGL's gluPerspective(), GLM's perspectiveRH_NO(). */
 static TapMat4 projection_matrix_get(const float rad_fovy, const float aspect, const float z_near, const float z_far)
 {
-    TAP_ASSERT(rad_fovy > 0 && rad_fovy < TAP_MATH_PI*2);
-    TAP_ASSERT(!TAP_MATH_EQUAL_FLOAT(aspect, 0));
-    TAP_ASSERT(z_near > 0.01F);
-    TAP_ASSERT(z_far > z_near);
+    assert(rad_fovy > 0 && rad_fovy < TAP_MATH_PI*2);
+    assert(!TAP_MATH_EQUAL_FLOAT(aspect, 0));
+    assert(z_near > 0.01F);
+    assert(z_far > z_near);
     {
-        const float a = tap_math_tan(rad_fovy / 2);
+        const float a = tanf(rad_fovy / 2);
         const float b = 1 / (aspect / a);
         const float c = 1 / a;
         const float d = - (z_far + z_near) / (z_far - z_near);
@@ -99,8 +100,8 @@ static TapMat4 view_matrix_get(const TapVec3 eye, const TapVec3 center, const Ta
 static void rasterize(const TapVec4 a_clip, const TapVec4 b_clip, const TapVec4 c_clip, const unsigned int viewport_width, const unsigned int viewport_height, 
                       const unsigned int color, unsigned int *framebuffer, float *zbuffer)
 {
-    TAP_ASSERT(framebuffer);
-    TAP_ASSERT(zbuffer);
+    assert(framebuffer);
+    assert(zbuffer);
     {
         /* Perspective divide */
         const TapVec3 a_ndc = tap_vec4_dehomogenize(a_clip);
@@ -131,10 +132,10 @@ static void rasterize(const TapVec4 a_clip, const TapVec4 b_clip, const TapVec4 
         {
             int x = 0;
             int y = 0;
-            const int bbox_max_x = (int)tap_math_round(TAP_MATH_MAX(a_screen.x, TAP_MATH_MAX(b_screen.x, c_screen.x)));
-            const int bbox_max_y = (int)tap_math_round(TAP_MATH_MAX(a_screen.y, TAP_MATH_MAX(b_screen.y, c_screen.y)));
-            const int bbox_min_x = (int)tap_math_round(TAP_MATH_MIN(a_screen.x, TAP_MATH_MIN(b_screen.x, c_screen.x)));
-            const int bbox_min_y = (int)tap_math_round(TAP_MATH_MIN(a_screen.y, TAP_MATH_MIN(b_screen.y, c_screen.y)));
+            const int bbox_max_x = (int)roundf(TAP_MATH_MAX(a_screen.x, TAP_MATH_MAX(b_screen.x, c_screen.x)));
+            const int bbox_max_y = (int)roundf(TAP_MATH_MAX(a_screen.y, TAP_MATH_MAX(b_screen.y, c_screen.y)));
+            const int bbox_min_x = (int)roundf(TAP_MATH_MIN(a_screen.x, TAP_MATH_MIN(b_screen.x, c_screen.x)));
+            const int bbox_min_y = (int)roundf(TAP_MATH_MIN(a_screen.y, TAP_MATH_MIN(b_screen.y, c_screen.y)));
 
             for (x = bbox_min_x; x < bbox_max_x; ++x)
             {
@@ -176,7 +177,7 @@ static void frustum_create(Frustum *frustum, const float rad_fovy, const float r
 {
     enum { TOP, BOTTOM, LEFT, RIGHT, NEARP, FARP };
 
-    const float tang = tap_math_tan(rad_fovy * 0.5F);
+    const float tang = tanf(rad_fovy * 0.5F);
     const float nh = z_near * tang;
     const float nw = nh * ratio;
 	const TapVec3 Z = tap_vec3_normalize(tap_vec3_sub(eye, center));
@@ -224,7 +225,7 @@ static void frustum_create(Frustum *frustum, const float rad_fovy, const float r
     }
 }
 
-TapResult tap_render_frustum_check_aabb(TapBool *is_outside, const TapVec3 bbox_min, const TapVec3 bbox_max)
+TapResult tap_render_frustum_check_aabb(bool *is_outside, const TapVec3 bbox_min, const TapVec3 bbox_max)
 {
     TapResult result = {0};
     size_t i = 0;
@@ -247,11 +248,11 @@ TapResult tap_render_frustum_check_aabb(TapBool *is_outside, const TapVec3 bbox_
         if ((tap_vec3_signed_distance_to_plane(state.frustum.points[i], state.frustum.normals[i], pos) < 0) &&
            (tap_vec3_signed_distance_to_plane(state.frustum.points[i], state.frustum.normals[i], neg) < 0))
         {
-            *is_outside = TAP_FALSE;
+            *is_outside = false;
             return result;
         }
     }
-    *is_outside = TAP_TRUE;
+    *is_outside = true;
     return result;
 }
 
@@ -264,7 +265,7 @@ TapResult tap_render_frame_setup(TapVec3 eye, TapVec3 center, TapVec3 up)
         TAP_GUARD_BAIL(TAP_ERRNO_MODULE_UNINITIALIZED);
 
     /* Initialize all pixels in the frame to black. */
-    tap_str_memset(state.framebuffer, 0x00, (size_t)state.metadata.viewport_width * (size_t)state.metadata.viewport_height * sizeof(unsigned int));
+    memset(state.framebuffer, 0x00, (size_t)state.metadata.viewport_width * (size_t)state.metadata.viewport_height * sizeof(unsigned int));
 
     /* z_far=1 in NDC, so we need to start our z buffer beyond that. */
     for (unsigned int i = 0; i < (state.metadata.viewport_width * state.metadata.viewport_height); ++i)

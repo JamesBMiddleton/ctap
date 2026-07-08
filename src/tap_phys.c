@@ -1,4 +1,5 @@
 #include "tap_phys.h"
+#include "util/tap_math.h"
 
 static struct {
     TapPhysPlayerPose pose;

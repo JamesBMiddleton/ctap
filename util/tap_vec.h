@@ -1,7 +1,7 @@
 #ifndef TAP_VEC_H
 #define TAP_VEC_H
 
-#include "tap_math.h"
+#include <math.h>
 
 typedef struct { float x; float y; } TapVec2;
 typedef struct { float x; float y; float z; } TapVec3;
@@ -19,7 +19,7 @@ static TapVec2 tap_vec2_div(const TapVec2 left, const TapVec2 right) { TapVec2 o
 static TapVec2 tap_vec2_scale(const TapVec2 vec, const float s) { TapVec2 out = {vec.x * s, vec.y * s}; return out; }
 static TapVec2 tap_vec2_normalize(TapVec2 vec); 
 static TapVec3 tap_vec2_homogenize(TapVec2 vec) { TapVec3 out = { vec.x, vec.y, 1}; return out; }
-static float tap_vec2_norm(TapVec2 vec) { return tap_math_sqrtf((vec.x * vec.x) + (vec.y * vec.y)); }
+static float tap_vec2_norm(TapVec2 vec) { return sqrtf((vec.x * vec.x) + (vec.y * vec.y)); }
 
 static float tap_vec3_dot(const TapVec3 left, const TapVec3 right) { return (left.x * right.x) + (left.y * right.y) + (left.z * right.z); }
 static TapVec3 tap_vec3_cross(TapVec3 left, TapVec3 right);
@@ -34,7 +34,7 @@ static TapVec3 tap_vec3_reflect(TapVec3 vec, TapVec3 normal);
 static TapVec4 tap_vec3_homogenize(TapVec3 vec) { TapVec4 out = { vec.x, vec.y, vec.z, 1}; return out; }
 static TapVec2 tap_vec3_dehomogenize(TapVec3 vec) { TapVec2 out = { vec.x/vec.z, vec.y/vec.z }; return out; }
 static TapVec2 tap_vec3_truncate(TapVec3 vec) { TapVec2 out = { vec.x, vec.y }; return out; }
-static float tap_vec3_norm(TapVec3 vec) { return tap_math_sqrtf((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z)); }
+static float tap_vec3_norm(TapVec3 vec) { return sqrtf((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z)); }
 static TapVec3 tap_vec3_rotate(TapVec3 v, TapVec3 axis, float angle);
 static float tap_vec3_signed_distance_to_plane(TapVec3 plane_point, TapVec3 plane_normal, TapVec3 point);
 
@@ -47,7 +47,7 @@ static TapVec4 tap_vec4_scale(const TapVec4 vec, const float s) { TapVec4 out = 
 static TapVec4 tap_vec4_normalize(TapVec4 vec); 
 static TapVec3 tap_vec4_dehomogenize(TapVec4 vec) { TapVec3 out = { vec.x/vec.w, vec.y/vec.w, vec.z/vec.w }; return out; }
 static TapVec3 tap_vec4_truncate(TapVec4 vec) { TapVec3 out = { vec.x, vec.y, vec.z }; return out; }
-static float tap_vec4_norm(TapVec4 vec) { return tap_math_sqrtf((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z) + (vec.w + vec.w)); }
+static float tap_vec4_norm(TapVec4 vec) { return sqrtf((vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z) + (vec.w + vec.w)); }
 
 static TapVec3I tap_vec3i_add(const TapVec3I left, const TapVec3I right) { TapVec3I out = {left.x + right.x, left.y + right.y, left.z + right.z}; return out; }
 static TapVec3I tap_vec3i_sub(const TapVec3I left, const TapVec3I right) { TapVec3I out = {left.x - right.x, left.y - right.y, left.z - right.z}; return out; }
@@ -56,7 +56,7 @@ static TapVec3I tap_vec3i_scale(const TapVec3I vec, int s) { TapVec3I out = {vec
 static TapVec2 tap_vec2_normalize(const TapVec2 vec)
 { 
     TapVec2 out = {0}; 
-    const float length = tap_math_sqrtf((vec.x*vec.x) + (vec.y*vec.y));
+    const float length = sqrtf((vec.x*vec.x) + (vec.y*vec.y));
 
     if (length > 0.0F)
     {
@@ -70,7 +70,7 @@ static TapVec2 tap_vec2_normalize(const TapVec2 vec)
 static TapVec3 tap_vec3_normalize(const TapVec3 vec)
 { 
     TapVec3 out = {0}; 
-    const float length = tap_math_sqrtf((vec.x*vec.x) + (vec.y*vec.y) + (vec.z*vec.z));
+    const float length = sqrtf((vec.x*vec.x) + (vec.y*vec.y) + (vec.z*vec.z));
 
     if (length > 0.0F)
     {
@@ -139,7 +139,7 @@ static float tap_vec3_signed_distance_to_plane(TapVec3 plane_point, TapVec3 plan
 static TapVec4 tap_vec4_normalize(const TapVec4 vec)
 { 
     TapVec4 out = {0}; 
-    const float length = tap_math_sqrtf((vec.x*vec.x) + (vec.y*vec.y) + (vec.z*vec.z) + (vec.w*vec.w));
+    const float length = sqrtf((vec.x*vec.x) + (vec.y*vec.y) + (vec.z*vec.z) + (vec.w*vec.w));
 
     if (length > 0.0F)
     {

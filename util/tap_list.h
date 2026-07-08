@@ -1,8 +1,8 @@
 #ifndef TAP_LIST_H
 #define TAP_LIST_H
 
-#include "tap_assert.h"
 #include <stddef.h>
+#include <assert.h>
 
 typedef struct TapList_ {
     struct TapList_ *prev, *next;
@@ -24,8 +24,8 @@ void tap_list_init(TapList *node)
 
 void tap_list_insert(TapList *node, TapList *new)
 {
-    TAP_ASSERT(new->prev == new);
-    TAP_ASSERT(new->next == new);
+    assert(new->prev == new);
+    assert(new->next == new);
     new->next = node->next;
     new->prev = node;
     node->next->prev = new;

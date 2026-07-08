@@ -34,6 +34,7 @@
 
 #include "tap_chunk.h"
 
+#include "util/tap_def.h"
 #include "util/tap_arena.h"
 #include "util/tap_guard.h"
 #include "util/tap_vec.h"
@@ -44,7 +45,6 @@
 #include <limits.h>
 
 #define R_DISTANCE 5
-TAP_ASSERT_STATIC(R_DISTANCE % 2 == 1, render_distance_odd);
 
 typedef enum {
     BLOCKTYPE_AIR,
@@ -197,9 +197,9 @@ static void chunkpool_init(TapArena *arena, ChunkPool *pool)
         tap_list_init(&pool->chunks[i].free_node);
 
         /* Handle edgecase of first chunkpool_update() call. */
-        pool->chunks[i].coords.x = TAP_INT_MAX-(R_DISTANCE*2); 
-        pool->chunks[i].coords.y = TAP_INT_MAX-(R_DISTANCE*2);
-        pool->chunks[i].coords.z = TAP_INT_MAX-(R_DISTANCE*2);
+        pool->chunks[i].coords.x = INT_MAX-(R_DISTANCE*2); 
+        pool->chunks[i].coords.y = INT_MAX-(R_DISTANCE*2);
+        pool->chunks[i].coords.z = INT_MAX-(R_DISTANCE*2);
 
         pool->meshes[i].faces = tap_arena_alloc(arena, TapFace, (CHUNK_SZ * CHUNK_SZ * CHUNK_SZ * 12));
     }
