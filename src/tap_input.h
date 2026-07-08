@@ -1,10 +1,8 @@
 #ifndef TAP_INPUT_H
 #define TAP_INPUT_H
 
-#include <stdbool.h>
-#include "util/tap_def.h"
 #include "util/tap_result.h"
-#include "util/tap_vec.h"
+#include <stdbool.h>
 
 typedef struct {
     float mouse_dx;
@@ -18,8 +16,8 @@ typedef struct {
     float forward_delta;
     float side_delta;
     float up_delta;
-    bool action1placeholder; 
-    bool push2talkplaceholder; /* aallll the intent */ 
+    bool action1placeholder;
+    bool push2talkplaceholder; /* aallll the intent */
 } TapInputIntent;
 
 TapResult tap_input_init(void);

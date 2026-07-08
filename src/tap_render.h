@@ -1,10 +1,10 @@
 #ifndef TAP_RENDER_H
 #define TAP_RENDER_H
 
-#include <stdbool.h>
-#include "util/tap_def.h"
-#include "util/tap_result.h"
 #include "util/tap_face.h"
+#include "util/tap_result.h"
+#include <stdbool.h>
+#include <stddef.h>
 
 typedef struct {
     unsigned int viewport_width;
@@ -20,6 +20,5 @@ TapResult tap_render_frame_draw(const TapFace *faces, size_t num_faces);
 TapResult tap_render_frame_get(const unsigned int **framebuffer);
 TapResult tap_render_frustum_check_aabb(bool *is_outside, TapVec3 bbox_min, TapVec3 bbox_max);
 TapResult tap_render_deinit(void);
-
 
 #endif /* TAP_RENDER_H */

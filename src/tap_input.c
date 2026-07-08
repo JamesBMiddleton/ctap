@@ -4,13 +4,11 @@
 
 TapResult tap_input_init(void)
 {
-    TapResult out = {0};
-    return out;
+    return (TapResult){0};
 }
 
 TapResult tap_input_cycle(const TapInputEvents *in_events, TapInputIntent *out_intent)
 {
-    TapResult out = {0};
     const float m_yaw = 0.022F;
     const float m_pitch = 0.022F;
     const float sens = 0.25F;
@@ -26,11 +24,10 @@ TapResult tap_input_cycle(const TapInputEvents *in_events, TapInputIntent *out_i
         case ASCII_SPACE: out_intent->up_delta = 1.0F; break;
         default: break;
     }
-    return out;
+    return (TapResult){0};
 }
 
 TapResult tap_input_deinit(void)
 {
-    TapResult out = {0};
-    return out;
+    return (TapResult){0};
 }

@@ -78,10 +78,9 @@ static struct {
 
 static void chunk_load(Chunk *chunk, const char *mapfile)
 {
-    size_t i_x, i_y, i_z;
-    for (i_x = 0; i_x < CHUNK_SZ; ++i_x)
-        for (i_y = 0; i_y < CHUNK_SZ; ++i_y)
-            for (i_z = 0; i_z < CHUNK_SZ; ++i_z)
+    for (size_t i_x = 0; i_x < CHUNK_SZ; ++i_x)
+        for (size_t i_y = 0; i_y < CHUNK_SZ; ++i_y)
+            for (size_t i_z = 0; i_z < CHUNK_SZ; ++i_z)
                 /* chunk->blocks[i_x][i_y][i_z].type = (unsigned int)rand() % BLOCKTYPE_SIZE; */
                 /* chunk->blocks[i_x][i_y][i_z].type = (((unsigned int)rand() % 2) == 0) ? BLOCKTYPE_AIR : BLOCKTYPE_BLUE; */
                 chunk->blocks[i_x][i_y][i_z].type = BLOCKTYPE_RED; 
@@ -113,16 +112,15 @@ static void chunk_mesh_update(const Chunk *chunk, TapChunkMesh *mesh)
         {7, 6, 3}, {3, 5, 7}, /* z+1 face */
     };
 
-    size_t i_x, i_y, i_z, i;
     mesh->num_faces = 0;
-    for (i_x = 0; i_x < CHUNK_SZ; ++i_x)
-        for (i_y = 0; i_y < CHUNK_SZ; ++i_y)
-            for (i_z = 0; i_z < CHUNK_SZ; ++i_z)
+    for (size_t i_x = 0; i_x < CHUNK_SZ; ++i_x)
+        for (size_t i_y = 0; i_y < CHUNK_SZ; ++i_y)
+            for (size_t i_z = 0; i_z < CHUNK_SZ; ++i_z)
                 if (chunk->blocks[i_x][i_y][i_z].type != BLOCKTYPE_AIR)
                 {
                     TapVec3 voxel_vertices[8];
 
-                    for (i = 0; i < TAP_ARRAY_SIZE(voxel_vertices); ++i)
+                    for (size_t i = 0; i < TAP_ARRAY_SIZE(voxel_vertices); ++i)
                     {
                         const TapVec3 chunk_offset = {chunk->coords.x * CHUNK_SZ, chunk->coords.y * CHUNK_SZ, chunk->coords.z * CHUNK_SZ};
                         const TapVec3 voxel_offset = {i_x, i_y, i_z};
@@ -130,7 +128,7 @@ static void chunk_mesh_update(const Chunk *chunk, TapChunkMesh *mesh)
                     }
 
                     if (i_x == 0 || chunk->blocks[i_x-1][i_y][i_z].type == BLOCKTYPE_AIR)
-                        for (i = 0; i < 2; ++i)
+                        for (size_t i = 0; i < 2; ++i)
                         {
                             TapFace *face = &(mesh->faces[mesh->num_faces++]);
                             face->color = blocktype_colors[chunk->blocks[i_x][i_y][i_z].type];
@@ -139,7 +137,7 @@ static void chunk_mesh_update(const Chunk *chunk, TapChunkMesh *mesh)
                             face->vertices[2] = voxel_vertices[face_indexes[i][2]]; 
                         }
                     if (i_y == 0 || chunk->blocks[i_x][i_y-1][i_z].type == BLOCKTYPE_AIR)
-                        for (i = 2; i < 4; ++i)
+                        for (size_t i = 2; i < 4; ++i)
                         {
                             TapFace *face = &(mesh->faces[mesh->num_faces++]);
                             face->color = blocktype_colors[chunk->blocks[i_x][i_y][i_z].type];
@@ -148,7 +146,7 @@ static void chunk_mesh_update(const Chunk *chunk, TapChunkMesh *mesh)
                             face->vertices[2] = voxel_vertices[face_indexes[i][2]]; 
                         }
                     if (i_z == 0 || chunk->blocks[i_x][i_y][i_z-1].type == BLOCKTYPE_AIR)
-                        for (i = 4; i < 6; ++i)
+                        for (size_t i = 4; i < 6; ++i)
                         {
                             TapFace *face = &(mesh->faces[mesh->num_faces++]);
                             face->color = blocktype_colors[chunk->blocks[i_x][i_y][i_z].type];
@@ -157,7 +155,7 @@ static void chunk_mesh_update(const Chunk *chunk, TapChunkMesh *mesh)
                             face->vertices[2] = voxel_vertices[face_indexes[i][2]]; 
                         }
                     if (i_x == CHUNK_SZ-1 || chunk->blocks[i_x+1][i_y][i_z].type == BLOCKTYPE_AIR)
-                        for (i = 6; i < 8 ; ++i)
+                        for (size_t i = 6; i < 8 ; ++i)
                         {
                             TapFace *face = &(mesh->faces[mesh->num_faces++]);
                             face->color = blocktype_colors[chunk->blocks[i_x][i_y][i_z].type];
@@ -166,7 +164,7 @@ static void chunk_mesh_update(const Chunk *chunk, TapChunkMesh *mesh)
                             face->vertices[2] = voxel_vertices[face_indexes[i][2]]; 
                         }
                     if (i_y == CHUNK_SZ-1 || chunk->blocks[i_x][i_y+1][i_z].type == BLOCKTYPE_AIR)
-                        for (i = 8; i < 10; ++i)
+                        for (size_t i = 8; i < 10; ++i)
                         {
                             TapFace *face = &(mesh->faces[mesh->num_faces++]);
                             face->color = blocktype_colors[chunk->blocks[i_x][i_y][i_z].type];
@@ -175,7 +173,7 @@ static void chunk_mesh_update(const Chunk *chunk, TapChunkMesh *mesh)
                             face->vertices[2] = voxel_vertices[face_indexes[i][2]]; 
                         }
                     if (i_z == CHUNK_SZ-1 || chunk->blocks[i_x][i_y][i_z+1].type == BLOCKTYPE_AIR)
-                        for (i = 10; i < 12; ++i)
+                        for (size_t i = 10; i < 12; ++i)
                         {
                             TapFace *face = &(mesh->faces[mesh->num_faces++]);
                             face->color = blocktype_colors[chunk->blocks[i_x][i_y][i_z].type];
@@ -209,11 +207,9 @@ static void chunkpool_update(ChunkPool* pool, TapVec3I player_chunk_coords, cons
 {
     const TapVec3I index_offset = {R_DISTANCE/2, R_DISTANCE/2, R_DISTANCE/2}; /* +/- 5 chunk render distance so {0,0,0} offset from player is loaded_chunks[4][4][4] */
     Chunk *loaded_chunks[R_DISTANCE][R_DISTANCE][R_DISTANCE] = {0};
-    int i_x, i_y, i_z;
-    size_t i;
 
     /* Check if any chunks in the pool are within the render distance. */
-    for (i = 0; i < pool->size; ++i)
+    for (size_t i = 0; i < pool->size; ++i)
     {
         Chunk *chunk = &(pool->chunks[i]);
         TapVec3I relative = tap_vec3i_add(tap_vec3i_sub(chunk->coords, player_chunk_coords), index_offset);
@@ -224,9 +220,9 @@ static void chunkpool_update(ChunkPool* pool, TapVec3I player_chunk_coords, cons
     }
 
     /* Load any remaining chunks within the render distance but not already in the pool. */
-    for (i_x = 0; i_x < R_DISTANCE; ++i_x)
-        for (i_y = 0; i_y < R_DISTANCE; ++i_y)
-            for (i_z = 0; i_z < R_DISTANCE; ++i_z)
+    for (int i_x = 0; i_x < R_DISTANCE; ++i_x)
+        for (int i_y = 0; i_y < R_DISTANCE; ++i_y)
+            for (int i_z = 0; i_z < R_DISTANCE; ++i_z)
                 if (loaded_chunks[i_x][i_y][i_z] == NULL)
                 {
                     TapVec3I relative = {i_x, i_y, i_z};
@@ -251,9 +247,8 @@ static void chunkpool_update(ChunkPool* pool, TapVec3I player_chunk_coords, cons
 
 TapResult tap_chunk_init(void)
 {
-    TapResult result = {0};
     if (state.initialized)
-        return result;
+        return (TapResult){0};
 
     srand((unsigned int)time(NULL));
 
@@ -261,31 +256,28 @@ TapResult tap_chunk_init(void)
     chunkpool_init(&state.arena, &state.chunk_pool);
 
     state.initialized = 1;
-    return result;
+    return (TapResult){0};
 }
 
 TapResult tap_chunk_get_meshes(TapVec3 player_coords, const TapChunkMesh **meshes, size_t *num_meshes)
 {
-    TapResult result = {0};
-
     if (!meshes || !num_meshes)
         TAP_GUARD_BAIL(TAP_ERRNO_NULLPTR);
     if (!state.initialized)
         TAP_GUARD_BAIL(TAP_ERRNO_MODULE_UNINITIALIZED);
 
-    TapVec3I player_chunk_coords = { (int)player_coords.x / CHUNK_SZ, (int)player_coords.y / CHUNK_SZ, (int)player_coords.z / CHUNK_SZ };
+    const TapVec3I player_chunk_coords = { (int)player_coords.x / CHUNK_SZ, (int)player_coords.y / CHUNK_SZ, (int)player_coords.z / CHUNK_SZ };
     chunkpool_update(&state.chunk_pool, player_chunk_coords, "placeholder");
 
     *meshes = state.chunk_pool.meshes;
     *num_meshes = state.chunk_pool.size;
 
-    return result;
+    return (TapResult){0};
 }
 
 TapResult tap_chunk_deinit(void)
 {
-    TapResult result = {0};
     tap_arena_destroy(&state.arena);
     state.initialized = 0;
-    return result;
+    return (TapResult){0};
 }
