@@ -16,12 +16,12 @@ static void *tap_arena_alloc_aligned(TapArena *arena, size_t align, size_t size,
 static void tap_arena_destroy(TapArena *arena);
 #define tap_arena_alloc(arena, type, count) (type *)tap_arena_alloc_aligned(arena, tap_def_alignof(type), sizeof(type), count)
 
-TapArena tap_arena_create(const size_t initial_capacity)
+static TapArena tap_arena_create(const size_t initial_capacity)
 {
     TapArena arena = {0};
     arena.capacity = initial_capacity;
 #ifdef TAP_DEBUG
-    arena.data = (unsigned char *)TAP_MALLOC(1);
+    arena.data = (unsigned char *)tap_alloc_malloc(1);
     arena.head = arena.data; /* ensure overflow on first allocation */
 #else
     arena.data = (unsigned char *)tap_alloc_malloc(arena.capacity);

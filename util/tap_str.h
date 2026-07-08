@@ -1,6 +1,9 @@
 #ifndef TAP_STR_H
 #define TAP_STR_H
 
+#include <stdlib.h> /* Temporary! */
+#include <string.h> /* Temporary! */
+
 #include "tap_def.h"
 #include "tap_math.h"
 
@@ -15,10 +18,13 @@ typedef struct {
 } TapStrPrintfVaList;
 
 static const void *tap_str_memcpy(void *dest, const void *src, size_t count);
+static const void *tap_str_memset(void *dest, unsigned char ch, size_t count);
 static size_t tap_str_len(const char *str);
 static char *tap_str_from_int(int val, char *buf);
 static char *tap_str_from_uint(unsigned int val, char *buf);
 static char *tap_str_from_float(float val, char *buf, unsigned char decimals);
+static float tap_str_to_float(const char *s, char **end);
+static unsigned long tap_str_to_ulong(const char *s, char **end, int base);
 static int tap_str_printf(char *buf, size_t bufsz, const char *format, TapStrPrintfVaList va_list);
 
 #define STR_NULL_TERMINATOR_SZ 1
@@ -26,6 +32,16 @@ static int tap_str_printf(char *buf, size_t bufsz, const char *format, TapStrPri
 #define STR_UINT_MAX_CHAR_THRESHOLD 1000000000
 #define STR_FLOAT_DECIMAL_CHARS (3)
 #define STR_NUMERIC_MAX_CHARS (1 + STR_UINT_MAX_CHARS + 1 + STR_FLOAT_DECIMAL_CHARS) /* '-2147483648.123' */
+
+static float tap_str_to_float(const char *s, char **end)
+{
+    return strtof(s, end);
+}
+
+static unsigned long tap_str_to_ulong(const char *s, char **end, int base)
+{
+    return strtoul(s, end, base);
+}
 
 /*
  * If aligned copy 32bit chunks from dest to src, else copy bytes.
@@ -54,6 +70,12 @@ static const void *tap_str_memcpy(void *dest, const void *src, size_t count)
         for (i = 0; i < count; i += sizeof(unsigned int))
             *(dest_word++) = *(src_word++);
     }
+    return dest;
+}
+
+static const void *tap_str_memset(void *dest, unsigned char ch, size_t count)
+{
+    memset(dest, ch, count);
     return dest;
 }
 
@@ -194,7 +216,7 @@ static int tap_str_printf(char *buf, size_t bufsz, const char *format, TapStrPri
     size_t i_vals = 0;
     const char *last = buf + bufsz - 1;
     const char *str = NULL;
-    /* char specifier; */
+    char specifier = '\0';
 
     while (*format != '\0')
     {
@@ -217,7 +239,7 @@ static int tap_str_printf(char *buf, size_t bufsz, const char *format, TapStrPri
             }
 
             ++format;
-            char specifier = *format++;
+            specifier = *format++;
 
             if (((specifier == 'd' || specifier == 'u' || specifier == 'f') && (buf + STR_NUMERIC_MAX_CHARS) > last) ||
                 ((specifier == 's') && (buf + tap_str_len(va_list.elems[i_vals].s) > last)))

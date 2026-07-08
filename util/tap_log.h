@@ -25,6 +25,30 @@ int (*tap_log_get_printf(void))(const char *format, ...);
             tap_log_get_printf()(__FILE__ ":" TAP_DEF_TOSTRING(__LINE__) " | " msg "\n", one); \
         }                                                                                      \
     } while (0)
+#define TAP_LOG2(msg, one, two)                                                                     \
+    do                                                                                              \
+    {                                                                                               \
+        if (tap_log_get_printf())                                                                   \
+        {                                                                                           \
+            tap_log_get_printf()(__FILE__ ":" TAP_DEF_TOSTRING(__LINE__) " | " msg "\n", one, two); \
+        }                                                                                           \
+    } while (0)
+#define TAP_LOG3(msg, one, two, three)                                                                     \
+    do                                                                                                     \
+    {                                                                                                      \
+        if (tap_log_get_printf())                                                                          \
+        {                                                                                                  \
+            tap_log_get_printf()(__FILE__ ":" TAP_DEF_TOSTRING(__LINE__) " | " msg "\n", one, two, three); \
+        }                                                                                                  \
+    } while (0)
+#define TAP_LOG4(msg, one, two, three, four)                                                                     \
+    do                                                                                                           \
+    {                                                                                                            \
+        if (tap_log_get_printf())                                                                                \
+        {                                                                                                        \
+            tap_log_get_printf()(__FILE__ ":" TAP_DEF_TOSTRING(__LINE__) " | " msg "\n", one, two, three, four); \
+        }                                                                                                        \
+    } while (0)
 
 #ifdef TAP_LOG_IMPLEMENTATION
 static TapLogLogger log_logger;

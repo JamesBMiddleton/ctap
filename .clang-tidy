@@ -3,7 +3,8 @@ Checks: '*,-altera-struct-pack-align, -altera-unroll-loops, -google-readability-
 -bugprone-easily-swappable-parameters, -readability-identifier-length, -bugprone-suspicious-include, 
 -llvmlibc-restrict-system-libc-headers, -cppcoreguidelines-avoid-magic-numbers, -readability-magic-numbers,
 -cppcoreguidelines-avoid-non-const-global-variables, -cppcoreguidelines-macro-to-enum, misc-static-assert,
--bugprone-assignment-in-if-condition'
+-bugprone-assignment-in-if-condition, -google-objc-function-naming, -concurrency-mt-unsafe, 
+-readability-function-cognitive-complexity, -readability-isolate-declaration, -android-cloexec-open'
 CheckOptions:
   - key: readability-function-cognitive-complexity.IgnoreMacros
     value: True 

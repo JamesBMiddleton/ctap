@@ -18,18 +18,14 @@ static void tap_list_clear(TapList *anchor);
 
 void tap_list_init(TapList *node)
 {
-    /* Ensure the node isn't already part of a list */
-    TAP_ASSERT(node->prev == NULL || node->prev == node);
-    TAP_ASSERT(node->next == NULL || node->next == node);
     node->prev = node;
     node->next = node;
 }
 
 void tap_list_insert(TapList *node, TapList *new)
 {
-    /* Ensure the new node isn't already part of a list */
-    TAP_ASSERT(new->prev == NULL || new->prev == new);
-    TAP_ASSERT(new->next == NULL || new->next == new);
+    TAP_ASSERT(new->prev == new);
+    TAP_ASSERT(new->next == new);
     new->next = node->next;
     new->prev = node;
     node->next->prev = new;

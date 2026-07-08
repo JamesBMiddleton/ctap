@@ -7,10 +7,9 @@ typedef struct {
     void *(*malloc)(size_t size);
     void (*free)(void *ptr);
 } TapAllocAllocator;
-static void tap_alloc_set_allocator(TapAllocAllocator allocator);
-
-static void *tap_alloc_malloc(size_t size);
-static void tap_alloc_free(void *ptr);
+void tap_alloc_set_allocator(TapAllocAllocator allocator);
+void *tap_alloc_malloc(size_t size);
+void tap_alloc_free(void *ptr);
 
 #ifdef TAP_ALLOC_IMPLEMENTATION
 static TapAllocAllocator alloc_allocator;

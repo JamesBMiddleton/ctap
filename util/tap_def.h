@@ -3,6 +3,10 @@
 
 #include <stddef.h>
 
+typedef char TapBool;
+#define TAP_FALSE 0
+#define TAP_TRUE 1
+
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
     #ifndef tap_def_alignof
         #define tap_def_alignof(type) alignof(type)
@@ -63,5 +67,9 @@
 
 #define TAP_DEF_TOSTRING_(s) #s
 #define TAP_DEF_TOSTRING(s) TAP_DEF_TOSTRING_(s)
+
+#define TAP_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
+#define TAP_INT_MAX 32767 /* 16 bit int representation is legacy but valid C. */
 
 #endif /* TAP_DEF_H */

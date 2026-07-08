@@ -1,0 +1,13 @@
+#ifndef TAP_COLOR_H
+#define TAP_COLOR_H
+
+typedef unsigned int TapColor; /* ABGR8 */
+#define TAP_COLOR_BLACK 0xFF000000
+#define TAP_COLOR_WHITE 0xFFFFFFFF
+#define TAP_COLOR_RED 0xFF0000B9
+#define TAP_COLOR_GREEN 0xFF489B00
+#define TAP_COLOR_BLUE 0xFFAD4500
+#define TAP_COLOR_ORANGE 0xFF0059FF
+#define TAP_COLOR_YELLOW 0xFF00D5FF
+
+#endif /* TAP_COLOR_H */
